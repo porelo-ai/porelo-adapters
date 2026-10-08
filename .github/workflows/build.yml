@@ -1,0 +1,33 @@
+# Builds the reader on every change to it: compiled, its unit tests run, and its native executable built, which is
+# what Sokar starts. Against sokar-build-api as a snapshot while it is developed (-U takes the newest), as the
+# shared rules allow; a release, on a tag, comes with its packages once sokar-build-api is on Central.
+name: Build
+
+on:
+  push:
+    branches: [main]
+    # A change to documents alone is the Shared rules workflow's.
+    paths-ignore: ['**.md', 'doc/**', 'issues/**', 'mkdocs.yml']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: The pinned GraalVM
+        uses: ./.github/actions/pinned-jdk
+
+      - name: Build, unit tests and the native reader
+        run: ./mvnw -B -U -s settings.xml -Pnative verify
+
+      - name: The reader answers as one
+        run: |
+          set -eu
+          reader/target/sokar-build-github describe | tee /dev/stderr | grep -q '"forge":"github"'

@@ -1,0 +1,28 @@
+# Checks the documents: AGENTS.md's shared block against its hash, no citation of an issue that goes stale, a
+# documentation chapter somebody can find their way through, and the tests that read documents. Of its own because
+# the build ignores a change to Markdown alone, which is exactly the change this is for, and it leases no machine.
+name: Shared rules
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: The pinned GraalVM
+        uses: ./.github/actions/pinned-jdk
+
+      # The root's validate runs check-actions, check-shared, check-citations, check-readmes and check-doc-site, with sokar-release
+      # from Central; the tests tagged documents follow it, so a change to a page runs every test that reads one.
+      - name: The documents
+        run: ./mvnw -B -U -s settings.xml -Pdocuments test

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.fuin.sokar</groupId>
+        <artifactId>sokar-build-github</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>sokar-build-github-reader</artifactId>
+    <name>Sokar Build GitHub Reader</name>
+    <description>Sokar - Reads what the build of a task's push did on GitHub Actions</description>
+
+    <dependencies>
+
+        <!-- compile: the build API and the wire it speaks, and nothing else of Sokar's. -->
+
+        <dependency>
+            <groupId>org.fuin.sokar</groupId>
+            <artifactId>sokar-build-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.sokar</groupId>
+            <artifactId>sokar-wire</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
+
+        <!-- test -->
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <profiles>
+        <!-- The executable Sokar starts: mvn -Pnative package writes target/sokar-build-github, installed as
+             /usr/libexec/sokar/builds/github, the name a project file gives the forge. -->
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${native-maven-plugin.version}</version>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>build-sokar-build-github</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <configuration>
+                                    <imageName>sokar-build-github</imageName>
+                                    <mainClass>org.fuin.sokar.build.github.GitHubReader</mainClass>
+                                    <fallback>false</fallback>
+                                    <buildArgs>
+                                        <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                                        <!-- x86-64 v1, so it starts on any x86-64 CPU, not only the build host's. -->
+                                        <buildArg>-march=x86-64</buildArg>
+                                    </buildArgs>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>

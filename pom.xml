@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         child.project.url.inherit.append.path="false">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.fuin.sokar</groupId>
+        <artifactId>sokar-parent</artifactId>
+        <version>0.1.1</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>org.fuin.sokar</groupId>
+    <artifactId>sokar-build-github</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Sokar Build GitHub</name>
+    <description>Sokar - Reads what the build of a task's push did on GitHub Actions (PARENT)</description>
+
+    <!-- Overrides the LGPL block inherited from org.fuin:pom. -->
+    <licenses>
+        <license>
+            <name>GPL-3.0-or-later</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.html</url>
+            <distribution>repo</distribution>
+            <comments>GNU General Public License v3.0 or later</comments>
+        </license>
+    </licenses>
+
+    <!-- Without the inherit.append.path attributes Maven appends each child's artifactId to these. -->
+    <url>https://github.com/sokar-ai/sokar-build-github/</url>
+
+    <scm child.scm.url.inherit.append.path="false"
+         child.scm.connection.inherit.append.path="false"
+         child.scm.developerConnection.inherit.append.path="false">
+        <url>https://github.com/sokar-ai/sokar-build-github/</url>
+        <connection>scm:git:git://github.com/sokar-ai/sokar-build-github.git</connection>
+        <developerConnection>scm:git:git@github.com:sokar-ai/sokar-build-github.git</developerConnection>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/sokar-ai/sokar-build-github/issues</url>
+    </issueManagement>
+
+    <properties>
+        <!-- The Sokar this reader is built against: sokar-build-api and sokar-wire, through sokar-bom. A snapshot while
+             it is developed; a release depends only on releases. Everything else it builds with - the Java release,
+             nothing published, the plugin and tool versions - comes from sokar-parent. -->
+        <sokar.version>0.4.1-SNAPSHOT</sokar.version>
+        <!-- The command line 'exec:exec@machines' gives sokar-machines, such as 'jdk'. -->
+        <machines.args></machines.args>
+    </properties>
+
+    <modules>
+        <module>reader</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- JUnit's first, as sokar-parent says: an import here comes before the parent's, and the fuin BOM below
+                 pins an older JUnit. -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Sokar's versions next, so the API and the wire it speaks are the ones Sokar was built with. -->
+            <dependency>
+                <groupId>org.fuin.sokar</groupId>
+                <artifactId>sokar-bom</artifactId>
+                <version>${sokar.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.fuin</groupId>
+                <artifactId>bom</artifactId>
+                <version>${fuin-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+
+        <plugins>
+
+
+            <plugin>
+                <groupId>dev.logchange</groupId>
+                <artifactId>logchange-maven-plugin</artifactId>
+                <version>${logchange-maven-plugin.version}</version>
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>logchange-lint</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>lint</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec-maven-plugin.version}</version>
+                <inherited>false</inherited>
+                <executions>
+                    <!-- Any sokar-machines command, in a JVM of its own: the pinned GraalVM for a CI job. -->
+                    <execution>
+                        <id>machines</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${java.home}/bin/java</executable>
+                            <includeProjectDependencies>false</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                            <executableDependency>
+                                <groupId>org.fuin.sokar</groupId>
+                                <artifactId>sokar-machines</artifactId>
+                            </executableDependency>
+                            <commandlineArgs>-classpath %classpath org.fuin.sokar.machines.Main ${machines.args}</commandlineArgs>
+                        </configuration>
+                    </execution>
+                    <!-- Every workflow step pinned by commit. -->
+                    <execution>
+                        <id>check-actions</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${java.home}/bin/java</executable>
+                            <includeProjectDependencies>false</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                            <executableDependency>
+                                <groupId>org.fuin.sokar</groupId>
+                                <artifactId>sokar-release</artifactId>
+                            </executableDependency>
+                            <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-actions ${maven.multiModuleProjectDirectory}/.github</commandlineArgs>
+                        </configuration>
+                    </execution>
+                    <!-- The shared block of AGENTS.md carries the hash of its text, so a copy edited on its own fails. -->
+                    <execution>
+                        <id>check-shared</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${java.home}/bin/java</executable>
+                            <includeProjectDependencies>false</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                            <executableDependency>
+                                <groupId>org.fuin.sokar</groupId>
+                                <artifactId>sokar-release</artifactId>
+                            </executableDependency>
+                            <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-shared ${maven.multiModuleProjectDirectory}/AGENTS.md</commandlineArgs>
+                        </configuration>
+                    </execution>
+                    <!-- No file cites an issue in a way that goes stale once the issue is finished and deleted. -->
+                    <execution>
+                        <id>check-citations</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${java.home}/bin/java</executable>
+                            <includeProjectDependencies>false</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                            <executableDependency>
+                                <groupId>org.fuin.sokar</groupId>
+                                <artifactId>sokar-release</artifactId>
+                            </executableDependency>
+                            <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-citations ${maven.multiModuleProjectDirectory}</commandlineArgs>
+                        </configuration>
+                    </execution>
+                    <!-- Every module has a README.md beside its pom.xml, linking its submodules. -->
+                    <execution>
+                        <id>check-readmes</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${java.home}/bin/java</executable>
+                            <includeProjectDependencies>false</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                            <executableDependency>
+                                <groupId>org.fuin.sokar</groupId>
+                                <artifactId>sokar-release</artifactId>
+                            </executableDependency>
+                            <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-readmes ${maven.multiModuleProjectDirectory}</commandlineArgs>
+                        </configuration>
+                    </execution>
+                    <!-- Every page of doc/ is in mkdocs.yml's navigation once, and every link on it can be followed. -->
+                    <execution>
+                        <id>check-doc-site</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${java.home}/bin/java</executable>
+                            <includeProjectDependencies>false</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                            <executableDependency>
+                                <groupId>org.fuin.sokar</groupId>
+                                <artifactId>sokar-release</artifactId>
+                            </executableDependency>
+                            <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-doc-site ${maven.multiModuleProjectDirectory}/doc ${maven.multiModuleProjectDirectory}/mkdocs.yml</commandlineArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.fuin.sokar</groupId>
+                        <artifactId>sokar-machines</artifactId>
+                        <version>${sokar.buildtools.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.fuin.sokar</groupId>
+                        <artifactId>sokar-release</artifactId>
+                        <version>${sokar.buildtools.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+        </plugins>
+
+    </build>
+
+    <profiles>
+        <profile>
+            <!-- A change to documents or issues: only the tests that read them, tagged so. -->
+            <id>documents</id>
+            <properties>
+                <groups>documents</groups>
+            </properties>
+        </profile>
+    </profiles>
+
+</project>

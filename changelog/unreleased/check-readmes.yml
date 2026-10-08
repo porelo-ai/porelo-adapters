@@ -1,2 +1,2 @@
-title: Every build checks that each Maven module has a README.md linking its submodules, with sokar-release check-readmes from the build tools 0.4.2
+title: Every build checks that each Maven module has a README.md linking its submodules, with sokar-release check-readmes from the build tools
 type: changed

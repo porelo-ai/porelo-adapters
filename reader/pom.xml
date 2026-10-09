@@ -85,6 +85,194 @@
                 </plugins>
             </build>
         </profile>
+
+        <!-- The packages: -Pnative,dist verify. The native reader as /usr/libexec/sokar/builds/github, where sokar
+             finds the reader a project names with 'builds: { forge: github }'. -->
+        <profile>
+            <id>dist</id>
+            <properties>
+                <package.name>sokar-build-github</package.name>
+                <builds.install.dir>/usr/libexec/sokar/builds</builds.install.dir>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>package-version</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>regex-property</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- '~' sorts below everything in dpkg and rpm, so 0.4.2~snapshot.N is older than
+                                         0.4.2, and the run number makes each snapshot newer than the last. -->
+                                    <name>reader.package.version</name>
+                                    <value>${project.version}</value>
+                                    <regex>-SNAPSHOT$</regex>
+                                    <replacement>~snapshot.${reader.snapshot.run}</replacement>
+                                    <failIfNoMatch>false</failIfNoMatch>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+
+                    <plugin>
+                        <groupId>org.vafer</groupId>
+                        <artifactId>jdeb</artifactId>
+                        <executions>
+                            <execution>
+                                <id>deb</id>
+                                <!-- Not 'package': native-image binds there too. -->
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jdeb</goal>
+                                </goals>
+                                <configuration>
+                                    <name>${package.name}</name>
+                                    <deb>${project.build.directory}/${package.name}_${reader.package.version}_amd64.deb</deb>
+                                    <controlDir>${project.basedir}/src/deb/control</controlDir>
+                                    <dataSet>
+                                        <data>
+                                            <src>${project.build.directory}/sokar-build-github</src>
+                                            <type>file</type>
+                                            <dst>github</dst>
+                                            <mapper>
+                                                <type>perm</type>
+                                                <prefix>${builds.install.dir}</prefix>
+                                                <filemode>755</filemode>
+                                                <user>root</user>
+                                                <group>root</group>
+                                            </mapper>
+                                        </data>
+                                        <!-- Debian Policy 12.5: every binary package ships one. -->
+                                        <data>
+                                            <src>${project.basedir}/src/deb/copyright/copyright</src>
+                                            <type>file</type>
+                                            <mapper>
+                                                <type>perm</type>
+                                                <prefix>/usr/share/doc/${package.name}</prefix>
+                                                <filemode>644</filemode>
+                                                <user>root</user>
+                                                <group>root</group>
+                                            </mapper>
+                                        </data>
+                                    </dataSet>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>de.dentrassi.maven</groupId>
+                        <artifactId>rpm</artifactId>
+                        <executions>
+                            <execution>
+                                <id>rpm</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>rpm</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <packageName>${package.name}</packageName>
+                            <version>${reader.package.version}</version>
+                            <snapshotVersion>${reader.package.version}</snapshotVersion>
+                            <release>1</release>
+                            <summary>Sokar's build reader for GitHub Actions</summary>
+                            <description>Reads a task's builds on GitHub Actions for Sokar. Installs into /usr/libexec/sokar/builds as 'github', where sokar finds it.</description>
+                            <!-- Without this a snapshot gets a timestamp release, and the rpm and the deb disagree. -->
+                            <forceRelease>true</forceRelease>
+                            <architecture>x86_64</architecture>
+                            <group>Applications/System</group>
+                            <license>GPL-3.0-or-later</license>
+                            <packager>fuin.org</packager>
+                            <requires>
+                                <require>sokar</require>
+                                <!-- The names rpmbuild itself generates for these libraries. -->
+                                <require>libc.so.6(GLIBC_${package.glibc.floor})(64bit)</require>
+                                <require>libz.so.1(ZLIB_${package.zlib.floor})(64bit)</require>
+                            </requires>
+                            <signature>
+                                <skip>true</skip>
+                            </signature>
+                            <entries>
+                                <entry>
+                                    <name>${builds.install.dir}/github</name>
+                                    <file>${project.build.directory}/sokar-build-github</file>
+                                    <mode>0755</mode>
+                                    <user>root</user>
+                                    <group>root</group>
+                                </entry>
+                                <!-- 'license' marks it %license, so 'rpm -qL' answers. -->
+                                <entry>
+                                    <name>/usr/share/licenses/${package.name}/LICENSE</name>
+                                    <file>${project.basedir}/../LICENSE</file>
+                                    <mode>0644</mode>
+                                    <user>root</user>
+                                    <group>root</group>
+                                    <license>true</license>
+                                </entry>
+                            </entries>
+                        </configuration>
+                    </plugin>
+
+                    <!-- Declared after both packages, since all bind to verify and run in this order: the reader
+                         against what the packages declare, then what the packages say their version is. -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>check-linkage</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${java.home}/bin/java</executable>
+                                    <includeProjectDependencies>false</includeProjectDependencies>
+                                    <includePluginDependencies>true</includePluginDependencies>
+                                    <executableDependency>
+                                        <groupId>org.fuin.sokar</groupId>
+                                        <artifactId>sokar-release</artifactId>
+                                    </executableDependency>
+                                    <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-linkage --declare libc.so.6=GLIBC:${package.glibc.floor} --declare libz.so.1=ZLIB:${package.zlib.floor} --ceiling GLIBC=${package.glibc.ceiling} ${project.build.directory}/sokar-build-github</commandlineArgs>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>check-package-version</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${java.home}/bin/java</executable>
+                                    <includeProjectDependencies>false</includeProjectDependencies>
+                                    <includePluginDependencies>true</includePluginDependencies>
+                                    <executableDependency>
+                                        <groupId>org.fuin.sokar</groupId>
+                                        <artifactId>sokar-release</artifactId>
+                                    </executableDependency>
+                                    <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-package-version ${package.name} ${project.version} ${reader.snapshot.run} ${project.build.directory}</commandlineArgs>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.fuin.sokar</groupId>
+                                <artifactId>sokar-release</artifactId>
+                                <version>${sokar.buildtools.version}</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
 </project>

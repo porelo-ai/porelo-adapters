@@ -5,6 +5,26 @@ see. This reader is what lets Sokar tell the task how that build went. Sokar fin
 about the commits the task pushes, and hands the answer to the task; the reader never runs inside a task, and the
 token it reads GitHub with never enters one.
 
+## Installing it
+
+From the same package repositories as Sokar, on any system Sokar supports (Ubuntu 26.04, Debian 13, Fedora 43
+and 44):
+
+```
+sudo apt install sokar-build-github      # Debian and Ubuntu
+sudo dnf install sokar-build-github      # Fedora
+```
+
+The package depends on `sokar` and puts the reader at `/usr/libexec/sokar/builds/github`, where Sokar looks for the
+reader a project names with `builds: { forge: github }`; nothing is registered or copied into an account. Whether it
+is there and answers:
+
+```
+/usr/libexec/sokar/builds/github describe     # {"protocolVersion":1,"forge":"github"}
+```
+
+A reader in `~/.local/share/sokar/builds/github` is found first, for one account only; the package needs none.
+
 ## What it answers
 
 - **The head of a branch**: the commit the task last pushed, as GitHub has it.

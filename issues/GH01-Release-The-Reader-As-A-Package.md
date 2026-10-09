@@ -1,6 +1,6 @@
 # GH01 — Release The Reader As A Package
 
-**Status:** soon.
+**Status:** implemented here; the upload is proven at the first push.
 
 **What must be true.** Somebody who runs Sokar installs the GitHub build reader from the same `releases` indexes as
 Sokar and its agents, and `sokar` finds it there without a step of their own. A tag `v<version>` of this repository
@@ -30,6 +30,19 @@ publishes exactly that version, and a push to `main` publishes a snapshot of it,
   - a package that puts the reader anywhere but `/usr/libexec/sokar/builds/` fails the install check;
   - an upload the index does not list fails the run.
 
-## To be checked
+## As built, 2026-10-09
 
-- Whether the packaging is taken from the agents' repositories as it is there, or shared through the build tools.
+- **The packages:** `-Pnative,dist verify` in `reader` builds `sokar-build-github_<version>_amd64.deb` and
+  `sokar-build-github-<version>-1.x86_64.rpm`, putting the reader at `/usr/libexec/sokar/builds/github` and depending on
+  `sokar`, `libc6 (>= 2.34)` and `zlib1g` (`libc.so.6(GLIBC_2.34)(64bit)`, `libz.so.1(ZLIB_1.2.2)(64bit)` in the rpm).
+  The version is the reader's with `-SNAPSHOT` as `~snapshot.<run>`.
+- **Checked in the build, shared through the build tools rather than copied from the agents:** `sokar-release
+  check-linkage` holds the reader to the declared C library and zlib, and the floor to Debian 13's glibc 2.41;
+  `sokar-release check-package-version` reads both packages' version and the rpm's release.
+- **`build.yml`:** a pinned runner (`ubuntu-24.04`), the packages built with the run number, a push to `main`
+  publishing to `snapshots`, a tag `v<version>` to `releases` after `check-releases`, a release already there refused,
+  and the index checked to list the upload - as the agents publish.
+- **Measured:** the packages install beside a local `sokar` in clean `ubuntu:26.04`, `debian:13`, `fedora:44` and
+  `fedora:43`, and the reader answers `describe` there. The workflow's channel step refuses a tag that is not the
+  version, a snapshot under a tag, a release on a branch and a release on a snapshot Sokar.
+- **Open:** the upload itself, first by the operator's push to `main`; the acceptance leg is left for later.

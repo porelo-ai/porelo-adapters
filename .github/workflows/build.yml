@@ -1,12 +1,14 @@
-# Builds the reader on every change to it: compiled, its unit tests run, and its native executable built, which is
-# what Sokar starts. Against sokar-build-api as a snapshot while it is developed (-U takes the newest), as the
-# shared rules allow; a release, on a tag, comes with its packages once sokar-build-api is on Central.
+# Builds the reader on every change to it: compiled, its unit tests run, its native executable built and packed as a
+# .deb and an .rpm, which put it where Sokar finds it. A push to main publishes them to the snapshots channel, a tag
+# v<version> to the releases channel; a release depends only on releases. Against sokar-build-api as a snapshot
+# while it is developed (-U takes the newest), as the shared rules allow.
 name: Build
 run-name: "${{ github.workflow }} · ${{ github.ref_name }}: ${{ github.event.head_commit.message || github.event.pull_request.title || github.workflow }}"
 
 on:
   push:
     branches: [main]
+    tags: ['v*']
     # A change to documents alone is the Shared rules check's.
     paths-ignore: ['**.md', 'doc/**', 'issues/**', 'mkdocs.yml']
   pull_request:
@@ -17,7 +19,9 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: Build, packages and publish
+    # Pinned, not ubuntu-latest: the packages' C library floor is measured on what this builds.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -25,10 +29,121 @@ jobs:
       - name: The pinned GraalVM
         uses: ./.github/actions/pinned-jdk
 
-      - name: Build, unit tests and the native reader
-        run: ./mvnw -B -U -s settings.xml -Pnative verify
+      # check-package-version reads the built .rpm with rpm, which the runner is not promised to have.
+      - name: rpm, to read the built package
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq rpm
+
+      # Not -DskipTests: the dist profile's checks need the binary and the packages it is packed into - the reader
+      # against the C library and zlib both declare, and the version both carry.
+      - name: Build, unit tests, the native reader and its packages
+        run: ./mvnw -B -U -s settings.xml -Pnative,dist verify -Dreader.snapshot.run=${{ github.run_number }}
 
       - name: The reader answers as one
         run: |
           set -eu
           reader/target/sokar-build-github describe | tee /dev/stderr | grep -q '"forge":"github"'
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: packages
+          path: |
+            reader/target/*.deb
+            reader/target/*.rpm
+          if-no-files-found: error
+
+      - name: Not publishing
+        if: "!(github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')))"
+        run: |
+          echo "Not publishing. This run is '${{ github.event_name }}' on '${{ github.ref }}', and only a push to main"
+          echo "or a tag v<version> publishes. The packages were built and checked here and are attached to this run."
+
+      # A tag publishes a release, main a snapshot. A release is refused unless the tag is exactly 'v' plus the version
+      # it carries and Sokar is a release too, and a version is never both at once.
+      - name: Which channel
+        id: channel
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        run: |
+          set -eu
+          VERSION="$(sed -n 's|^    <version>\(.*\)</version>$|\1|p' pom.xml | head -1)"
+          [ -n "$VERSION" ] || { echo "::error::no version in pom.xml"; exit 1; }
+          SOKAR="$(sed -n 's|^        <sokar.version>\(.*\)</sokar.version>$|\1|p' pom.xml | head -1)"
+          [ -n "$SOKAR" ] || { echo "::error::no sokar.version in pom.xml"; exit 1; }
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+              [ "$GITHUB_REF_NAME" = "v$VERSION" ] \
+                  || { echo "::error::the tag $GITHUB_REF_NAME is not v$VERSION, the version this commit carries"; exit 1; }
+              case "$VERSION" in
+                  *-SNAPSHOT) echo "::error::$VERSION is a snapshot; a release carries its own version"; exit 1 ;;
+              esac
+              case "$SOKAR" in
+                  *-SNAPSHOT) echo "::error::sokar.version $SOKAR is a snapshot; a release is built against a released Sokar"; exit 1 ;;
+              esac
+              echo "channel=releases" >> "$GITHUB_OUTPUT"
+          else
+              case "$VERSION" in
+                  *-SNAPSHOT) ;;
+                  *) echo "::error::$VERSION on a branch would publish a release as a snapshot"; exit 1 ;;
+              esac
+              echo "channel=snapshots" >> "$GITHUB_OUTPUT"
+          fi
+          echo "  $VERSION -> $(tail -1 "$GITHUB_OUTPUT")"
+
+      # Every -SNAPSHOT in the effective pom - dependencies, the imported BOM, plugins and their dependencies such as
+      # sokar-release, inactive profiles too - refuses the tag.
+      - name: A release depends only on releases
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          ./mvnw -B -s settings.xml help:effective-pom -Doutput=target/effective-pom.xml
+          ./mvnw -B -s settings.xml -N exec:exec@check-releases
+
+      # The action publishes build-info by itself at the end of the workflow.
+      - uses: jfrog/setup-jfrog-cli@68c0efdc951dd2359bbbfa15c48bc67b3ae8e4d6 # v5.2.0
+        with:
+          disable-auto-build-publish: true
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        env:
+          JF_URL: ${{ vars.JF_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+
+      # The same two repositories Sokar and its agents publish to.
+      - name: Publish the packages
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        env:
+          JF_URL: ${{ vars.JF_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+          CHANNEL: ${{ steps.channel.outputs.channel }}
+        run: |
+          set -eux
+          # A published release is never replaced, as on Central.
+          if [ "$CHANNEL" = releases ] && curl -sfL "${JF_URL}/artifactory/sokar-dist-deb/dists/releases/main/binary-amd64/Packages" \
+                  | grep -qF "Filename: pool/main/s/sokar-build-github/$(basename reader/target/*.deb)"; then
+              echo "::error::this release is published already"; exit 1
+          fi
+          # --flat, or the source directory travels and the package lands away from its siblings.
+          jf rt upload "reader/target/*.deb" "sokar-dist-deb/pool/main/s/sokar-build-github/" \
+              --flat=true \
+              --target-props="deb.distribution=${CHANNEL};deb.component=main;deb.architecture=amd64"
+          jf rt upload "reader/target/*.rpm" "sokar-dist-rpm/${CHANNEL}/" --flat=true
+
+      # Uploaded is not installable.
+      - name: The package is indexed, not merely stored
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        env:
+          JF_URL: ${{ vars.JF_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+          CHANNEL: ${{ steps.channel.outputs.channel }}
+        run: |
+          set -eu
+          DEB="$(basename reader/target/*.deb)"
+          tries=0
+          # -L: Artifactory answers a file with a redirect to its cloud storage, and without it the body is empty.
+          while [ "$tries" -lt 20 ]; do
+              if jf rt curl -sL -XGET "/sokar-dist-deb/dists/${CHANNEL}/main/binary-amd64/Packages" 2>/dev/null \
+                  | grep -qF "Filename: pool/main/s/sokar-build-github/$DEB"; then
+                  echo "  OK    the Debian index lists $DEB"
+                  exit 0
+              fi
+              tries=$((tries + 1))
+              sleep 6
+          done
+          echo "::error::$DEB never appeared in the index - uploaded but not indexed"
+          exit 1

@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.fuin.sokar</groupId>
         <artifactId>sokar-parent</artifactId>
-        <version>0.1.2</version>
+        <version>0.1.4-SNAPSHOT</version>
         <relativePath/>
     </parent>
 
@@ -50,7 +50,7 @@
         <!-- The Sokar this reader is built against: sokar-build-api and sokar-wire, through sokar-bom. A snapshot while
              it is developed; a release depends only on releases. Everything else it builds with - the Java release,
              nothing published, the plugin and tool versions - comes from sokar-parent. -->
-        <sokar.version>0.4.1</sokar.version>
+        <sokar.version>0.4.2-SNAPSHOT</sokar.version>
         <!-- The command line 'exec:exec@machines' gives sokar-machines, such as 'jdk'. -->
         <machines.args></machines.args>
     </properties>

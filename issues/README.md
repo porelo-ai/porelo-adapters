@@ -12,6 +12,7 @@ is `GH`.
 
 | # | status | blocked by | what it covers | to be checked |
 |---|---|---|---|---|
+| [GH01](GH01-Release-The-Reader-As-A-Package.md) | soon | - | a tag and `main` publish the reader as a `.deb` and an `.rpm` to the indexes, where `sokar` finds it | 1 |
 
 ## Later
 

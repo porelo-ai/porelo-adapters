@@ -2,11 +2,12 @@
 # what Sokar starts. Against sokar-build-api as a snapshot while it is developed (-U takes the newest), as the
 # shared rules allow; a release, on a tag, comes with its packages once sokar-build-api is on Central.
 name: Build
+run-name: "${{ github.workflow }} · ${{ github.ref_name }}: ${{ github.event.head_commit.message || github.event.pull_request.title || github.workflow }}"
 
 on:
   push:
     branches: [main]
-    # A change to documents alone is the Shared rules workflow's.
+    # A change to documents alone is the Shared rules check's.
     paths-ignore: ['**.md', 'doc/**', 'issues/**', 'mkdocs.yml']
   pull_request:
   workflow_dispatch:

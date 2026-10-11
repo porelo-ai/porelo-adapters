@@ -5,7 +5,7 @@ Version: [[reader.package.version]]
 Section: utils
 Priority: optional
 Architecture: amd64
-Maintainer: fuin.org <info@fuin.org>
+Maintainer: Michael Schnell <michael@fuin.org>
 Homepage: https://github.com/sokar-ai/sokar-build-github
 # The native binary links against both; jdeb does not read it to find out. check-linkage holds these floors to it.
 Depends: sokar, libc6 (>= [[package.glibc.floor]]), zlib1g (>= 1:[[package.zlib.floor]])

@@ -43,4 +43,4 @@ adapter for GitHub is this reader; what it already does for builds, it does for 
 
 ## To be checked
 
-- Whether a review's top-level body (not anchored to a line) is a comment of its own or a thread's head.
+- Whether a review's top-level body (not anchored to a line) is a comment of its own or a thread's head (Agent Core's).

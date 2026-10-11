@@ -1,15 +1,15 @@
 # Issues
 
 The open tasks of `sokar-build-github`, grouped by state; the order within a group is the priority. The rules for an
-issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questions* counts what waits on the
-operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
+issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questions*, in *Analyzed* only, counts what
+waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
 
 ## Review
 
-| # | Size | Blocked by | What it covers | Open questions |
-|---|---|---|---|---|
-| <a id="gh01"></a>[GH01](GH01-Release-The-Reader-As-A-Package.md) | S | - | a tag and `main` publish the reader as a `.deb` and an `.rpm` to the indexes, where `sokar` finds it | - |
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh01"></a>[GH01](GH01-Release-The-Reader-As-A-Package.md) | S | - | a tag and `main` publish the reader as a `.deb` and an `.rpm` to the indexes, where `sokar` finds it |
 
 ## Analyzed
 

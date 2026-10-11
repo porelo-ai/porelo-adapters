@@ -1,6 +1,8 @@
 # GH01 — Release The Reader As A Package
 
-**Status:** implemented here; the upload is proven at the first push.
+**Status:** Review.
+**Size:** S - built: the publish job and the packages; the first push published `0.4.2~snapshot.3` and `.4` to the
+`snapshots` index.
 
 **What must be true.** Somebody who runs Sokar installs the GitHub build reader from the same `releases` indexes as
 Sokar and its agents, and `sokar` finds it there without a step of their own. A tag `v<version>` of this repository

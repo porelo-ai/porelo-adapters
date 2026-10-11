@@ -9,7 +9,7 @@ on:
   push:
     branches: [main]
     tags: ['v*']
-    # A change to documents alone is the Shared rules check's.
+    # A change to documents alone is checked locally before the hand-over and by the Shared rules check once a day.
     paths-ignore: ['**.md', 'doc/**', 'issues/**', 'mkdocs.yml']
   pull_request:
   workflow_dispatch:

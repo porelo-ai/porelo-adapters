@@ -1,6 +1,6 @@
 # GH04 — Sokar Renamed Porelo Here
 
-**Status:** Analyzed.
+**Status:** Estimated.
 **Size:** S - 330 occurrences in 27 of 45 files and 5 paths, one module, and a package Porelo finds by its path.
 
 **What must be true.** The GitHub build reader is Porelo's: `org.fuin.porelo:porelo-build-github`, packaged as

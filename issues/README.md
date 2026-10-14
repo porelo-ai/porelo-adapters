@@ -15,4 +15,5 @@ left out.
 
 | # | Size | Blocked by | What it covers | Open questions |
 |---|---|---|---|---|
+| <a id="gh03"></a>[GH03](GH03-The-Code-Read-Against-The-Skills-It-Names.md) | S | - | `reader` read against the five skills `AGENTS.md` names, at recorded versions and SHA-256; each finding fixed with a test seen red or declined with why. | - |
 | <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | M | `sokar` [B171](https://github.com/sokar-ai/sokar/blob/main/issues/base/README.md#b171) | `Review1` beside `Build1`: a pull request's review comments, threads and suggestions read into `sokar`'s comment model, and comments and replies written with a write token of their own | - |

@@ -9,13 +9,13 @@
     <parent>
         <groupId>org.fuin.porelo</groupId>
         <artifactId>porelo-parent</artifactId>
-        <version>0.2.0</version>
+        <version>0.2.1-SNAPSHOT</version>
         <relativePath/>
     </parent>
 
     <groupId>org.fuin.porelo</groupId>
     <artifactId>porelo-build-github</artifactId>
-    <version>0.5.0</version>
+    <version>0.5.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Porelo Build GitHub</name>
     <description>Porelo - Reads what the build of a task's push did on GitHub Actions (PARENT)</description>

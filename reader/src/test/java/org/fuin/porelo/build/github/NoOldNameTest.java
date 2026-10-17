@@ -26,15 +26,8 @@ class NoOldNameTest {
 
     private static final String OLD = "so" + "kar";
 
-    /**
-     * Paths that keep the old name, name and text: the released changelog entries and the changelog made of them,
-     * and the issue of the rename.
-     */
-    private static final Pattern KEPT_PATHS = Pattern.compile("CHANGELOG\\.md|changelog/v[^/]+/.*|"
-            + "issues/GH04-[^/]+\\.md"); // not-a-citation: the issue's own file
-
-    /** Lines that keep it: the rename's own row in the issue index. */
-    private static final Pattern KEPT_LINES = Pattern.compile(".*<a id=\"gh04\"></a>.*");
+    /** Paths that keep the old name, name and text: the released changelog entries and the changelog made of them. */
+    private static final Pattern KEPT_PATHS = Pattern.compile("CHANGELOG\\.md|changelog/v[^/]+/.*");
 
     private static List<String> tracked() throws IOException, InterruptedException {
         final Process git = new ProcessBuilder("git", "ls-files", "-z").directory(Path.of("..").toFile())
@@ -69,7 +62,7 @@ class NoOldNameTest {
             final List<String> lines = lines(Path.of("..", file));
             for (int i = 0; i < lines.size(); i++) {
                 final String line = lines.get(i);
-                if (!KEPT_LINES.matcher(line).matches() && line.toLowerCase(Locale.ROOT).contains(OLD)) {
+                if (line.toLowerCase(Locale.ROOT).contains(OLD)) {
                     found.add(file + ":" + (i + 1) + ": " + line.strip());
                 }
             }

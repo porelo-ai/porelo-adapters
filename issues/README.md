@@ -9,13 +9,8 @@ left out.
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
-| <a id="gh01"></a>[GH01](GH01-Release-The-Reader-As-A-Package.md) | S | - | a tag and `main` publish the reader as a `.deb` and an `.rpm` to the indexes, where `porelo` finds it |
-
-## Implementing
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
 | <a id="gh04"></a>[GH04](GH04-Sokar-Renamed-Porelo-Here.md) | S | - | The reader renamed by script: `org.fuin.porelo:porelo-build-github`, packaged at `/usr/libexec/porelo/builds/github`; red first a test refusing the old word; found by Porelo on the VM. |
+| <a id="gh01"></a>[GH01](GH01-Release-The-Reader-As-A-Package.md) | S | - | a tag and `main` publish the reader as a `.deb` and an `.rpm` to the indexes, where `porelo` finds it |
 
 ## Analyzed
 

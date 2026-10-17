@@ -1,11 +1,13 @@
 package org.fuin.porelo.build.github;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -20,10 +22,12 @@ public interface Http {
      *
      * @param uri Where.
      * @param headers What to send; empty for a redirect's target, which must never see the token.
+     * @param tail The most of the body's end that is kept, read through without holding the rest; 0
+     *     for the whole body.
      * @return The answer.
      * @throws IOException When nothing answered.
      */
-    Response get(URI uri, Map<String, String> headers) throws IOException;
+    Response get(URI uri, Map<String, String> headers, int tail) throws IOException;
 
     /**
      * An HTTP answer.
@@ -57,23 +61,50 @@ public interface Http {
                         .followRedirects(HttpClient.Redirect.NEVER)
                         .connectTimeout(Duration.ofSeconds(15))
                         .build();
-        return (uri, headers) -> {
+        return (uri, headers, tail) -> {
             final HttpRequest.Builder request =
                     HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(60)).GET();
             headers.forEach(request::header);
             try {
-                final HttpResponse<byte[]> answer =
-                        client.send(request.build(), HttpResponse.BodyHandlers.ofByteArray());
+                final HttpResponse<InputStream> answer =
+                        client.send(request.build(), HttpResponse.BodyHandlers.ofInputStream());
                 final Map<String, List<String>> named = new LinkedHashMap<>();
                 answer.headers()
                         .map()
                         .forEach(
                                 (name, values) -> named.put(name.toLowerCase(Locale.ROOT), values));
-                return new Response(answer.statusCode(), named, answer.body());
+                try (InputStream body = answer.body()) {
+                    return new Response(
+                            answer.statusCode(),
+                            named,
+                            tail > 0 ? tail(body, tail) : body.readAllBytes());
+                }
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
                 throw new IOException("interrupted", ex);
             }
         };
+    }
+
+    /**
+     * Returns the last bytes of a stream, holding at most twice that many while it reads.
+     *
+     * @param in What is read to its end.
+     * @param most How many of the last bytes are kept.
+     * @return Them.
+     * @throws IOException When the stream fails.
+     */
+    private static byte[] tail(final InputStream in, final int most) throws IOException {
+        final byte[] window = new byte[2 * most];
+        int length = 0;
+        int read;
+        while ((read = in.read(window, length, window.length - length)) >= 0) {
+            length += read;
+            if (length == window.length) {
+                System.arraycopy(window, most, window, 0, most);
+                length = most;
+            }
+        }
+        return Arrays.copyOfRange(window, Math.max(0, length - most), length);
     }
 }

@@ -18,6 +18,7 @@ import org.fuin.porelo.build.api.BuildReader;
 import org.fuin.porelo.build.api.BuildRefused;
 import org.fuin.porelo.build.api.Target;
 import org.fuin.porelo.wire.Json;
+import org.fuin.porelo.wire.JsonException;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -48,6 +49,12 @@ public final class GitHubReader implements BuildReader {
 
     /** What GitHub calls a job that failed. */
     private static final List<String> FAILED_JOB = List.of("failure", "timed_out");
+
+    /** The most entries GitHub hands out in one page of a list. */
+    private static final int PER_PAGE = 100;
+
+    /** The most pages of a list read: GitHub lists at most 1000 runs of one commit. */
+    private static final int MOST_PAGES = 10;
 
     private final Http http;
 
@@ -88,15 +95,15 @@ public final class GitHubReader implements BuildReader {
         // Not of the Actions runs: a push GitHub starts no run for would never be seen, and its "no
         // build" never said.
         final String asked = repository.path() + "/git/ref/heads/" + branch;
-        final Http.Response ref = api(target, asked);
+        final Http.Response ref = api(target, asked, 0);
         if (ref.status() == 404) {
             // The same 404 for a branch it lacks and for a repository it does not show; asking for
             // the repository tells them apart.
-            refuse(api(target, repository.path()), repository, repository.path());
+            refuse(api(target, repository.path(), 0), repository, repository.path());
             return "";
         }
         refuse(ref, repository, asked);
-        if (json(ref) instanceof Map<?, ?> found
+        if (json(ref, asked) instanceof Map<?, ?> found
                 && found.get("object") instanceof Map<?, ?> object
                 && object.get("sha") instanceof String sha) {
             return sha;
@@ -110,12 +117,22 @@ public final class GitHubReader implements BuildReader {
         if (!commit.matches("[0-9a-f]{40}")) {
             return Build.unknown("'" + commit + "' is not a full commit sha");
         }
-        final Http.Response runs =
-                api(
+        final Listed runs =
+                listed(
                         target,
-                        repository.path() + "/actions/runs?head_sha=" + commit + "&per_page=50");
-        refuse(runs, repository, repository.path() + "/actions/runs?head_sha=" + commit);
-        final List<Map<?, ?>> found = list(runs, "workflow_runs");
+                        repository,
+                        repository.path() + "/actions/runs?head_sha=" + commit,
+                        "workflow_runs");
+        final List<Map<?, ?>> found = runs.entries();
+        if (!runs.whole()) {
+            // A run left unread can be the one that failed.
+            return Build.unknown(
+                    "more runs of "
+                            + commit.substring(0, 12)
+                            + " at "
+                            + repository
+                            + " than GitHub lists");
+        }
         if (found.isEmpty()) {
             return Build.unknown(
                     "no build of " + commit.substring(0, 12) + " at " + repository + " yet");
@@ -156,57 +173,133 @@ public final class GitHubReader implements BuildReader {
     }
 
     /**
-     * Returns every job of every run, in GitHub's order, each with the end of its log when it is
-     * wanted: every job's when all are, otherwise each failed one's.
+     * Returns the jobs of every run, in GitHub's order, each with the end of its log when it is
+     * wanted: every job's when all are, otherwise each failed one's. Beyond {@link Build#MOST_JOBS}
+     * a failed job is kept before one that did not fail.
      */
     private List<Build.Job> jobs(
             final Target target,
             final Repository repository,
             final List<Map<?, ?>> runs,
             final boolean everyLog) {
-        final List<Build.Job> jobs = new ArrayList<>();
+        final List<ListedJob> all = new ArrayList<>();
         for (final Map<?, ?> run : runs) {
-            final Http.Response listed =
-                    api(
+            // A run holds at most 256 jobs, so the list is whole.
+            final Listed listed =
+                    listed(
                             target,
-                            repository.path()
-                                    + "/actions/runs/"
-                                    + number(run.get("id"))
-                                    + "/jobs?per_page=100");
-            refuse(
-                    listed,
-                    repository,
-                    repository.path() + "/actions/runs/" + number(run.get("id")) + "/jobs");
-            for (final Map<?, ?> job : list(listed, "jobs")) {
-                if (jobs.size() >= Build.MOST_JOBS) {
-                    return jobs;
-                }
+                            repository,
+                            repository.path() + "/actions/runs/" + number(run.get("id")) + "/jobs",
+                            "jobs");
+            for (final Map<?, ?> job : listed.entries()) {
                 // Finished, what became of it; not yet, how far it is.
                 final String result =
                         job.get("conclusion") == null
                                 ? lower(job.get("status"))
                                 : lower(job.get("conclusion"));
-                final String name = name(run.get("name")) + " / " + name(job.get("name"));
-                final boolean finished = "completed".equals(lower(job.get("status")));
-                if (!finished || !everyLog && !FAILED_JOB.contains(result)) {
-                    jobs.add(new Build.Job(name, result));
-                    continue;
-                }
-                final Http.Response log =
-                        follow(
-                                api(
-                                        target,
-                                        repository.path()
-                                                + "/actions/jobs/"
-                                                + number(job.get("id"))
-                                                + "/logs"));
-                jobs.add(
-                        log.status() == 200
-                                ? new Build.Job(name, result, log.body())
-                                : new Build.Job(name, result));
+                all.add(
+                        new ListedJob(
+                                name(run.get("name")) + " / " + name(job.get("name")),
+                                result,
+                                "completed".equals(lower(job.get("status"))),
+                                number(job.get("id"))));
             }
         }
+        final List<Build.Job> jobs = new ArrayList<>();
+        for (final ListedJob job : kept(all)) {
+            if (!job.finished() || !everyLog && !job.failed()) {
+                jobs.add(new Build.Job(job.name(), job.result()));
+                continue;
+            }
+            final Http.Response log =
+                    follow(
+                            api(
+                                    target,
+                                    repository.path() + "/actions/jobs/" + job.id() + "/logs",
+                                    Build.TAIL));
+            jobs.add(
+                    log.status() == 200
+                            ? new Build.Job(job.name(), job.result(), log.body())
+                            : new Build.Job(job.name(), job.result()));
+        }
         return jobs;
+    }
+
+    /**
+     * Returns at most {@link Build#MOST_JOBS} of the jobs, in their order: every failed one first,
+     * then those that did not fail, so the job that failed is never the one left out.
+     */
+    static List<ListedJob> kept(final List<ListedJob> all) {
+        if (all.size() <= Build.MOST_JOBS) {
+            return all;
+        }
+        final long failed = all.stream().filter(ListedJob::failed).count();
+        final long others = Math.max(0, Build.MOST_JOBS - failed);
+        long keptFailed = 0;
+        long keptOthers = 0;
+        final List<ListedJob> kept = new ArrayList<>();
+        for (final ListedJob job : all) {
+            if (job.failed() && keptFailed < Build.MOST_JOBS) {
+                kept.add(job);
+                keptFailed++;
+            } else if (!job.failed() && keptOthers < others) {
+                kept.add(job);
+                keptOthers++;
+            }
+        }
+        return kept;
+    }
+
+    /**
+     * A job as GitHub lists it, before its log is asked for.
+     *
+     * @param name Workflow and job, as GitHub spells them.
+     * @param result What became of it, or how far it is.
+     * @param finished Whether it completed.
+     * @param id Its number at GitHub.
+     */
+    record ListedJob(String name, String result, boolean finished, long id) {
+
+        /** Whether it failed. */
+        boolean failed() {
+            return FAILED_JOB.contains(result);
+        }
+    }
+
+    /**
+     * What a list GitHub hands out in pages held.
+     *
+     * @param entries Its entries, in GitHub's order.
+     * @param whole Whether they are all of them: false when there are more than {@link #MOST_PAGES}
+     *     pages hold.
+     */
+    record Listed(List<Map<?, ?>> entries, boolean whole) {}
+
+    /** Returns every entry of a list GitHub hands out in pages, as far as {@link #MOST_PAGES}. */
+    private Listed listed(
+            final Target target, final Repository repository, final String path, final String key) {
+        final List<Map<?, ?>> found = new ArrayList<>();
+        for (int page = 1; page <= MOST_PAGES; page++) {
+            final Http.Response answer =
+                    api(
+                            target,
+                            path
+                                    + (path.contains("?") ? "&" : "?")
+                                    + "per_page="
+                                    + PER_PAGE
+                                    + "&page="
+                                    + page,
+                            0);
+            refuse(answer, repository, path);
+            final @Nullable Object json = json(answer, path);
+            final List<Map<?, ?>> entries = entries(json, key);
+            found.addAll(entries);
+            final long total = json instanceof Map<?, ?> map ? number(map.get("total_count")) : -1;
+            if (entries.size() < PER_PAGE || total >= 0 && found.size() >= total) {
+                return new Listed(found, true);
+            }
+        }
+        return new Listed(found, false);
     }
 
     /** Follows a redirect to its target without a single header, so the token stays with GitHub. */
@@ -217,12 +310,12 @@ public final class GitHubReader implements BuildReader {
             if (location.isEmpty()) {
                 return current;
             }
-            current = send(URI.create(location), Map.of());
+            current = send(URI.create(location), Map.of(), Build.TAIL);
         }
         return current;
     }
 
-    private Http.Response api(final Target target, final String path) {
+    private Http.Response api(final Target target, final String path, final int tail) {
         final Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Authorization", "Bearer " + target.token());
         headers.put("Accept", "application/vnd.github+json");
@@ -230,12 +323,13 @@ public final class GitHubReader implements BuildReader {
         final String api = target.api().isEmpty() ? API : target.api();
         return send(
                 URI.create((api.endsWith("/") ? api.substring(0, api.length() - 1) : api) + path),
-                headers);
+                headers,
+                tail);
     }
 
-    private Http.Response send(final URI uri, final Map<String, String> headers) {
+    private Http.Response send(final URI uri, final Map<String, String> headers, final int tail) {
         try {
-            return http.get(uri, headers);
+            return http.get(uri, headers, tail);
         } catch (IOException ex) {
             throw new BuildRefused(
                     BuildRefused.Reason.UNREACHABLE, "GitHub did not answer: " + ex.getMessage());
@@ -248,8 +342,20 @@ public final class GitHubReader implements BuildReader {
      */
     void refuse(final Http.Response answer, final Repository repository, final String asked) {
         final int status = answer.status();
-        if (status >= 200 && status < 400) {
+        if (status >= 200 && status < 300) {
             return;
+        }
+        if (status >= 300 && status < 400) {
+            // The token never follows a redirect, and its body is no answer to what was asked.
+            throw new BuildRefused(
+                    BuildRefused.Reason.NO_SUCH_REPOSITORY,
+                    "GitHub answered "
+                            + asked
+                            + " with a redirect ("
+                            + status
+                            + "): "
+                            + repository
+                            + " has moved or was renamed; the project file names its old address");
         }
         if ((status == 403 || status == 429)
                 && "0".equals(answer.header("x-ratelimit-remaining"))) {
@@ -268,11 +374,17 @@ public final class GitHubReader implements BuildReader {
                                     : ""),
                     seconds);
         }
-        if (status == 429) {
-            final String after = answer.header("retry-after");
+        final String said = said(answer);
+        // A secondary rate limit comes as a 403 too, and a credential that is right must not be
+        // reported as refused.
+        final String after = answer.header("retry-after");
+        if (status == 429
+                || status == 403
+                        && (after.matches("\\d+")
+                                || said.toLowerCase(Locale.ROOT).contains("rate limit"))) {
             throw new BuildRefused(
                     BuildRefused.Reason.RATE_LIMITED,
-                    "GitHub asks to slow down (429)",
+                    "GitHub asks to slow down (" + status + "): " + said,
                     after.matches("\\d+") ? Long.parseLong(after) : 60);
         }
         if (status == 401) {
@@ -283,11 +395,6 @@ public final class GitHubReader implements BuildReader {
         if (status == 403) {
             // GitHub's own words: a guess at the missing permission was wrong once and sent a
             // person to change a token that was right.
-            final String said =
-                    json(answer) instanceof Map<?, ?> map
-                                    && map.get("message") instanceof String message
-                            ? message
-                            : "no reason given";
             throw new BuildRefused(
                     BuildRefused.Reason.CREDENTIAL_REFUSED,
                     "GitHub refused this credential "
@@ -313,7 +420,10 @@ public final class GitHubReader implements BuildReader {
      */
     static Repository repository(final Target target) {
         final Matcher matcher = UPSTREAM.matcher(target.upstream().strip());
-        if (!matcher.matches()) {
+        // "." and ".." would take the API path, and the token with it, outside the repository.
+        if (!matcher.matches()
+                || List.of(".", "..").contains(matcher.group(1))
+                || List.of(".", "..").contains(matcher.group(2))) {
             throw new IllegalArgumentException(
                     "'" + target.upstream() + "' names no GitHub repository as owner/name");
         }
@@ -339,13 +449,33 @@ public final class GitHubReader implements BuildReader {
         }
     }
 
-    private static @Nullable Object json(final Http.Response answer) {
-        return Json.parse(new String(answer.body(), StandardCharsets.UTF_8));
+    /** An answer that is not JSON - a proxy's page, a cut connection - is no answer from GitHub. */
+    private static @Nullable Object json(final Http.Response answer, final String asked) {
+        try {
+            return Json.parse(new String(answer.body(), StandardCharsets.UTF_8));
+        } catch (JsonException ex) {
+            throw new BuildRefused(
+                    BuildRefused.Reason.UNREACHABLE,
+                    "GitHub answered " + asked + " with something that is not JSON");
+        }
     }
 
-    private static List<Map<?, ?>> list(final Http.Response answer, final String key) {
+    /** GitHub's own words for a refusal, or that it gave none. */
+    private static String said(final Http.Response answer) {
+        try {
+            return Json.parse(new String(answer.body(), StandardCharsets.UTF_8))
+                                    instanceof Map<?, ?> map
+                            && map.get("message") instanceof String message
+                    ? message
+                    : "no reason given";
+        } catch (JsonException ex) {
+            return "no reason given";
+        }
+    }
+
+    private static List<Map<?, ?>> entries(final @Nullable Object json, final String key) {
         final List<Map<?, ?>> found = new ArrayList<>();
-        if (json(answer) instanceof Map<?, ?> map && map.get(key) instanceof List<?> entries) {
+        if (json instanceof Map<?, ?> map && map.get(key) instanceof List<?> entries) {
             for (final Object entry : entries) {
                 if (entry instanceof Map<?, ?> each) {
                     found.add(each);

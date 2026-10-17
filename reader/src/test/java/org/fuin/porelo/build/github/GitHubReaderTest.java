@@ -36,10 +36,14 @@ class GitHubReaderTest {
 
     private final List<Map.Entry<URI, Map<String, String>>> asked = new ArrayList<>();
 
+    /** How much of each answer's end was asked to be kept, by the address asked. */
+    private final Map<String, Integer> tails = new LinkedHashMap<>();
+
     private GitHubReader reader() {
         return new GitHubReader(
-                (uri, headers) -> {
+                (uri, headers, tail) -> {
                     asked.add(Map.entry(uri, headers));
+                    tails.put(uri.toString(), tail);
                     final Http.Response answer = answers.get(uri.toString());
                     if (answer == null) {
                         throw new IOException("nothing at " + uri);
@@ -57,7 +61,7 @@ class GitHubReaderTest {
 
     private void runs(final String json) {
         answer(
-                "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT + "&per_page=50",
+                "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT + "&per_page=100&page=1",
                 200,
                 "{\"workflow_runs\":" + json + "}");
     }
@@ -68,18 +72,24 @@ class GitHubReaderTest {
                 "[{\"id\":1,\"name\":\"Build\",\"status\":\"completed\",\"conclusion\":\"success\"},"
                         + "{\"id\":2,\"name\":\"Docs\",\"status\":\"completed\",\"conclusion\":\"skipped\"}]");
         answer(
-                "/repos/porelo-ai/porelo/actions/runs/1/jobs?per_page=100",
+                "/repos/porelo-ai/porelo/actions/runs/1/jobs?per_page=100&page=1",
                 200,
                 "{\"jobs\":[{\"id\":10,\"name\":\"unit\",\"status\":\"completed\",\"conclusion\":\"success\"}]}");
-        answer("/repos/porelo-ai/porelo/actions/runs/2/jobs?per_page=100", 200, "{\"jobs\":[]}");
+        answer(
+                "/repos/porelo-ai/porelo/actions/runs/2/jobs?per_page=100&page=1",
+                200,
+                "{\"jobs\":[]}");
 
         assertThat(reader().look(TARGET, COMMIT, Build.Logs.FAILURE))
+                .as("a success, with its jobs and without their logs")
                 .isEqualTo(
                         new Build(
                                 Build.SUCCESS,
                                 List.of(new Build.Job("Build / unit", "success")),
                                 ""));
-        assertThat(asked.get(0).getValue()).containsEntry("Authorization", "Bearer secret-token");
+        assertThat(asked.get(0).getValue())
+                .as("GitHub's API is asked with the token")
+                .containsEntry("Authorization", "Bearer secret-token");
     }
 
     @Test
@@ -87,7 +97,7 @@ class GitHubReaderTest {
         runs(
                 "[{\"id\":1,\"status\":\"completed\",\"conclusion\":\"success\"},{\"id\":2,\"status\":\"in_progress\"}]");
         final Build running = reader().look(TARGET, COMMIT, Build.Logs.ALL);
-        assertThat(running.verdict()).isEqualTo(Build.RUNNING);
+        assertThat(running.verdict()).as("a run in progress").isEqualTo(Build.RUNNING);
         assertThat(running.jobs())
                 .as("no jobs listed while it runs: a question per run every round")
                 .isEmpty();
@@ -95,6 +105,7 @@ class GitHubReaderTest {
 
         runs("[{\"id\":2,\"status\":\"queued\"}]");
         assertThat(reader().look(TARGET, COMMIT, Build.Logs.FAILURE).verdict())
+                .as("only queued runs")
                 .isEqualTo(Build.QUEUED);
     }
 
@@ -104,13 +115,13 @@ class GitHubReaderTest {
                 "[{\"id\":7,\"name\":\"Build\",\"status\":\"completed\",\"conclusion\":\"failure\"},"
                         + "{\"id\":8,\"name\":\"Checks\",\"status\":\"in_progress\"}]");
         answer(
-                "/repos/porelo-ai/porelo/actions/runs/7/jobs?per_page=100",
+                "/repos/porelo-ai/porelo/actions/runs/7/jobs?per_page=100&page=1",
                 200,
                 "{\"jobs\":[{\"id\":70,\"name\":\"unit\",\"status\":\"completed\",\"conclusion\":\"success\"},"
                         + "{\"id\":71,\"name\":\"Leg - ubuntu\",\"status\":\"completed\","
                         + "\"conclusion\":\"failure\"}]}");
         answer(
-                "/repos/porelo-ai/porelo/actions/runs/8/jobs?per_page=100",
+                "/repos/porelo-ai/porelo/actions/runs/8/jobs?per_page=100&page=1",
                 200,
                 "{\"jobs\":[{\"id\":80,\"name\":\"lint\",\"status\":\"in_progress\",\"conclusion\":null}]}");
         answers.put(
@@ -136,9 +147,15 @@ class GitHubReaderTest {
                         org.assertj.core.groups.Tuple.tuple("Checks / lint", "in_progress"));
         assertThat(build.jobs().get(0).log()).as("no log of a job that did not fail").isNull();
         assertThat(build.jobs().get(1).logText())
+                .as("the end of the failed job's log")
                 .endsWith("ERROR the test failed here\n")
                 .hasSize(Build.TAIL);
+        assertThat(tails)
+                .as("a log is read through for its end, never held whole")
+                .containsEntry(API + "/repos/porelo-ai/porelo/actions/jobs/71/logs", Build.TAIL)
+                .containsEntry("https://blobs.example/log?sig=x", Build.TAIL);
         assertThat(asked)
+                .as("the log's host is asked once")
                 .filteredOn(each -> each.getKey().getHost().equals("blobs.example"))
                 .singleElement()
                 .satisfies(
@@ -152,7 +169,7 @@ class GitHubReaderTest {
     void everyJobsLogOnceTheVerdictIsFinalWhenAllAreWanted() {
         runs("[{\"id\":1,\"name\":\"Build\",\"status\":\"completed\",\"conclusion\":\"success\"}]");
         answer(
-                "/repos/porelo-ai/porelo/actions/runs/1/jobs?per_page=100",
+                "/repos/porelo-ai/porelo/actions/runs/1/jobs?per_page=100&page=1",
                 200,
                 "{\"jobs\":[{\"id\":10,\"name\":\"unit\",\"status\":\"completed\",\"conclusion\":\"success\"},"
                         + "{\"id\":11,\"name\":\"docs\",\"status\":\"completed\",\"conclusion\":\"skipped\"}]}");
@@ -161,7 +178,7 @@ class GitHubReaderTest {
 
         final Build build = reader().look(TARGET, COMMIT, Build.Logs.ALL);
 
-        assertThat(build.verdict()).isEqualTo(Build.SUCCESS);
+        assertThat(build.verdict()).as("every run succeeded").isEqualTo(Build.SUCCESS);
         assertThat(build.jobs())
                 .extracting(Build.Job::name, Build.Job::result, Build.Job::logText)
                 .as("each job, with the log GitHub gave and without one where it gave none")
@@ -180,9 +197,13 @@ class GitHubReaderTest {
     @Test
     void aCancelledRunIsCancelled() {
         runs("[{\"id\":1,\"status\":\"completed\",\"conclusion\":\"cancelled\"}]");
-        answer("/repos/porelo-ai/porelo/actions/runs/1/jobs?per_page=100", 200, "{\"jobs\":[]}");
+        answer(
+                "/repos/porelo-ai/porelo/actions/runs/1/jobs?per_page=100&page=1",
+                200,
+                "{\"jobs\":[]}");
 
         assertThat(reader().look(TARGET, COMMIT, Build.Logs.FAILURE).verdict())
+                .as("a cancelled run and none that failed")
                 .isEqualTo(Build.CANCELLED);
     }
 
@@ -192,14 +213,19 @@ class GitHubReaderTest {
 
         final Build missing = reader().look(TARGET, COMMIT, Build.Logs.FAILURE);
 
-        assertThat(missing.verdict()).isEqualTo(Build.UNKNOWN);
-        assertThat(missing.detail()).contains("no build of 0123456789ab at porelo-ai/porelo");
+        assertThat(missing.verdict()).as("no run of the commit").isEqualTo(Build.UNKNOWN);
+        assertThat(missing.detail())
+                .as("says which commit and where")
+                .contains("no build of 0123456789ab at porelo-ai/porelo");
     }
 
     @Test
     void aRateLimitIsRefusedWithHowLongItLastsAndARefusedCredentialAsSuch() {
         answers.put(
-                API + "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT + "&per_page=50",
+                API
+                        + "/repos/porelo-ai/porelo/actions/runs?head_sha="
+                        + COMMIT
+                        + "&per_page=100&page=1",
                 new Http.Response(
                         403,
                         Map.of(
@@ -213,15 +239,16 @@ class GitHubReaderTest {
                         BuildRefused.class,
                         refused -> {
                             assertThat(refused.reason())
+                                    .as("the limit is waited out")
                                     .isEqualTo(BuildRefused.Reason.RATE_LIMITED);
                             assertThat(refused.retryAfterSeconds())
                                     .as("until the reset GitHub named")
                                     .isEqualTo(90);
-                            assertThat(refused.detail()).contains("resets at");
+                            assertThat(refused.detail()).as("says when").contains("resets at");
                         });
 
         answer(
-                "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT + "&per_page=50",
+                "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT + "&per_page=100&page=1",
                 401,
                 "{}");
         assertThatThrownBy(() -> reader().look(TARGET, COMMIT, Build.Logs.FAILURE))
@@ -229,8 +256,12 @@ class GitHubReaderTest {
                         BuildRefused.class,
                         refused -> {
                             assertThat(refused.reason())
+                                    .as("a 401 is a credential GitHub does not take")
                                     .isEqualTo(BuildRefused.Reason.CREDENTIAL_REFUSED);
-                            assertThat(refused.detail()).contains("401").contains("expired");
+                            assertThat(refused.detail())
+                                    .as("says what may be wrong with it")
+                                    .contains("401")
+                                    .contains("expired");
                         });
 
         // Every 403 was said to be a missing Actions scope, and a person changed a token that had
@@ -245,8 +276,10 @@ class GitHubReaderTest {
                         BuildRefused.class,
                         refused -> {
                             assertThat(refused.reason())
+                                    .as("a 403 that is no rate limit")
                                     .isEqualTo(BuildRefused.Reason.CREDENTIAL_REFUSED);
                             assertThat(refused.detail())
+                                    .as("GitHub's words, what was asked, what a reader needs")
                                     .contains("Resource not accessible by personal access token")
                                     .contains("/git/ref/heads/fix-login")
                                     .contains("Actions: Read and Contents: Read")
@@ -260,16 +293,21 @@ class GitHubReaderTest {
                 .isInstanceOfSatisfying(
                         BuildRefused.class,
                         refused -> {
-                            assertThat(refused.reason()).isEqualTo(BuildRefused.Reason.UNREACHABLE);
-                            assertThat(refused.detail()).startsWith("GitHub did not answer");
+                            assertThat(refused.reason())
+                                    .as("nothing answered")
+                                    .isEqualTo(BuildRefused.Reason.UNREACHABLE);
+                            assertThat(refused.detail())
+                                    .as("says so")
+                                    .startsWith("GitHub did not answer");
                         });
     }
 
     @Test
     void anythingButAFullShaIsNoQuestionToGitHub() {
         assertThat(reader().look(TARGET, "main", Build.Logs.FAILURE).verdict())
+                .as("a branch name is not a commit")
                 .isEqualTo(Build.UNKNOWN);
-        assertThat(asked).isEmpty();
+        assertThat(asked).as("nothing was asked of GitHub").isEmpty();
     }
 
     @Test
@@ -279,7 +317,7 @@ class GitHubReaderTest {
                 200,
                 "{\"object\":{\"sha\":\"" + COMMIT + "\"}}");
 
-        assertThat(reader().head(TARGET, "fix-login")).isEqualTo(COMMIT);
+        assertThat(reader().head(TARGET, "fix-login")).as("the ref's object").isEqualTo(COMMIT);
     }
 
     @Test
@@ -294,7 +332,7 @@ class GitHubReaderTest {
                 "{\"object\":{\"sha\":\"" + pushed + "\"}}");
         runs("[{\"id\":1,\"name\":\"Build\",\"status\":\"completed\",\"conclusion\":\"success\"}]");
         answer(
-                "/repos/porelo-ai/porelo/actions/runs?head_sha=" + pushed + "&per_page=50",
+                "/repos/porelo-ai/porelo/actions/runs?head_sha=" + pushed + "&per_page=100&page=1",
                 200,
                 "{\"workflow_runs\":[]}");
 
@@ -310,7 +348,9 @@ class GitHubReaderTest {
     void aBranchGitHubLacksIsNoHeadButARepositoryItDoesNotShowIsRefused() {
         answer("/repos/porelo-ai/porelo/git/ref/heads/gone", 404, "{}");
         answer("/repos/porelo-ai/porelo", 200, "{}");
-        assertThat(reader().head(TARGET, "gone")).isEmpty();
+        assertThat(reader().head(TARGET, "gone"))
+                .as("no such branch, in a repository GitHub shows")
+                .isEmpty();
 
         answer("/repos/porelo-ai/porelo", 404, "{}");
         assertThatThrownBy(() -> reader().head(TARGET, "gone"))
@@ -318,6 +358,7 @@ class GitHubReaderTest {
                         BuildRefused.class,
                         refused ->
                                 assertThat(refused.reason())
+                                        .as("a repository GitHub does not show")
                                         .isEqualTo(BuildRefused.Reason.NO_SUCH_REPOSITORY));
     }
 
@@ -336,7 +377,258 @@ class GitHubReaderTest {
                     .isEqualTo(new GitHubReader.Repository("porelo-ai", "porelo"));
         }
         assertThatThrownBy(() -> GitHubReader.repository(new Target("github.com", "", "t")))
+                .as("a host alone names no repository")
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void anUpstreamWhoseOwnerOrNameIsADotSegmentIsNoRepositoryAndNothingIsAsked() {
+        // "/repos/../user" is another API path than a repository's, asked with the token.
+        for (final String upstream :
+                List.of(
+                        "git@github.com:../user",
+                        "https://github.com/porelo-ai/..",
+                        "https://github.com/porelo-ai/...git",
+                        "git@github.com:./porelo")) {
+            assertThatThrownBy(() -> reader().head(new Target(upstream, API, "t"), "main"))
+                    .as(upstream)
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+        assertThat(asked).as("nothing was sent with the token").isEmpty();
+    }
+
+    @Test
+    void everyPageOfACommitsRunsIsReadSoAFailedRunOnTheSecondIsTheVerdict() {
+        final String path = "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT;
+        final StringBuilder first = new StringBuilder();
+        for (int id = 1; id <= 100; id++) {
+            first.append(id == 1 ? "" : ",")
+                    .append("{\"id\":")
+                    .append(id)
+                    .append(",\"name\":\"W")
+                    .append(id)
+                    .append("\",\"status\":\"completed\",\"conclusion\":\"success\"}");
+            answer(
+                    "/repos/porelo-ai/porelo/actions/runs/" + id + "/jobs?per_page=100&page=1",
+                    200,
+                    "{\"total_count\":0,\"jobs\":[]}");
+        }
+        answer(
+                path + "&per_page=100&page=1",
+                200,
+                "{\"total_count\":101,\"workflow_runs\":[" + first + "]}");
+        answer(
+                path + "&per_page=100&page=2",
+                200,
+                "{\"total_count\":101,\"workflow_runs\":[{\"id\":101,\"name\":\"Late\","
+                        + "\"status\":\"completed\",\"conclusion\":\"failure\"}]}");
+        answer(
+                "/repos/porelo-ai/porelo/actions/runs/101/jobs?per_page=100&page=1",
+                200,
+                "{\"total_count\":1,\"jobs\":[{\"id\":1010,\"name\":\"unit\","
+                        + "\"status\":\"completed\",\"conclusion\":\"failure\"}]}");
+        answer("/repos/porelo-ai/porelo/actions/jobs/1010/logs", 200, "it failed\n");
+
+        final Build build = reader().look(TARGET, COMMIT, Build.Logs.FAILURE);
+
+        assertThat(build.verdict())
+                .as("the 101st run failed; a success read from the first page alone is wrong")
+                .isEqualTo(Build.FAILURE);
+        assertThat(build.jobs())
+                .extracting(Build.Job::name, Build.Job::logText)
+                .as("the failed job, with its log")
+                .contains(org.assertj.core.groups.Tuple.tuple("Late / unit", "it failed\n"));
+    }
+
+    @Test
+    void moreRunsThanGitHubListsAreNoVerdict() {
+        final String path = "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT;
+        for (int page = 1; page <= 10; page++) {
+            final StringBuilder runs = new StringBuilder();
+            for (int each = 0; each < 100; each++) {
+                runs.append(each == 0 ? "" : ",")
+                        .append("{\"id\":")
+                        .append(page * 1000 + each)
+                        .append(",\"status\":\"completed\",\"conclusion\":\"success\"}");
+                answer(
+                        "/repos/porelo-ai/porelo/actions/runs/"
+                                + (page * 1000 + each)
+                                + "/jobs?per_page=100&page=1",
+                        200,
+                        "{\"total_count\":0,\"jobs\":[]}");
+            }
+            answer(
+                    path + "&per_page=100&page=" + page,
+                    200,
+                    "{\"total_count\":1001,\"workflow_runs\":[" + runs + "]}");
+        }
+
+        final Build build = reader().look(TARGET, COMMIT, Build.Logs.FAILURE);
+
+        assertThat(build.verdict())
+                .as("a run left unread can be the one that failed")
+                .isEqualTo(Build.UNKNOWN);
+        assertThat(build.detail())
+                .as("says why")
+                .contains("more runs of 0123456789ab at porelo-ai/porelo than GitHub lists");
+    }
+
+    @Test
+    void aFailedJobBeyondTheMostJobsHandedOverIsKeptWithItsLog() {
+        runs(
+                "[{\"id\":1,\"name\":\"Matrix\",\"status\":\"completed\",\"conclusion\":\"failure\"}]");
+        final StringBuilder jobs = new StringBuilder();
+        for (int id = 1; id <= Build.MOST_JOBS + 10; id++) {
+            jobs.append(id == 1 ? "" : ",")
+                    .append("{\"id\":")
+                    .append(id)
+                    .append(",\"name\":\"leg ")
+                    .append(id)
+                    .append("\",\"status\":\"completed\",\"conclusion\":\"")
+                    .append(id == Build.MOST_JOBS + 10 ? "failure" : "success")
+                    .append("\"}");
+        }
+        answer(
+                "/repos/porelo-ai/porelo/actions/runs/1/jobs?per_page=100&page=1",
+                200,
+                "{\"total_count\":" + (Build.MOST_JOBS + 10) + ",\"jobs\":[" + jobs + "]}");
+        answer(
+                "/repos/porelo-ai/porelo/actions/jobs/" + (Build.MOST_JOBS + 10) + "/logs",
+                200,
+                "the last leg failed\n");
+
+        final Build build = reader().look(TARGET, COMMIT, Build.Logs.FAILURE);
+
+        assertThat(build.jobs()).as("no more than the most handed over").hasSize(Build.MOST_JOBS);
+        assertThat(build.jobs().getLast())
+                .as("the failed job is kept, last as GitHub lists it, with its log")
+                .extracting(Build.Job::name, Build.Job::result, Build.Job::logText)
+                .containsExactly(
+                        "Matrix / leg " + (Build.MOST_JOBS + 10),
+                        "failure",
+                        "the last leg failed\n");
+        assertThat(build.detail()).as("a job failed, and is named").isEmpty();
+    }
+
+    @Test
+    void aSecondaryRateLimitIsWaitedOutNeverReportedAsARefusedCredential() {
+        answers.put(
+                API
+                        + "/repos/porelo-ai/porelo/actions/runs?head_sha="
+                        + COMMIT
+                        + "&per_page=100&page=1",
+                new Http.Response(
+                        403,
+                        Map.of("retry-after", List.of("30")),
+                        "{\"message\":\"You have exceeded a secondary rate limit.\"}"
+                                .getBytes(StandardCharsets.UTF_8)));
+        assertThatThrownBy(() -> reader().look(TARGET, COMMIT, Build.Logs.FAILURE))
+                .as("a 403 with retry-after")
+                .isInstanceOfSatisfying(
+                        BuildRefused.class,
+                        refused -> {
+                            assertThat(refused.reason())
+                                    .as("a right token must not be sent to be replaced")
+                                    .isEqualTo(BuildRefused.Reason.RATE_LIMITED);
+                            assertThat(refused.retryAfterSeconds())
+                                    .as("as long as GitHub asked")
+                                    .isEqualTo(30);
+                        });
+
+        answer(
+                "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT + "&per_page=100&page=1",
+                403,
+                "{\"message\":\"You have exceeded a secondary rate limit. Please wait a few"
+                        + " minutes before you try again.\"}");
+        assertThatThrownBy(() -> reader().look(TARGET, COMMIT, Build.Logs.FAILURE))
+                .as("a 403 that says so without a header")
+                .isInstanceOfSatisfying(
+                        BuildRefused.class,
+                        refused -> {
+                            assertThat(refused.reason())
+                                    .as("waited out")
+                                    .isEqualTo(BuildRefused.Reason.RATE_LIMITED);
+                            assertThat(refused.retryAfterSeconds())
+                                    .as("at least a minute, as GitHub says to wait")
+                                    .isEqualTo(60);
+                        });
+    }
+
+    @Test
+    void aRedirectFromTheApiIsRefusedNeverReadAsNoBuildOrNoBranch() {
+        // GitHub answers 301 for a repository that was renamed or moved.
+        final String moved =
+                "{\"message\":\"Moved Permanently\",\"url\":\"https://forge.example/repositories/1\"}";
+        answers.put(
+                API
+                        + "/repos/porelo-ai/porelo/actions/runs?head_sha="
+                        + COMMIT
+                        + "&per_page=100&page=1",
+                new Http.Response(
+                        301,
+                        Map.of("location", List.of(API + "/repositories/1/actions/runs")),
+                        moved.getBytes(StandardCharsets.UTF_8)));
+        answers.put(
+                API + "/repos/porelo-ai/porelo/git/ref/heads/fix-login",
+                new Http.Response(
+                        301,
+                        Map.of(
+                                "location",
+                                List.of(API + "/repositories/1/git/ref/heads/fix-login")),
+                        moved.getBytes(StandardCharsets.UTF_8)));
+
+        assertThatThrownBy(() -> reader().look(TARGET, COMMIT, Build.Logs.FAILURE))
+                .as("a moved repository's build")
+                .isInstanceOfSatisfying(
+                        BuildRefused.class,
+                        refused -> {
+                            assertThat(refused.reason())
+                                    .as("the project file names an old address")
+                                    .isEqualTo(BuildRefused.Reason.NO_SUCH_REPOSITORY);
+                            assertThat(refused.detail()).as("says so").contains("(301)");
+                        });
+        assertThatThrownBy(() -> reader().head(TARGET, "fix-login"))
+                .as("a moved repository's branch")
+                .isInstanceOfSatisfying(
+                        BuildRefused.class,
+                        refused ->
+                                assertThat(refused.reason())
+                                        .as("the project file names an old address")
+                                        .isEqualTo(BuildRefused.Reason.NO_SUCH_REPOSITORY));
+        assertThat(asked)
+                .as("the redirect is not followed with the token")
+                .extracting(each -> each.getKey().getPath())
+                .noneMatch(path -> path.startsWith("/repositories/"));
+    }
+
+    @Test
+    void anAnswerThatIsNotJsonIsAForgeThatDidNotAnswerNeverAFailedReader() {
+        answer(
+                "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT + "&per_page=100&page=1",
+                200,
+                "<html><body>Bad gateway</body></html>");
+        assertThatThrownBy(() -> reader().look(TARGET, COMMIT, Build.Logs.FAILURE))
+                .as("a 200 that is a proxy's page")
+                .isInstanceOfSatisfying(
+                        BuildRefused.class,
+                        refused ->
+                                assertThat(refused.reason())
+                                        .as("the forge, not the installation")
+                                        .isEqualTo(BuildRefused.Reason.UNREACHABLE));
+
+        answer("/repos/porelo-ai/porelo/git/ref/heads/fix-login", 403, "<html>Forbidden</html>");
+        assertThatThrownBy(() -> reader().head(TARGET, "fix-login"))
+                .as("a 403 that is a page")
+                .isInstanceOfSatisfying(
+                        BuildRefused.class,
+                        refused -> {
+                            assertThat(refused.reason())
+                                    .as("still a refused credential")
+                                    .isEqualTo(BuildRefused.Reason.CREDENTIAL_REFUSED);
+                            assertThat(refused.detail())
+                                    .as("without words of GitHub's")
+                                    .contains("no reason given");
+                        });
     }
 
     @Test
@@ -346,6 +638,8 @@ class GitHubReaderTest {
                 200,
                 "{\"object\":{\"sha\":\"" + COMMIT + "\"}}");
 
-        assertThat(reader().head(new Target(TARGET.upstream(), "", "t"), "main")).isEqualTo(COMMIT);
+        assertThat(reader().head(new Target(TARGET.upstream(), "", "t"), "main"))
+                .as("asked of api.github.com")
+                .isEqualTo(COMMIT);
     }
 }

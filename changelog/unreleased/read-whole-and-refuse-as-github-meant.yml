@@ -1,0 +1,2 @@
+title: The reader reads every page of a commit's runs and of each run's jobs, keeps a failed job among the 50 it hands over, keeps only the end of a job's log in memory, and reports a secondary rate limit, a moved repository and an answer that is not JSON as what they are instead of a refused credential, no build or a failed reader
+type: fixed

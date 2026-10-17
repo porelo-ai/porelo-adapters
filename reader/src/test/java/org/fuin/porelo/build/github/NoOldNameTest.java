@@ -34,11 +34,14 @@ class NoOldNameTest {
     private static final Pattern KEPT_PATHS = Pattern.compile("CHANGELOG\\.md|changelog/v[^/]+/.*");
 
     private static List<String> tracked() throws IOException, InterruptedException {
-        final Process git =
+        final ProcessBuilder command =
                 new ProcessBuilder("git", "ls-files", "-z")
                         .directory(Path.of("..").toFile())
-                        .redirectErrorStream(true)
-                        .start();
+                        .redirectErrorStream(true);
+        // What git lists must not depend on the machine's configuration.
+        command.environment().put("GIT_CONFIG_GLOBAL", "/dev/null");
+        command.environment().put("GIT_CONFIG_NOSYSTEM", "1");
+        final Process git = command.start();
         final String out = new String(git.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         assertThat(git.waitFor()).as("git ls-files: %s", out).isZero();
         return List.of(out.split("\0"));
@@ -76,7 +79,9 @@ class NoOldNameTest {
         }
 
         // A guard that reads nothing passes forever: assert what it read, then what it checks.
-        assertThat(files).contains("pom.xml", "AGENTS.md", "issues/README.md");
+        assertThat(files)
+                .as("the tracked files were read")
+                .contains("pom.xml", "AGENTS.md", "issues/README.md");
         assertThat(found).as("tracked files that say the old name").isEmpty();
     }
 }

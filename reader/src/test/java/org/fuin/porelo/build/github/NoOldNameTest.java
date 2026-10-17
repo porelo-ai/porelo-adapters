@@ -17,21 +17,28 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Tests that no tracked file of this repository says the product's old name, but where it must.
- * <p>
- * The repository was renamed by a script; a word it left behind, or one written later out of habit, names something
- * that is no longer there. The old name is spelled here in two pieces, so that this file does not say it.
+ *
+ * <p>The repository was renamed by a script; a word it left behind, or one written later out of
+ * habit, names something that is no longer there. The old name is spelled here in two pieces, so
+ * that this file does not say it.
  */
 @Tag("documents")
 class NoOldNameTest {
 
     private static final String OLD = "so" + "kar";
 
-    /** Paths that keep the old name, name and text: the released changelog entries and the changelog made of them. */
+    /**
+     * Paths that keep the old name, name and text: the released changelog entries and the changelog
+     * made of them.
+     */
     private static final Pattern KEPT_PATHS = Pattern.compile("CHANGELOG\\.md|changelog/v[^/]+/.*");
 
     private static List<String> tracked() throws IOException, InterruptedException {
-        final Process git = new ProcessBuilder("git", "ls-files", "-z").directory(Path.of("..").toFile())
-                .redirectErrorStream(true).start();
+        final Process git =
+                new ProcessBuilder("git", "ls-files", "-z")
+                        .directory(Path.of("..").toFile())
+                        .redirectErrorStream(true)
+                        .start();
         final String out = new String(git.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         assertThat(git.waitFor()).as("git ls-files: %s", out).isZero();
         return List.of(out.split("\0"));

@@ -1,6 +1,4 @@
-/**
- * Porelo's build reader for GitHub Actions.
- */
+/** Porelo's build reader for GitHub Actions. */
 @NullMarked
 package org.fuin.porelo.build.github;
 

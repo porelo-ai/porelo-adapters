@@ -100,6 +100,13 @@
 
         <plugins>
 
+            <!-- The shared code style, from porelo-parent: google-java-format (AOSP) and shfmt, checked in validate.
+                 'spotless:apply' formats; the formatting commit is in .git-blame-ignore-revs. -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+            </plugin>
+
 
             <plugin>
                 <groupId>dev.logchange</groupId>
@@ -191,7 +198,7 @@
                                 <groupId>org.fuin.porelo</groupId>
                                 <artifactId>porelo-release</artifactId>
                             </executableDependency>
-                            <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main check-shared ${maven.multiModuleProjectDirectory}/AGENTS.md</commandlineArgs>
+                            <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main check-shared ${maven.multiModuleProjectDirectory}/AGENTS.md ${maven.multiModuleProjectDirectory}/.editorconfig</commandlineArgs>
                         </configuration>
                     </execution>
                     <!-- No file cites an issue in a way that goes stale once the issue is finished and deleted. -->

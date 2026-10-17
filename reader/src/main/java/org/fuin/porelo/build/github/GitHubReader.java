@@ -1,4 +1,4 @@
-package org.fuin.sokar.build.github;
+package org.fuin.porelo.build.github;
 
 import java.io.IOException;
 import java.net.URI;
@@ -12,12 +12,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.fuin.sokar.build.api.Build;
-import org.fuin.sokar.build.api.BuildMain;
-import org.fuin.sokar.build.api.BuildReader;
-import org.fuin.sokar.build.api.BuildRefused;
-import org.fuin.sokar.build.api.Target;
-import org.fuin.sokar.wire.Json;
+import org.fuin.porelo.build.api.Build;
+import org.fuin.porelo.build.api.BuildMain;
+import org.fuin.porelo.build.api.BuildReader;
+import org.fuin.porelo.build.api.BuildRefused;
+import org.fuin.porelo.build.api.Target;
+import org.fuin.porelo.wire.Json;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -77,7 +77,7 @@ public final class GitHubReader implements BuildReader {
     public String head(final Target target, final String branch) {
         final Repository repository = repository(target);
         if (!BRANCH.matcher(branch).matches() || branch.contains("..")) {
-            throw new IllegalArgumentException("'" + branch + "' is not a branch Sokar names");
+            throw new IllegalArgumentException("'" + branch + "' is not a branch Porelo names");
         }
         // Asked of the git refs, which a credential reads with Contents: Read beside Actions: Read. Not of the Actions
         // runs: a push GitHub starts no run for would never be seen, and its "no build" never said.
@@ -244,7 +244,7 @@ public final class GitHubReader implements BuildReader {
     /**
      * Returns the repository an upstream address names.
      *
-     * @param target What Sokar asked about.
+     * @param target What Porelo asked about.
      * @return Its owner and name.
      */
     static Repository repository(final Target target) {

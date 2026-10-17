@@ -1,4 +1,4 @@
-package org.fuin.sokar.build.github;
+package org.fuin.porelo.build.github;
 
 import java.io.IOException;
 import java.net.URI;

@@ -1,2 +1,2 @@
-title: The reader is packaged as a .deb and an .rpm that put it where Sokar finds it, held to its C library floor and its version, and published to the snapshots channel from main and the releases channel from a tag
+title: The reader is packaged as a .deb and an .rpm that put it where Porelo finds it, held to its C library floor and its version, and published to the snapshots channel from main and the releases channel from a tag
 type: added

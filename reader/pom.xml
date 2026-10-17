@@ -6,27 +6,27 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.fuin.sokar</groupId>
-        <artifactId>sokar-build-github</artifactId>
-        <version>0.4.2-SNAPSHOT</version>
+        <groupId>org.fuin.porelo</groupId>
+        <artifactId>porelo-build-github</artifactId>
+        <version>0.5.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>sokar-build-github-reader</artifactId>
-    <name>Sokar Build GitHub Reader</name>
-    <description>Sokar - Reads what the build of a task's push did on GitHub Actions</description>
+    <artifactId>porelo-build-github-reader</artifactId>
+    <name>Porelo Build GitHub Reader</name>
+    <description>Porelo - Reads what the build of a task's push did on GitHub Actions</description>
 
     <dependencies>
 
-        <!-- compile: the build API and the wire it speaks, and nothing else of Sokar's. -->
+        <!-- compile: the build API and the wire it speaks, and nothing else of Porelo's. -->
 
         <dependency>
-            <groupId>org.fuin.sokar</groupId>
-            <artifactId>sokar-build-api</artifactId>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-build-api</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.fuin.sokar</groupId>
-            <artifactId>sokar-wire</artifactId>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-wire</artifactId>
         </dependency>
 
         <dependency>
@@ -51,8 +51,8 @@
     </dependencies>
 
     <profiles>
-        <!-- The executable Sokar starts: mvn -Pnative package writes target/sokar-build-github, installed as
-             /usr/libexec/sokar/builds/github, the name a project file gives the forge. -->
+        <!-- The executable Porelo starts: mvn -Pnative package writes target/porelo-build-github, installed as
+             /usr/libexec/porelo/builds/github, the name a project file gives the forge. -->
         <profile>
             <id>native</id>
             <build>
@@ -64,14 +64,14 @@
                         <extensions>true</extensions>
                         <executions>
                             <execution>
-                                <id>build-sokar-build-github</id>
+                                <id>build-porelo-build-github</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>compile-no-fork</goal>
                                 </goals>
                                 <configuration>
-                                    <imageName>sokar-build-github</imageName>
-                                    <mainClass>org.fuin.sokar.build.github.GitHubReader</mainClass>
+                                    <imageName>porelo-build-github</imageName>
+                                    <mainClass>org.fuin.porelo.build.github.GitHubReader</mainClass>
                                     <fallback>false</fallback>
                                     <buildArgs>
                                         <buildArg>-H:+ReportExceptionStackTraces</buildArg>
@@ -86,13 +86,13 @@
             </build>
         </profile>
 
-        <!-- The packages: -Pnative,dist verify. The native reader as /usr/libexec/sokar/builds/github, where sokar
+        <!-- The packages: -Pnative,dist verify. The native reader as /usr/libexec/porelo/builds/github, where porelo
              finds the reader a project names with 'builds: { forge: github }'. -->
         <profile>
             <id>dist</id>
             <properties>
-                <package.name>sokar-build-github</package.name>
-                <builds.install.dir>/usr/libexec/sokar/builds</builds.install.dir>
+                <package.name>porelo-build-github</package.name>
+                <builds.install.dir>/usr/libexec/porelo/builds</builds.install.dir>
             </properties>
             <build>
                 <plugins>
@@ -137,7 +137,7 @@
                                     <controlDir>${project.basedir}/src/deb/control</controlDir>
                                     <dataSet>
                                         <data>
-                                            <src>${project.build.directory}/sokar-build-github</src>
+                                            <src>${project.build.directory}/porelo-build-github</src>
                                             <type>file</type>
                                             <dst>github</dst>
                                             <mapper>
@@ -183,8 +183,8 @@
                             <version>${reader.package.version}</version>
                             <snapshotVersion>${reader.package.version}</snapshotVersion>
                             <release>1</release>
-                            <summary>Sokar's build reader for GitHub Actions</summary>
-                            <description>Reads a task's builds on GitHub Actions for Sokar. Installs into /usr/libexec/sokar/builds as 'github', where sokar finds it.</description>
+                            <summary>Porelo's build reader for GitHub Actions</summary>
+                            <description>Reads a task's builds on GitHub Actions for Porelo. Installs into /usr/libexec/porelo/builds as 'github', where porelo finds it.</description>
                             <!-- Without this a snapshot gets a timestamp release, and the rpm and the deb disagree. -->
                             <forceRelease>true</forceRelease>
                             <architecture>x86_64</architecture>
@@ -192,7 +192,7 @@
                             <license>GPL-3.0-or-later</license>
                             <packager>Michael Schnell &lt;michael@fuin.org&gt;</packager>
                             <requires>
-                                <require>sokar</require>
+                                <require>porelo</require>
                                 <!-- The names rpmbuild itself generates for these libraries. -->
                                 <require>libc.so.6(GLIBC_${package.glibc.floor})(64bit)</require>
                                 <require>libz.so.1(ZLIB_${package.zlib.floor})(64bit)</require>
@@ -203,7 +203,7 @@
                             <entries>
                                 <entry>
                                     <name>${builds.install.dir}/github</name>
-                                    <file>${project.build.directory}/sokar-build-github</file>
+                                    <file>${project.build.directory}/porelo-build-github</file>
                                     <mode>0755</mode>
                                     <user>root</user>
                                     <group>root</group>
@@ -238,10 +238,10 @@
                                     <includeProjectDependencies>false</includeProjectDependencies>
                                     <includePluginDependencies>true</includePluginDependencies>
                                     <executableDependency>
-                                        <groupId>org.fuin.sokar</groupId>
-                                        <artifactId>sokar-release</artifactId>
+                                        <groupId>org.fuin.porelo</groupId>
+                                        <artifactId>porelo-release</artifactId>
                                     </executableDependency>
-                                    <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-linkage --declare libc.so.6=GLIBC:${package.glibc.floor} --declare libz.so.1=ZLIB:${package.zlib.floor} --ceiling GLIBC=${package.glibc.ceiling} ${project.build.directory}/sokar-build-github</commandlineArgs>
+                                    <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main check-linkage --declare libc.so.6=GLIBC:${package.glibc.floor} --declare libz.so.1=ZLIB:${package.zlib.floor} --ceiling GLIBC=${package.glibc.ceiling} ${project.build.directory}/porelo-build-github</commandlineArgs>
                                 </configuration>
                             </execution>
                             <execution>
@@ -255,18 +255,18 @@
                                     <includeProjectDependencies>false</includeProjectDependencies>
                                     <includePluginDependencies>true</includePluginDependencies>
                                     <executableDependency>
-                                        <groupId>org.fuin.sokar</groupId>
-                                        <artifactId>sokar-release</artifactId>
+                                        <groupId>org.fuin.porelo</groupId>
+                                        <artifactId>porelo-release</artifactId>
                                     </executableDependency>
-                                    <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-package-version ${package.name} ${project.version} ${reader.snapshot.run} ${project.build.directory}</commandlineArgs>
+                                    <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main check-package-version ${package.name} ${project.version} ${reader.snapshot.run} ${project.build.directory}</commandlineArgs>
                                 </configuration>
                             </execution>
                         </executions>
                         <dependencies>
                             <dependency>
-                                <groupId>org.fuin.sokar</groupId>
-                                <artifactId>sokar-release</artifactId>
-                                <version>${sokar.buildtools.version}</version>
+                                <groupId>org.fuin.porelo</groupId>
+                                <artifactId>porelo-release</artifactId>
+                                <version>${porelo.buildtools.version}</version>
                             </dependency>
                         </dependencies>
                     </plugin>

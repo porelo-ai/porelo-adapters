@@ -7,18 +7,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.fuin.sokar</groupId>
-        <artifactId>sokar-parent</artifactId>
-        <version>0.1.4-SNAPSHOT</version>
+        <groupId>org.fuin.porelo</groupId>
+        <artifactId>porelo-parent</artifactId>
+        <version>0.2.0-SNAPSHOT</version>
         <relativePath/>
     </parent>
 
-    <groupId>org.fuin.sokar</groupId>
-    <artifactId>sokar-build-github</artifactId>
-    <version>0.4.2-SNAPSHOT</version>
+    <groupId>org.fuin.porelo</groupId>
+    <artifactId>porelo-build-github</artifactId>
+    <version>0.5.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Sokar Build GitHub</name>
-    <description>Sokar - Reads what the build of a task's push did on GitHub Actions (PARENT)</description>
+    <name>Porelo Build GitHub</name>
+    <description>Porelo - Reads what the build of a task's push did on GitHub Actions (PARENT)</description>
 
     <!-- Overrides the LGPL block inherited from org.fuin:pom. -->
     <licenses>
@@ -31,26 +31,26 @@
     </licenses>
 
     <!-- Without the inherit.append.path attributes Maven appends each child's artifactId to these. -->
-    <url>https://github.com/sokar-ai/sokar-build-github/</url>
+    <url>https://github.com/porelo-ai/porelo-build-github/</url>
 
     <scm child.scm.url.inherit.append.path="false"
          child.scm.connection.inherit.append.path="false"
          child.scm.developerConnection.inherit.append.path="false">
-        <url>https://github.com/sokar-ai/sokar-build-github/</url>
-        <connection>scm:git:git://github.com/sokar-ai/sokar-build-github.git</connection>
-        <developerConnection>scm:git:git@github.com:sokar-ai/sokar-build-github.git</developerConnection>
+        <url>https://github.com/porelo-ai/porelo-build-github/</url>
+        <connection>scm:git:git://github.com/porelo-ai/porelo-build-github.git</connection>
+        <developerConnection>scm:git:git@github.com:porelo-ai/porelo-build-github.git</developerConnection>
     </scm>
 
     <issueManagement>
         <system>GitHub Issues</system>
-        <url>https://github.com/sokar-ai/sokar-build-github/issues</url>
+        <url>https://github.com/porelo-ai/porelo-build-github/issues</url>
     </issueManagement>
 
     <properties>
-        <!-- The Sokar this reader is built against: sokar-build-api and sokar-wire, through sokar-bom. A snapshot while
+        <!-- The Porelo this reader is built against: porelo-build-api and porelo-wire, through porelo-bom. A snapshot while
              it is developed; a release depends only on releases. Everything else it builds with - the Java release,
-             nothing published, the plugin and tool versions - comes from sokar-parent. -->
-        <sokar.version>0.4.2-SNAPSHOT</sokar.version>
+             nothing published, the plugin and tool versions - comes from porelo-parent. -->
+        <porelo.version>0.5.0-SNAPSHOT</porelo.version>
         <!-- What makes one snapshot package newer than the last; CI passes the run number. -->
         <reader.snapshot.run>0</reader.snapshot.run>
         <!-- The C library and zlib the native reader needs, measured with readelf, which both packages declare by
@@ -59,7 +59,7 @@
         <package.glibc.floor>2.34</package.glibc.floor>
         <package.zlib.floor>1.2.2</package.zlib.floor>
         <package.glibc.ceiling>2.41</package.glibc.ceiling>
-        <!-- The command line 'exec:exec@machines' gives sokar-machines, such as 'jdk'. -->
+        <!-- The command line 'exec:exec@machines' gives porelo-machines, such as 'jdk'. -->
         <machines.args></machines.args>
     </properties>
 
@@ -69,7 +69,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- JUnit's first, as sokar-parent says: an import here comes before the parent's, and the fuin BOM below
+            <!-- JUnit's first, as porelo-parent says: an import here comes before the parent's, and the fuin BOM below
                  pins an older JUnit. -->
             <dependency>
                 <groupId>org.junit</groupId>
@@ -78,11 +78,11 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- Sokar's versions next, so the API and the wire it speaks are the ones Sokar was built with. -->
+            <!-- Porelo's versions next, so the API and the wire it speaks are the ones Porelo was built with. -->
             <dependency>
-                <groupId>org.fuin.sokar</groupId>
-                <artifactId>sokar-bom</artifactId>
-                <version>${sokar.version}</version>
+                <groupId>org.fuin.porelo</groupId>
+                <artifactId>porelo-bom</artifactId>
+                <version>${porelo.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -123,7 +123,7 @@
                 <version>${exec-maven-plugin.version}</version>
                 <inherited>false</inherited>
                 <executions>
-                    <!-- Any sokar-machines command, in a JVM of its own: the pinned GraalVM for a CI job. -->
+                    <!-- Any porelo-machines command, in a JVM of its own: the pinned GraalVM for a CI job. -->
                     <execution>
                         <id>machines</id>
                         <goals>
@@ -134,10 +134,10 @@
                             <includeProjectDependencies>false</includeProjectDependencies>
                             <includePluginDependencies>true</includePluginDependencies>
                             <executableDependency>
-                                <groupId>org.fuin.sokar</groupId>
-                                <artifactId>sokar-machines</artifactId>
+                                <groupId>org.fuin.porelo</groupId>
+                                <artifactId>porelo-machines</artifactId>
                             </executableDependency>
-                            <commandlineArgs>-classpath %classpath org.fuin.sokar.machines.Main ${machines.args}</commandlineArgs>
+                            <commandlineArgs>-classpath %classpath org.fuin.porelo.machines.Main ${machines.args}</commandlineArgs>
                         </configuration>
                     </execution>
                     <!-- A release depends only on releases: run on a tag, on the effective pom
@@ -152,10 +152,10 @@
                             <includeProjectDependencies>false</includeProjectDependencies>
                             <includePluginDependencies>true</includePluginDependencies>
                             <executableDependency>
-                                <groupId>org.fuin.sokar</groupId>
-                                <artifactId>sokar-release</artifactId>
+                                <groupId>org.fuin.porelo</groupId>
+                                <artifactId>porelo-release</artifactId>
                             </executableDependency>
-                            <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-releases ${maven.multiModuleProjectDirectory}/target/effective-pom.xml --requires org.fuin.sokar:sokar-release</commandlineArgs>
+                            <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main check-releases ${maven.multiModuleProjectDirectory}/target/effective-pom.xml --requires org.fuin.porelo:porelo-release</commandlineArgs>
                         </configuration>
                     </execution>
                     <!-- Every workflow step pinned by commit. -->
@@ -170,10 +170,10 @@
                             <includeProjectDependencies>false</includeProjectDependencies>
                             <includePluginDependencies>true</includePluginDependencies>
                             <executableDependency>
-                                <groupId>org.fuin.sokar</groupId>
-                                <artifactId>sokar-release</artifactId>
+                                <groupId>org.fuin.porelo</groupId>
+                                <artifactId>porelo-release</artifactId>
                             </executableDependency>
-                            <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-actions ${maven.multiModuleProjectDirectory}/.github</commandlineArgs>
+                            <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main check-actions ${maven.multiModuleProjectDirectory}/.github</commandlineArgs>
                         </configuration>
                     </execution>
                     <!-- The shared block of AGENTS.md carries the hash of its text, so a copy edited on its own fails. -->
@@ -188,10 +188,10 @@
                             <includeProjectDependencies>false</includeProjectDependencies>
                             <includePluginDependencies>true</includePluginDependencies>
                             <executableDependency>
-                                <groupId>org.fuin.sokar</groupId>
-                                <artifactId>sokar-release</artifactId>
+                                <groupId>org.fuin.porelo</groupId>
+                                <artifactId>porelo-release</artifactId>
                             </executableDependency>
-                            <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-shared ${maven.multiModuleProjectDirectory}/AGENTS.md</commandlineArgs>
+                            <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main check-shared ${maven.multiModuleProjectDirectory}/AGENTS.md</commandlineArgs>
                         </configuration>
                     </execution>
                     <!-- No file cites an issue in a way that goes stale once the issue is finished and deleted. -->
@@ -206,10 +206,10 @@
                             <includeProjectDependencies>false</includeProjectDependencies>
                             <includePluginDependencies>true</includePluginDependencies>
                             <executableDependency>
-                                <groupId>org.fuin.sokar</groupId>
-                                <artifactId>sokar-release</artifactId>
+                                <groupId>org.fuin.porelo</groupId>
+                                <artifactId>porelo-release</artifactId>
                             </executableDependency>
-                            <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-citations ${maven.multiModuleProjectDirectory}</commandlineArgs>
+                            <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main check-citations ${maven.multiModuleProjectDirectory}</commandlineArgs>
                         </configuration>
                     </execution>
                     <!-- Every module has a README.md beside its pom.xml, linking its submodules. -->
@@ -224,10 +224,10 @@
                             <includeProjectDependencies>false</includeProjectDependencies>
                             <includePluginDependencies>true</includePluginDependencies>
                             <executableDependency>
-                                <groupId>org.fuin.sokar</groupId>
-                                <artifactId>sokar-release</artifactId>
+                                <groupId>org.fuin.porelo</groupId>
+                                <artifactId>porelo-release</artifactId>
                             </executableDependency>
-                            <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-readmes ${maven.multiModuleProjectDirectory}</commandlineArgs>
+                            <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main check-readmes ${maven.multiModuleProjectDirectory}</commandlineArgs>
                         </configuration>
                     </execution>
                     <!-- Every page of doc/ is in mkdocs.yml's navigation once, and every link on it can be followed. -->
@@ -242,23 +242,23 @@
                             <includeProjectDependencies>false</includeProjectDependencies>
                             <includePluginDependencies>true</includePluginDependencies>
                             <executableDependency>
-                                <groupId>org.fuin.sokar</groupId>
-                                <artifactId>sokar-release</artifactId>
+                                <groupId>org.fuin.porelo</groupId>
+                                <artifactId>porelo-release</artifactId>
                             </executableDependency>
-                            <commandlineArgs>-classpath %classpath org.fuin.sokar.release.Main check-doc-site ${maven.multiModuleProjectDirectory}/doc ${maven.multiModuleProjectDirectory}/mkdocs.yml</commandlineArgs>
+                            <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main check-doc-site ${maven.multiModuleProjectDirectory}/doc ${maven.multiModuleProjectDirectory}/mkdocs.yml</commandlineArgs>
                         </configuration>
                     </execution>
                 </executions>
                 <dependencies>
                     <dependency>
-                        <groupId>org.fuin.sokar</groupId>
-                        <artifactId>sokar-machines</artifactId>
-                        <version>${sokar.buildtools.version}</version>
+                        <groupId>org.fuin.porelo</groupId>
+                        <artifactId>porelo-machines</artifactId>
+                        <version>${porelo.buildtools.version}</version>
                     </dependency>
                     <dependency>
-                        <groupId>org.fuin.sokar</groupId>
-                        <artifactId>sokar-release</artifactId>
-                        <version>${sokar.buildtools.version}</version>
+                        <groupId>org.fuin.porelo</groupId>
+                        <artifactId>porelo-release</artifactId>
+                        <version>${porelo.buildtools.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>

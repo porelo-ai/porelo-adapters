@@ -1,15 +1,15 @@
-# Working on Sokar Build GitHub
+# Working on Porelo Build GitHub
 
 ## What this repository is
 
-Sokar's build reader for GitHub Actions: an executable Sokar finds under `/usr/libexec/sokar/builds/github` and
-speaks `org.fuin.sokar.Build1` with, through `sokar-build-api`. It answers the head commit of a branch and what the
+Porelo's build reader for GitHub Actions: an executable Porelo finds under `/usr/libexec/porelo/builds/github` and
+speaks `org.fuin.porelo.Build1` with, through `porelo-build-api`. It answers the head commit of a branch and what the
 build of a commit did - the verdict across its workflow runs, the failing job, and the last 64 KiB of that job's
-log. It holds no secret: Sokar reads the forge token from the vault on the host and passes it in each call.
+log. It holds no secret: Porelo reads the forge token from the vault on the host and passes it in each call.
 
-- **It is built against `sokar-build-api` and `sokar-wire`, and nothing else of `sokar`'s.** Until that API is on
-  Central, it resolves from a local install of the `sokar` branch that carries it.
-- **Nothing here runs in a task**, and no answer reaches one except through Sokar.
+- **It is built against `porelo-build-api` and `porelo-wire`, and nothing else of `porelo`'s.** Until that API is on
+  Central, it resolves from a local install of the `porelo` branch that carries it.
+- **Nothing here runs in a task**, and no answer reaches one except through Porelo.
 - **The token never follows a redirect**: GitHub sends a job's log to a blob host, and the request there carries no
   Authorization header.
 - **A changelog entry is one YAML file under `changelog/unreleased/`** with a one-sentence `title` and a `type`.
@@ -17,11 +17,11 @@ log. It holds no secret: Sokar reads the forge token from the vault on the host 
 - **Issue prefix: `GH`**, in `issues/`.
 - **Skills used:** `graal`, `java-code-review`, `test-quality`, `security-audit`, `clean-code`.
 
-## Shared across the Sokar repositories
+## Shared across the Porelo repositories
 
-> **BEGIN Shared Area** · sha256 `32234366c7b349ec` · changed 2026-10-14T17:28Z
+> **BEGIN Shared Area** · sha256 `8f49d85552af3cd1` · changed 2026-10-16T16:20Z
 
-Identical in every repository `project.yml` names but `sokar-parent`, which holds only the parent pom
+Identical in every repository `project.yml` names but `porelo-parent`, which holds only the parent pom
 and no `AGENTS.md`. The markers carry the SHA-256 of the lines between them (the first 16 hex digits)
 and the UTC time that text last changed; change it in the channel first, never in one copy.
 
@@ -154,7 +154,7 @@ and the UTC time that text last changed; change it in the channel first, never i
 - **`doc/decisions.md` opens with an index** - subject, one line of what holds, link - and a row is
   written with its decision. An accepted risk states the exposure, why it stays, and what would
   change the answer.
-- **A requirement not yet placed waits in `sokar-project`** until it is clear which repository builds
+- **A requirement not yet placed waits in `porelo-project`** until it is clear which repository builds
   it, then moves there as an issue.
 - **Every row of an index opens with an anchor named after its number**, `<a id="<number>"></a>`,
   the number lower case; a *Finished* or *Rejected* row keeps it.
@@ -207,7 +207,7 @@ and the UTC time that text last changed; change it in the channel first, never i
   machine - never which ought to have. A change to documents or issues only needs the tests tagged
   `documents`, which run alone; every test that reads a document carries that tag, and a test fails
   when one does not.
-- **A repository with a workflow runs `sokar-release`'s `check-shared`, `check-citations` and, where
+- **A repository with a workflow runs `porelo-release`'s `check-shared`, `check-citations` and, where
   there is a documentation chapter, `check-doc-site`, with the tests tagged `documents`, on every
   push and pull request**, on a GitHub runner; the build skips a change to documents only.
 - **A test result names every skipped test**, never just a count.
@@ -298,16 +298,16 @@ and the UTC time that text last changed; change it in the channel first, never i
   Grouping changes only `parent` and `relativePath`, never a `groupId` or `artifactId`.
 - **Every directory with a `pom.xml` has a `README.md`**: two or three sentences on what the module is
   and is not, a link to each of its submodules, and only the few technical facts that matter most, such
-  as what it must never depend on; details are linked in `doc/`, never repeated. `sokar-release
+  as what it must never depend on; details are linked in `doc/`, never repeated. `porelo-release
   check-readmes` holds it.
 - **Only what another repository or an outsider builds against is published to Maven Central, each such
   module opting in; the root and every grouping module are never published.** Every published pom is
-  flattened, so it names no parent and a consumer needs nothing but the module itself; `sokar-release
+  flattened, so it names no parent and a consumer needs nothing but the module itself; `porelo-release
   check-releases` refuses a release whose published pom still names one. A BOM is imported, never a
   parent.
-- **Every Sokar Maven repository takes `org.fuin.sokar:sokar-parent` as its parent** and declares only what
+- **Every Porelo Maven repository takes `org.fuin.porelo:porelo-parent` as its parent** and declares only what
   is its own; one that publishes declares `flatten-maven-plugin` by name in its root, and the parent's
-  management flattens every module. `sokar-parent` names no parent and uses nothing of another Sokar
+  management flattens every module. `porelo-parent` names no parent and uses nothing of another Porelo
   repository.
 - **Every Java package with main code is `@NullMarked` and checked by NullAway as an error when it
   compiles**, with a test that fails on an unmarked package.
@@ -318,10 +318,10 @@ and the UTC time that text last changed; change it in the channel first, never i
   sentence (never `testXxx`) and an assertion states its reason (`.as(...)`).** Every build call in
   CI names its repositories in the repository itself (Maven: `-s settings.xml`).
 - **Everything a build runs is pinned and moved only by review**: actions by commit with the version
-  beside it, the JDK (from `sokar-machines jdk --github`), the build tool's wrapper (Maven, Gradle) and
+  beside it, the JDK (from `porelo-machines jdk --github`), the build tool's wrapper (Maven, Gradle) and
   images by version and digest, updated by Dependabot weekly, in one group, after three days.
-  `sokar-release check-actions` enforces it.
-- **While it is developed, a repository may build against another Sokar repository's snapshot from
+  `porelo-release check-actions` enforces it.
+- **While it is developed, a repository may build against another Porelo repository's snapshot from
   Sonatype**, and its build may fail for a while when that snapshot moves; a release depends only on
   releases, which the release build checks.
 - **Packages are built online**: offline, the CycloneDX bill of materials skips itself with only a
@@ -332,4 +332,4 @@ and the UTC time that text last changed; change it in the channel first, never i
 - **Every native executable is built with `-march=x86-64`**, so it starts on any x86-64 CPU, and the
   build checks each executable for exactly that instruction set.
 
-> **END Shared Area** · sha256 `32234366c7b349ec`
+> **END Shared Area** · sha256 `8f49d85552af3cd1`

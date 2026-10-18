@@ -5,11 +5,16 @@ issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questio
 waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
 
+## Review
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh03"></a>[GH03](GH03-The-Code-Read-Against-The-Skills-It-Names.md) | S | - | `reader` read against the five skills `AGENTS.md` names, at recorded versions; every finding fixed with a test seen red or declined with why; green in the Build. |
+
 ## Analyzed
 
 | # | Size | Blocked by | What it covers | Open questions |
 |---|---|---|---|---|
-| <a id="gh03"></a>[GH03](GH03-The-Code-Read-Against-The-Skills-It-Names.md) | S | - | `reader` read against the five skills `AGENTS.md` names, at recorded versions and SHA-256; each finding fixed with a test seen red or declined with why. Read; seven fixes with tests and ten declined, in one commit. | - |
 | <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | M | `porelo` [B171](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b171) | `Review1` beside `Build1`: a pull request's review comments, threads and suggestions read into `porelo`'s comment model, and comments and replies written with a write token of their own | - |
 
 ## Finished

@@ -1,6 +1,6 @@
 # GH03 — The Code Read Against The Skills It Names
 
-**Status:** Analyzed.
+**Status:** Review. Built in `3b17303`, green in the Build, 2026-10-18.
 **Size:** S - one module, `reader` (three classes, ~390 lines, ~250 of tests), built as a native image, read against
 five skills; one commit.
 

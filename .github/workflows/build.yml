@@ -3,7 +3,6 @@
 # v<version> to the releases channel; a release depends only on releases. Against porelo-build-api as a snapshot
 # while it is developed (-U takes the newest), as the shared rules allow.
 name: Build
-run-name: "${{ github.workflow }} · ${{ github.ref_name }}: ${{ github.event.head_commit.message || github.event.pull_request.title || github.workflow }}"
 
 on:
     push:

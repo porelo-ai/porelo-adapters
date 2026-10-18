@@ -5,12 +5,6 @@ issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questio
 waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
 
-## Review
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
-| <a id="gh03"></a>[GH03](GH03-The-Code-Read-Against-The-Skills-It-Names.md) | S | - | `reader` read against the five skills `AGENTS.md` names, at recorded versions; every finding fixed with a test seen red or declined with why; green in the Build. |
-
 ## Analyzed
 
 | # | Size | Blocked by | What it covers | Open questions |
@@ -21,5 +15,6 @@ left out.
 
 | # | Title | What was built |
 |---|---|---|
+| <a id="gh03"></a>GH03 | The Code Read Against The Skills It Names | `reader` read against the five skills `AGENTS.md` names, each finding fixed with a test seen red or declined. |
 | <a id="gh01"></a>GH01 | Release The Reader As A Package | A tag and `main` publish the reader as a `.deb` and an `.rpm` to the package repositories, where Porelo finds it. |
 | <a id="gh04"></a>GH04 | Renamed Porelo Here | The reader is `org.fuin.porelo:porelo-build-github`, packaged as `porelo-build-github` at `/usr/libexec/porelo/builds/github`, where Porelo looks; a documents test refuses the old word. |

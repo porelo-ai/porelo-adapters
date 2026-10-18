@@ -14,3 +14,5 @@ It is a build reader, not Porelo: it decides nothing about a task and keeps noth
 
 **Documentation: [porelo-ai.github.io/build-github](https://porelo-ai.github.io/build-github/)**, one chapter of
 [all of Porelo's documentation](https://porelo-ai.github.io).
+
+[Contributing](CONTRIBUTING.md), and [reporting a vulnerability](SECURITY.md).

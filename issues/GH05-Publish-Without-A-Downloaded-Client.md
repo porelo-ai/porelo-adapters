@@ -1,6 +1,6 @@
 # GH05 — Publish Without A Downloaded Client
 
-**Status:** Idea.
+**Status:** Accepted.
 
 **What must be true.** The Build's `Publish` speaks to Artifactory without downloading a client into the job that
 holds the token: no `jfrog/setup-jfrog-cli` and no `jf` in `.github/`, as in porelo.

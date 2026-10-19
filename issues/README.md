@@ -11,6 +11,12 @@ left out.
 |---|---|---|---|---|
 | <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | M | `porelo` [B171](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b171) | `Review1` beside `Build1`: a pull request's review comments, threads and suggestions read into `porelo`'s comment model, and comments and replies written with a write token of their own | - |
 
+## Idea
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh05"></a>[GH05](GH05-Publish-Without-A-Downloaded-Client.md) | - | - | `Publish` speaks to Artifactory with `curl` through porelo's `artifactory.sh`, downloading no client beside the token. |
+
 ## Finished
 
 | # | Title | What was built |

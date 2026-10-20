@@ -147,6 +147,23 @@
                             <commandlineArgs>-classpath %classpath org.fuin.porelo.machines.Main ${machines.args}</commandlineArgs>
                         </configuration>
                     </execution>
+                    <!-- Any other porelo-release command, in a JVM of its own: it exits with the command's code. -->
+                    <execution>
+                        <id>release</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${java.home}/bin/java</executable>
+                            <includeProjectDependencies>false</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                            <executableDependency>
+                                <groupId>org.fuin.porelo</groupId>
+                                <artifactId>porelo-release</artifactId>
+                            </executableDependency>
+                            <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main ${release.args}</commandlineArgs>
+                        </configuration>
+                    </execution>
                     <!-- A release depends only on releases: run on a tag, on the effective pom
                          'help:effective-pom -Doutput=target/effective-pom.xml' wrote. -->
                     <execution>

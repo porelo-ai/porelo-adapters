@@ -5,12 +5,17 @@ issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questio
 waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
 
+## Backlog
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh06"></a>[GH06](GH06-One-Contract-Suite-Every-Adapter-Passes.md) | L | `porelo` [B253](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b253) | `porelo-build-contract`, one suite from recorded answers that every adapter passes over `Build2`, and the `github` adapter passing it as `porelo-adapter-github` in place of `porelo-build-github` |
+| <a id="gh07"></a>[GH07](GH07-The-Forgejo-Adapter-Answers-As-The-GitHub-One.md) | M | [GH06](README.md#gh06), `porelo` [B275](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b275) | `porelo-adapter-forgejo`, reading Forgejo Actions so `porelo build status` and an `online` task get the same answer in the same shape as from GitHub |
+
 ## Analyzed
 
 | # | Size | Blocked by | What it covers | Open questions |
 |---|---|---|---|---|
-| <a id="gh06"></a>[GH06](GH06-One-Contract-Suite-Every-Adapter-Passes.md) | L | `porelo` [B253](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b253) | `porelo-build-contract`, one suite from recorded answers that every adapter passes over `Build2`, and the `github` adapter passing it as `porelo-adapter-github` in place of `porelo-build-github` | 1 |
-| <a id="gh07"></a>[GH07](GH07-The-Forgejo-Adapter-Answers-As-The-GitHub-One.md) | M | [GH06](README.md#gh06) | `porelo-adapter-forgejo`, reading Forgejo Actions so `porelo build status` and an `online` task get the same answer in the same shape as from GitHub | 1 |
 | <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | M | `porelo` [B171](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b171) | `Review1` beside `Build1`: a pull request's review comments, threads and suggestions read into `porelo`'s comment model, and comments and replies written with a write token of their own | - |
 
 ## Accepted

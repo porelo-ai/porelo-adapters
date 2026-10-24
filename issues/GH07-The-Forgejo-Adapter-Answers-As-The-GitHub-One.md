@@ -1,6 +1,6 @@
 # GH07 — The Forgejo Adapter Answers As The GitHub One
 
-**Status:** Analyzed; blocked by [GH06](README.md#gh06).
+**Status:** Backlog, for sprint 3; blocked by [GH06](README.md#gh06) and `porelo` [B275](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b275).
 **Size:** M - one adapter module beside the `github` one, a shared HTTP module, recordings made from a Forgejo in
 podman, and its packages.
 
@@ -38,6 +38,8 @@ in podman, its `swagger.v1.json`.
 5. **Recordings** for [GH06](README.md#gh06)'s suite, made once from Forgejo 17.0.0 in podman with a
    `forgejo-runner` beside it running a passing and a failing workflow, reduced like the `github` ones; the script
    that makes them is kept beside them, so a new Forgejo version is recorded the same way.
+   **Decided:** the Forgejo in podman answers `http://` on the loopback, which `porelo` accepts from
+   `porelo` [B275](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b275) on; no certificate is made for it.
 6. **Packages** `porelo-adapter-forgejo` (`.deb`, `.rpm`) built and published by `build.yml` beside the `github`
    one, with its smoke test and index check.
 
@@ -49,12 +51,6 @@ adapter broken for it.
 - `porelo-adapter-forgejo` passes every case of the suite from Forgejo's recordings, each seen to fail once.
 - Against a Forgejo 17 run in podman, `porelo build status` answers a red and a green run in the shape GitHub's
   answers take: the commit, the verdict, the jobs, the failed job's log.
-
-## Open questions
-
-- A Forgejo run in podman answers `http://` unless it is given a certificate, and `porelo` refuses a `builds.api`
-  that is not `https://`. Should `porelo` accept `http://` for a loopback address only (a `porelo` issue), or does
-  the test give Forgejo a certificate from a local authority the host trusts (more setup, no change to `porelo`)?
 
 ## To be checked
 

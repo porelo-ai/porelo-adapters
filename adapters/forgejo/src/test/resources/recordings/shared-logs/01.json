@@ -1,0 +1,11 @@
+{
+  "recorded": false,
+  "why": "Generated boundary case in the measured Forgejo response shape.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=0123456789abcdef0123456789abcdef01234567&limit=50&page=1",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": "{\"total_count\":1,\"workflow_runs\":[{\"id\":1,\"workflow_id\":\"matrix.yml\",\"status\":\"success\"}]}"
+}

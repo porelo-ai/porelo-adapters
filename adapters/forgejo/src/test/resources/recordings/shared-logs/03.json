@@ -1,0 +1,16 @@
+{
+  "recorded": false,
+  "why": "Fifty generated logs exceed the total log budget; Forgejo was not made to produce this boundary.",
+  "repeat": 50,
+  "exchanges": [
+    {
+      "method": "GET",
+      "path": "/repos/porelo-ai/porelo-frontend/actions/jobs/{{id}}/logs",
+      "status": 200,
+      "headers": {
+        "content-type": "text/plain"
+      },
+      "bodyBytes": 65536
+    }
+  ]
+}

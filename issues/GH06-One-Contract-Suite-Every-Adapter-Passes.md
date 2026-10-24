@@ -30,9 +30,9 @@ Read in `pom.xml`, `reader/` (`GitHubReader`, `Http`, their tests, `src/deb`), `
    the adapter as Porelo does - an executable that runs its main on the test class path, through
    `InstalledBuildReader` over its socket, the launcher `InstalledBuildReaderTest` uses made public here as
    `JavaExecutable` - with `Target.api` pointed at a loopback forge double (`com.sun.net.httpserver`) serving the
-   case's recordings, and compares the answer with the case's expectation, which the suite holds and no adapter can
-   change. A request the recording lacks is answered 404 and fails the case naming the request.
-3. **The cases**, each a record of a question (`head` or `build` with its logs) and an expected answer or refusal:
+   case's recordings, and compares the answer with the case's rules, which the suite holds and no adapter can
+   change; recording-derived values come from evidence-checked per-case `expect.json` files. A request the recording lacks is answered 404 and fails the case naming the request.
+3. **The cases**, each a record of a question (`head` or `build` with its logs) and shared answer rules or refusal:
    a branch's head; an absent branch; a commit with no build; queued; running; passed; failed (the failed job's log
    only); cancelled; logs `none` (jobs, no log, no log request made), `failure`, `all`; a log over 64 KiB keeps its
    end; more than 50 jobs keep the failed ones; logs over 2 MiB shared; `RateLimited` with its retry-after,
@@ -65,12 +65,13 @@ have nine jobs, and the failed Windows job's log arrives through a 302 to a blob
 The real head, missing branch, empty run list, 401, and ref 404 are also replayed. The uncaptured repository
 confirmation after the ref 404 and the green jobs' log downloads are explicitly generated. Queued, running,
 cancelled, both rate limits, transport failure, and size boundaries are generated from the real reduced
-shapes; the captures do not establish what a just-pushed queued commit returns. The cases and their
-provenance are specified in [the contract documentation](../doc/contract.md).
+shapes; the captures do not establish what a just-pushed queued commit returns. The cases, evidence-checked
+values, and their provenance are specified in [the contract documentation](../doc/contract.md).
 
 The failed-job capture contains no match for the four checked credential markers. Its retained replay body
-has 69,632 bytes, preserving a 4 KiB prefix before the expected 64 KiB tail, whose digest is fixed in the
-suite independently of the replay files. Generated matrix lists use bounded counts; repeated redirect/blob
+has 69,632 bytes, preserving a 4 KiB prefix before the expected 64 KiB tail, whose exact bytes are compared
+with the recorded body's end. The suite fixes no forge-specific head, job count, workflow name, or log digest;
+the adapter declares its authorization scheme. Generated matrix lists use bounded counts; repeated redirect/blob
 exchanges keep all fifty log downloads mandatory with three files for the shared-budget case.
 
 ## Acceptance

@@ -1,0 +1,12 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-10-24",
+  "capture": "jobs-ok-3",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs/3/jobs",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json;charset=utf-8"
+  },
+  "body": "[{\"id\":4,\"name\":\"first\",\"status\":\"cancelled\"}]"
+}

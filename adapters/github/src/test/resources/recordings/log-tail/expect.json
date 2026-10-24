@@ -1,0 +1,14 @@
+{
+  "jobs": [
+    {
+      "name": "Build / unit",
+      "result": "failure",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/0/name"
+      ],
+      "resultFrom": "02.json#/jobs/0/conclusion",
+      "log": "04.json"
+    }
+  ]
+}

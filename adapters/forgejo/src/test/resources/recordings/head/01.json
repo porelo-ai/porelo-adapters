@@ -1,0 +1,12 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-10-24",
+  "capture": "head-main",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/branches/main",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json;charset=utf-8"
+  },
+  "body": "{\"commit\":{\"id\":\"ce370b8f8b4224fcbcaaf3ce10502d66b9ce2bd6\"}}"
+}

@@ -1,6 +1,6 @@
 # GH07 — The Forgejo Adapter Answers As The GitHub One
 
-**Status:** Backlog, for sprint 3; blocked by [GH06](README.md#gh06) and `porelo` [B275](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b275).
+**Status:** Implementing, for sprint 3; blocked by [GH06](README.md#gh06) and `porelo` [B275](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b275).
 **Size:** M - one adapter module beside the `github` one, a shared HTTP module, recordings made from a Forgejo in
 podman, and its packages.
 
@@ -36,7 +36,8 @@ in podman, its `swagger.v1.json`.
    repository, as the `github` adapter does), 429 `RateLimited` with `Retry-After`, a 3xx `NoSuchRepository`, an
    I/O failure or a body that is not JSON `Unreachable`.
 5. **Recordings** for [GH06](README.md#gh06)'s suite, made once from Forgejo 17.0.0 in podman with a
-   `forgejo-runner` beside it running a passing and a failing workflow, reduced like the `github` ones; the script
+   `forgejo-runner` beside it running a passing and a failing workflow, reduced like the `github` ones, with each case’s `expect.json` holding only evidence-checked head, ordered
+   job values, log exchange references, and retry delay; the script
    that makes them is kept beside them, so a new Forgejo version is recorded the same way.
    **Decided:** the Forgejo in podman answers `http://` on the loopback, which `porelo` accepts from
    `porelo` [B275](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b275) on; no certificate is made for it.

@@ -1,0 +1,11 @@
+{
+  "recorded": false,
+  "why": "The successful wait job was recorded but its log was not captured.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/jobs/1/logs",
+  "status": 200,
+  "headers": {
+    "content-type": "text/plain"
+  },
+  "body": "2026-10-24T18:19:50Z generated successful log\n"
+}

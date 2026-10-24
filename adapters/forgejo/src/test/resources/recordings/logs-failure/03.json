@@ -1,0 +1,12 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-10-24",
+  "capture": "jobs-fail-5",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs/5/jobs",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json;charset=utf-8"
+  },
+  "body": "[{\"id\":6,\"name\":\"build\",\"status\":\"success\"},{\"id\":7,\"name\":\"lint\",\"status\":\"success\"}]"
+}

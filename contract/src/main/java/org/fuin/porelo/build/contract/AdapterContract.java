@@ -5,11 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -26,6 +23,7 @@ public abstract class AdapterContract {
     private final Class<?> main;
     private final String forge;
     private final Path recordings;
+    private final String authorization;
 
     /**
      * Configures an adapter's contract tests.
@@ -33,11 +31,17 @@ public abstract class AdapterContract {
      * @param main The executable adapter's main class.
      * @param forge Its Describe identity.
      * @param recordings Directory containing one subdirectory for every suite case.
+     * @param authorization Exact API authorization scheme, such as Bearer or token.
      */
-    protected AdapterContract(final Class<?> main, final String forge, final Path recordings) {
+    protected AdapterContract(
+            final Class<?> main,
+            final String forge,
+            final Path recordings,
+            final String authorization) {
         this.main = main;
         this.forge = forge;
         this.recordings = recordings;
+        this.authorization = authorization;
     }
 
     /**
@@ -56,7 +60,12 @@ public abstract class AdapterContract {
         Files.createDirectories(Path.of("target"));
         final Path scratch = Files.createTempDirectory(Path.of("target"), "c-");
         try (RecordedForge server =
-                new RecordedForge(recordings.resolve(test.name()), UUID.randomUUID().toString())) {
+                new RecordedForge(
+                        recordings.resolve(test.name()),
+                        UUID.randomUUID().toString(),
+                        authorization)) {
+            final CaseExpectation expected =
+                    CaseExpectation.read(recordings.resolve(test.name()), test, server.exchanges());
             try (InstalledBuildReader reader =
                     new InstalledBuildReader(
                             JavaExecutable.write(scratch, main), forge, scratch.resolve("s"))) {
@@ -66,7 +75,7 @@ public abstract class AdapterContract {
                                 server.api(),
                                 server.token());
                 try {
-                    compare(test, reader, target);
+                    compare(test, expected, reader, target);
                 } finally {
                     server.verify();
                 }
@@ -81,7 +90,10 @@ public abstract class AdapterContract {
     }
 
     private static void compare(
-            final ContractCase test, final InstalledBuildReader reader, final Target target) {
+            final ContractCase test,
+            final CaseExpectation values,
+            final InstalledBuildReader reader,
+            final Target target) {
         if (test.expected() instanceof ContractCase.Refusal expected) {
             assertThatThrownBy(() -> test.question().ask(reader, target))
                     .as("%s refusal", test.name())
@@ -92,49 +104,111 @@ public abstract class AdapterContract {
                                         .as("%s refusal reason", test.name())
                                         .isEqualTo(expected.reason());
                                 assertThat(refused.retryAfterSeconds())
-                                        .as("%s retry-after", test.name())
-                                        .isEqualTo(expected.retryAfter());
+                                        .as("%s recorded retry-after", test.name())
+                                        .isEqualTo(values.retryAfter());
                             });
-        } else if (test.expected() instanceof ContractCase.LoggedAnswer expected) {
-            compareRecordedLog(test, reader, target, expected);
-        } else if (test.expected() instanceof ContractCase.Answer expected) {
-            assertThat(test.question().ask(reader, target))
-                    .as("%s answer", test.name())
-                    .isEqualTo(expected.value());
+            return;
         }
-    }
-
-    private static void compareRecordedLog(
-            final ContractCase test,
-            final InstalledBuildReader reader,
-            final Target target,
-            final ContractCase.LoggedAnswer expected) {
         final Object answer = test.question().ask(reader, target);
+        if (test.expected() instanceof ContractCase.HeadAnswer) {
+            assertThat(answer).as("%s recorded head", test.name()).isEqualTo(values.head());
+            return;
+        }
         assertThat(answer).as("%s build answer", test.name()).isInstanceOf(Build.class);
         final Build actual = (Build) answer;
+        final ContractCase.Verdict verdict = (ContractCase.Verdict) test.expected();
+        assertThat(actual.verdict()).as("%s verdict", test.name()).isEqualTo(verdict.value());
+        if (List.of(Build.QUEUED, Build.RUNNING, Build.UNKNOWN).contains(verdict.value())) {
+            assertThat(values.jobs())
+                    .as("outstanding or unknown recordings have no expected jobs")
+                    .isEmpty();
+            assertThat(actual.jobs())
+                    .as("%s has no jobs before a final verdict", test.name())
+                    .isEmpty();
+            return;
+        }
+        compareJobs(test, values, actual);
+    }
+
+    private static void compareJobs(
+            final ContractCase test, final CaseExpectation values, final Build actual) {
+        final List<CaseExpectation.Job> retained = values.retainedJobs();
+        assertThat(values.jobs()).as("%s recorded finished jobs", test.name()).isNotEmpty();
         assertThat(actual.jobs())
-                .as("%s recorded jobs", test.name())
-                .hasSize(expected.value().jobs().size());
-        final byte[] log = actual.jobs().get(2).log();
-        assertThat(log)
-                .as("%s failed job's last 64 KiB", test.name())
-                .isNotNull()
-                .hasSize(Build.TAIL);
-        if (log == null) {
-            throw new AssertionError("The failed job has no log");
+                .as("%s retained job count", test.name())
+                .hasSize(retained.size())
+                .hasSizeLessThanOrEqualTo(Build.MOST_JOBS);
+        final Build.Logs policy = ((ContractCase.Commit) test.question()).logs();
+        final List<byte[]> logs = new ArrayList<>();
+        long bytes = 0;
+        int count = 0;
+        for (final CaseExpectation.Job job : retained) {
+            final boolean wanted =
+                    policy != Build.Logs.NONE
+                            && (policy == Build.Logs.ALL ? job.finished() : job.failed());
+            final byte[] body = job.log();
+            if (wanted) {
+                assertThat(body).as("%s recorded log for %s", test.name(), job.name()).isNotNull();
+                if (body == null) throw new AssertionError("Missing recorded log: " + job.name());
+                final byte[] tail = CaseExpectation.tail(body, Build.TAIL);
+                logs.add(tail);
+                bytes += tail.length;
+                count++;
+            } else {
+                assertThat(body).as("%s has no log fixture under %s", job.name(), policy).isNull();
+                logs.add(new byte[0]);
+            }
         }
-        try {
-            assertThat(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(log)))
-                    .as("%s recorded log tail SHA-256", test.name())
-                    .isEqualTo(expected.sha256());
-        } catch (NoSuchAlgorithmException ex) {
-            throw new IllegalStateException("SHA-256 is required to verify recorded log bytes", ex);
+        final int share = bytes > Build.MOST_LOG_BYTES ? Build.MOST_LOG_BYTES / count : Build.TAIL;
+        long returnedBytes = 0;
+        for (int index = 0; index < retained.size(); index++) {
+            final CaseExpectation.Job expected = retained.get(index);
+            final Build.Job job = actual.jobs().get(index);
+            assertThat(job.name())
+                    .as("%s job %s in forge order", test.name(), index)
+                    .isEqualTo(expected.name());
+            assertThat(job.result())
+                    .as("%s result of %s", test.name(), expected.name())
+                    .isEqualTo(expected.result());
+            final byte[] log = job.log();
+            if (expected.log() == null) {
+                assertThat(log)
+                        .as("%s no unwanted log for %s", test.name(), expected.name())
+                        .isNull();
+            } else {
+                assertThat(log)
+                        .as("%s exact recorded log end for %s", test.name(), expected.name())
+                        .isNotNull()
+                        .hasSizeLessThanOrEqualTo(Build.TAIL)
+                        .isEqualTo(CaseExpectation.tail(logs.get(index), share));
+                if (log != null) returnedBytes += log.length;
+            }
         }
-        final List<Build.Job> jobs = new ArrayList<>(expected.value().jobs());
-        final Build.Job failed = jobs.get(2);
-        jobs.set(2, new Build.Job(failed.name(), failed.result(), log));
-        assertThat(actual)
-                .as("%s answer", test.name())
-                .isEqualTo(new Build(expected.value().verdict(), jobs, expected.value().detail()));
+        assertThat(returnedBytes)
+                .as("%s total log budget", test.name())
+                .isLessThanOrEqualTo(Build.MOST_LOG_BYTES);
+        if (test.name().equals("log-tail")) {
+            assertThat(
+                            retained.stream()
+                                    .anyMatch(
+                                            job ->
+                                                    job.log() != null
+                                                            && job.log().length > Build.TAIL))
+                    .as("the log-tail recording crosses the tail limit")
+                    .isTrue();
+        }
+        if (test.name().equals("many-jobs")) {
+            assertThat(values.jobs().size())
+                    .as("the matrix recording crosses the job limit")
+                    .isGreaterThan(Build.MOST_JOBS);
+            assertThat(values.jobs().subList(Build.MOST_JOBS, values.jobs().size()))
+                    .as("a failure lies beyond the job limit")
+                    .anyMatch(CaseExpectation.Job::failed);
+        }
+        if (test.name().equals("shared-logs")) {
+            assertThat(bytes)
+                    .as("the recorded tails cross the shared budget")
+                    .isGreaterThan(Build.MOST_LOG_BYTES);
+        }
     }
 }

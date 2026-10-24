@@ -49,7 +49,7 @@ class RecordedForgeTest {
                  "bodyGenerated":{"kind":"github-jobs","count":60,"lastConclusion":"failure",
                   "template":{"id":1,"name":"leg {{id}}","status":"completed","conclusion":"success"}}}
                 """);
-        try (RecordedForge forge = new RecordedForge(directory, "test-token");
+        try (RecordedForge forge = new RecordedForge(directory, "test-token", "Bearer");
                 HttpClient client = HttpClient.newHttpClient()) {
             final Map<?, ?> body =
                     (Map<?, ?>) Json.parse(get(client, forge.api() + "/jobs").body());
@@ -100,7 +100,8 @@ class RecordedForgeTest {
                         .formatted(count));
         assertThatThrownBy(
                         () -> {
-                            try (RecordedForge forge = new RecordedForge(directory, "test-token")) {
+                            try (RecordedForge forge =
+                                    new RecordedForge(directory, "test-token", "Bearer")) {
                                 forge.verify();
                             }
                         })
@@ -117,7 +118,8 @@ class RecordedForgeTest {
                         .formatted(count));
         assertThatThrownBy(
                         () -> {
-                            try (RecordedForge forge = new RecordedForge(directory, "test-token")) {
+                            try (RecordedForge forge =
+                                    new RecordedForge(directory, "test-token", "Bearer")) {
                                 forge.verify();
                             }
                         })
@@ -138,7 +140,7 @@ class RecordedForgeTest {
                  {"method":"GET","path":"/logs/{{id}}","host":"blob","status":200,
                   "headers":{"content-type":"text/plain"},"bodyBytes":65555}]}
                 """);
-        try (RecordedForge forge = new RecordedForge(directory, "test-token");
+        try (RecordedForge forge = new RecordedForge(directory, "test-token", "Bearer");
                 HttpClient client = HttpClient.newHttpClient()) {
             for (int id = 1; id <= 2; id++) {
                 final HttpResponse<String> redirect =
@@ -164,6 +166,67 @@ class RecordedForgeTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void authorizationIsExactAndStaysAtTheApiOrigin(final boolean external) throws Exception {
+        // A missing API credential or a credential sent to another origin must fail the suite.
+        Files.writeString(
+                directory.resolve("01.json"),
+                Json.write(
+                        Map.of(
+                                "method",
+                                "GET",
+                                "path",
+                                "/known",
+                                "host",
+                                external ? "blob" : "api",
+                                "status",
+                                200,
+                                "headers",
+                                Map.of(),
+                                "body",
+                                "ok")));
+        try (RecordedForge forge = new RecordedForge(directory, "test-token", "token");
+                HttpClient client = HttpClient.newHttpClient()) {
+            final String url =
+                    external ? forge.api().replace("127.0.0.1", "localhost") : forge.api();
+            final HttpResponse<String> response = get(client, url + "/known");
+            assertThat(response.statusCode()).as("the recorded request was served").isEqualTo(200);
+            assertThatThrownBy(forge::verify)
+                    .as(
+                            "the authorization boundary rejects %s",
+                            external ? "a leaked credential" : "a wrong scheme")
+                    .isInstanceOf(AssertionError.class)
+                    .hasMessageContaining(
+                            external
+                                    ? "Authorization left API origin: GET /known"
+                                    : "API token missing or wrong: GET /known");
+        }
+    }
+
+    @Test
+    void aSecondAuthorizationHeaderCannotBypassTheExactHeaderGuard() throws Exception {
+        // A correct first header must not hide an additional credential sent to the forge.
+        Files.writeString(
+                directory.resolve("01.json"),
+                """
+                {"method":"GET","path":"/known","status":200,"headers":{},"body":"ok"}
+                """);
+        try (RecordedForge forge = new RecordedForge(directory, "test-token", "Bearer");
+                HttpClient client = HttpClient.newHttpClient()) {
+            client.send(
+                    HttpRequest.newBuilder(URI.create(forge.api() + "/known"))
+                            .header("Authorization", "Bearer test-token")
+                            .header("Authorization", "token test-token")
+                            .build(),
+                    HttpResponse.BodyHandlers.discarding());
+            assertThatThrownBy(forge::verify)
+                    .as("the API accepts exactly one matching authorization header")
+                    .isInstanceOf(AssertionError.class)
+                    .hasMessageContaining("API token missing or wrong: GET /known");
+        }
+    }
+
     private static HttpResponse<String> get(final HttpClient client, final String uri)
             throws Exception {
         return client.send(
@@ -181,7 +244,7 @@ class RecordedForgeTest {
                 """
                 {"method":"GET","path":"/known","status":200,"headers":{},"body":"ok"}
                 """);
-        try (RecordedForge forge = new RecordedForge(directory, "test-token");
+        try (RecordedForge forge = new RecordedForge(directory, "test-token", "Bearer");
                 HttpClient client = HttpClient.newHttpClient()) {
             client.send(
                     HttpRequest.newBuilder(URI.create(forge.api() + "/known"))

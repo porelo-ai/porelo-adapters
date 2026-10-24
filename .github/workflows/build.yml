@@ -46,10 +46,12 @@ jobs:
             - name: The reader answers as one
               run: |
                   set -eu
-                  description="$(adapters/github/target/porelo-adapter-github describe)"
-                  echo "$description"
-                  echo "$description" | grep -q '"forge":"github"'
-                  echo "$description" | grep -q '"protocolVersion":2'
+                  for forge in github forgejo; do
+                      description="$(adapters/$forge/target/porelo-adapter-$forge describe)"
+                      echo "$description"
+                      echo "$description" | grep -q "\"forge\":\"$forge\""
+                      echo "$description" | grep -q '"protocolVersion":2'
+                  done
 
             - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               with:
@@ -57,6 +59,8 @@ jobs:
                   path: |
                       adapters/github/target/*.deb
                       adapters/github/target/*.rpm
+                      adapters/forgejo/target/*.deb
+                      adapters/forgejo/target/*.rpm
                   if-no-files-found: error
 
             - name: Not publishing
@@ -128,16 +132,20 @@ jobs:
                   CHANNEL: ${{ steps.channel.outputs.channel }}
               run: |
                   set -eux
-                  # A published release is never replaced, as on Central.
-                  if [ "$CHANNEL" = releases ] && curl -sfL "${JF_URL}/artifactory/porelo-dist-deb/dists/releases/main/binary-amd64/Packages" \
-                          | grep -qF "Filename: pool/main/p/porelo-adapter-github/$(basename adapters/github/target/*.deb)"; then
-                      echo "::error::this release is published already"; exit 1
-                  fi
-                  # --flat, or the source directory travels and the package lands away from its siblings.
-                  jf rt upload "adapters/github/target/*.deb" "porelo-dist-deb/pool/main/p/porelo-adapter-github/" \
-                      --flat=true \
-                      --target-props="deb.distribution=${CHANNEL};deb.component=main;deb.architecture=amd64"
-                  jf rt upload "adapters/github/target/*.rpm" "porelo-dist-rpm/${CHANNEL}/" --flat=true
+                  for forge in github forgejo; do
+                      # A published release is never replaced, as on Central.
+                      if [ "$CHANNEL" = releases ] && curl -sfL "${JF_URL}/artifactory/porelo-dist-deb/dists/releases/main/binary-amd64/Packages" \
+                              | grep -qF "Filename: pool/main/p/porelo-adapter-$forge/$(basename adapters/$forge/target/*.deb)"; then
+                          echo "::error::this $forge release is published already"; exit 1
+                      fi
+                  done
+                  for forge in github forgejo; do
+                      # --flat keeps each package beside its siblings.
+                      jf rt upload "adapters/$forge/target/*.deb" "porelo-dist-deb/pool/main/p/porelo-adapter-$forge/" \
+                          --flat=true \
+                          --target-props="deb.distribution=${CHANNEL};deb.component=main;deb.architecture=amd64"
+                      jf rt upload "adapters/$forge/target/*.rpm" "porelo-dist-rpm/${CHANNEL}/" --flat=true
+                  done
 
             # Uploaded is not installable.
             - name: The package is indexed, not merely stored
@@ -148,17 +156,23 @@ jobs:
                   CHANNEL: ${{ steps.channel.outputs.channel }}
               run: |
                   set -eu
-                  DEB="$(basename adapters/github/target/*.deb)"
-                  tries=0
-                  # -L: Artifactory answers a file with a redirect to its cloud storage, and without it the body is empty.
-                  while [ "$tries" -lt 20 ]; do
-                      if jf rt curl -sL -XGET "/porelo-dist-deb/dists/${CHANNEL}/main/binary-amd64/Packages" 2>/dev/null \
-                          | grep -qF "Filename: pool/main/p/porelo-adapter-github/$DEB"; then
-                          echo "  OK    the Debian index lists $DEB"
-                          exit 0
+                  for forge in github forgejo; do
+                      DEB="$(basename adapters/$forge/target/*.deb)"
+                      tries=0
+                      indexed=false
+                      # -L follows Artifactory's cloud-storage redirect without forwarding credentials.
+                      while [ "$tries" -lt 20 ]; do
+                          if jf rt curl -sL -XGET "/porelo-dist-deb/dists/${CHANNEL}/main/binary-amd64/Packages" 2>/dev/null \
+                              | grep -qF "Filename: pool/main/p/porelo-adapter-$forge/$DEB"; then
+                              echo "  OK    the Debian index lists $DEB"
+                              indexed=true
+                              break
+                          fi
+                          tries=$((tries + 1))
+                          sleep 6
+                      done
+                      if [ "$indexed" != true ]; then
+                          echo "::error::$DEB never appeared in the index - uploaded but not indexed"
+                          exit 1
                       fi
-                      tries=$((tries + 1))
-                      sleep 6
                   done
-                  echo "::error::$DEB never appeared in the index - uploaded but not indexed"
-                  exit 1

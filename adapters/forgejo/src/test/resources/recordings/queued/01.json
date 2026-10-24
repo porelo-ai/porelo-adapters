@@ -1,0 +1,11 @@
+{
+  "recorded": false,
+  "why": "The measured pending and running runs share a failed commit; this isolates an outstanding verdict without changing its shape.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=0123456789abcdef0123456789abcdef01234567&limit=50&page=1",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": "{\"total_count\":1,\"workflow_runs\":[{\"id\":10,\"workflow_id\":\"wait.yml\",\"status\":\"waiting\"}]}"
+}

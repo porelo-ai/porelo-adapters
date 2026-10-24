@@ -1,0 +1,11 @@
+{
+  "recorded": false,
+  "why": "Generated boundary case in the measured Forgejo response shape.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/jobs/1/logs",
+  "status": 200,
+  "headers": {
+    "content-type": "text/plain"
+  },
+  "bodyBytes": 3145728
+}

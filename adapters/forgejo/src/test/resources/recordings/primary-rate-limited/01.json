@@ -1,0 +1,12 @@
+{
+  "recorded": false,
+  "why": "No rate limit was triggered in the local Forgejo; both cases exercise Retry-After with HTTP 429.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=0123456789abcdef0123456789abcdef01234567&limit=50&page=1",
+  "status": 429,
+  "headers": {
+    "content-type": "application/json",
+    "Retry-After": "60"
+  },
+  "body": "{\"message\":\"rate limited\"}"
+}

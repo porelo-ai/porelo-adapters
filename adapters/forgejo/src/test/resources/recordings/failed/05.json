@@ -1,0 +1,18 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-10-24",
+  "capture": "log-fail-5",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/jobs/5/logs",
+  "status": 200,
+  "headers": {
+    "content-type": "text/plain; charset=utf-8"
+  },
+  "bodyFile": "job-5.txt",
+  "reduction": {
+    "originalBytes": 164356,
+    "retainedBytes": 69632,
+    "originalSha256": "ca3950fdac999dc68e9da1cb43c7c00b2b83086cc658257c4991a278c004b678",
+    "retainedSha256": "0c2ba559717e30c7844fb8e04b38a5ce80d660f203eb4d3249a8fb2386216955"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "recorded": false,
+  "why": "A closed transport has no HTTP response to capture.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=0123456789abcdef0123456789abcdef01234567&limit=50&page=1",
+  "status": 0,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": ""
+}

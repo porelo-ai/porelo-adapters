@@ -16,6 +16,7 @@ import java.util.Map;
 import org.fuin.porelo.build.api.Build;
 import org.fuin.porelo.build.api.BuildRefused;
 import org.fuin.porelo.build.api.Target;
+import org.fuin.porelo.build.http.Http;
 import org.junit.jupiter.api.Test;
 
 class GitHubReaderTest {

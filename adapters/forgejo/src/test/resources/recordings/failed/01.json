@@ -1,0 +1,12 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-10-24",
+  "capture": "runs-fail",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=e95e5cc23d1b979120b3ca160c40a32514f1bd8b&limit=50&page=1",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json;charset=utf-8"
+  },
+  "body": "{\"total_count\":3,\"workflow_runs\":[{\"id\":6,\"workflow_id\":\"wait.yml\",\"status\":\"success\"},{\"id\":5,\"workflow_id\":\"ok.yml\",\"status\":\"success\"},{\"id\":4,\"workflow_id\":\"fail.yml\",\"status\":\"failure\"}]}"
+}

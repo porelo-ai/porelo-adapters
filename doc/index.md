@@ -1,4 +1,4 @@
-# Build reader for GitHub
+# Build adapters
 
 A task in an `online` project pushes its branch to GitHub, and GitHub Actions builds it somewhere the task cannot
 see. This reader is what lets Porelo tell the task how that build went. Porelo finds it installed on the host, asks it
@@ -45,3 +45,32 @@ A refused token is reported with GitHub's own message and what was asked, such a
 `GitHub refused this credential /repos/<owner>/<name>/git/ref/heads/<branch> (403): Resource not accessible by
 personal access token`. The token is stored in Porelo's vault under the name the project file's `builds.credential`
 gives.
+
+## Forgejo Actions
+
+Install `porelo-adapter-forgejo` from the same package repository as Porelo. It provides
+`/usr/libexec/porelo/builds/forgejo`; `describe` answers
+`{"protocolVersion":2,"forge":"forgejo"}`. The package has no replacement relationship with the GitHub adapter.
+
+A project's configuration names the forge and its API explicitly:
+
+```yaml
+builds:
+  forge: forgejo
+  api: https://<host>/api/v1
+  credential: forgejo
+```
+
+Forgejo has no public default API address. For a Forgejo on this machine, Porelo's next release also accepts
+`api: http://127.0.0.1:<port>/api/v1` on the host's loopback interface. The token is held in Porelo's vault and
+passed to the adapter in each call, as `Authorization: token <token>` on API requests. Redirects are refused;
+credentials never travel to a redirect destination. Public repositories can allow anonymous reads, although
+a configured credential still accompanies the adapter's requests.
+
+The adapter reads each workflow's single status: failure takes precedence over outstanding runs, then
+cancellation, then success. `waiting` and `blocked` are queued, `running` is running, and `success` and `skipped`
+are successful. Unrecognized statuses produce an unknown verdict naming the value. Jobs are named
+`<workflow_id> / <job name>` in Forgejo's order. A job that never executed has no log; this does not make the
+repository absent. Log tails, job counts, and the total log budget follow the build API's limits.
+
+See the [contract documentation](contract.md) for recordings and tests.

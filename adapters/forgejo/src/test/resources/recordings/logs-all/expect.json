@@ -1,0 +1,14 @@
+{
+  "jobs": [
+    {
+      "name": "wait.yml / first",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/0/name"
+      ],
+      "resultFrom": "02.json#/0/status",
+      "log": "03.json"
+    }
+  ]
+}

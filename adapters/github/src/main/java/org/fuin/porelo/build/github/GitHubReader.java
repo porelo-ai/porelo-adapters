@@ -17,6 +17,7 @@ import org.fuin.porelo.build.api.BuildMain;
 import org.fuin.porelo.build.api.BuildReader;
 import org.fuin.porelo.build.api.BuildRefused;
 import org.fuin.porelo.build.api.Target;
+import org.fuin.porelo.build.http.Http;
 import org.fuin.porelo.wire.Json;
 import org.fuin.porelo.wire.JsonException;
 import org.jspecify.annotations.Nullable;

@@ -1,0 +1,12 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-10-24",
+  "capture": "no-repo",
+  "method": "GET",
+  "path": "/repos/porelo-ai/no-such-repository-for-the-suite/branches/main",
+  "status": 404,
+  "headers": {
+    "content-type": "application/json;charset=utf-8"
+  },
+  "body": "{\"message\":\"The target couldn't be found.\"}"
+}

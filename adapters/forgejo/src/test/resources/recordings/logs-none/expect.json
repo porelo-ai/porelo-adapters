@@ -1,0 +1,40 @@
+{
+  "jobs": [
+    {
+      "name": "wait.yml / first",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/0/name"
+      ],
+      "resultFrom": "02.json#/0/status"
+    },
+    {
+      "name": "ok.yml / build",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/1/workflow_id",
+        "03.json#/0/name"
+      ],
+      "resultFrom": "03.json#/0/status"
+    },
+    {
+      "name": "ok.yml / lint",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/1/workflow_id",
+        "03.json#/1/name"
+      ],
+      "resultFrom": "03.json#/1/status"
+    },
+    {
+      "name": "fail.yml / test",
+      "result": "failure",
+      "nameFrom": [
+        "01.json#/workflow_runs/2/workflow_id",
+        "04.json#/0/name"
+      ],
+      "resultFrom": "04.json#/0/status"
+    }
+  ]
+}

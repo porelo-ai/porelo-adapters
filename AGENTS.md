@@ -2,8 +2,8 @@
 
 ## What this repository is
 
-Porelo's build adapters and their published contract suite. Porelo finds the GitHub adapter under
-`/usr/libexec/porelo/builds/github` and speaks `org.fuin.porelo.Build2` with, through `porelo-build-api`. It answers the head commit of a branch and what the
+Porelo's build adapters and their published contract suite. Porelo finds the GitHub and Forgejo adapters under
+`/usr/libexec/porelo/builds/github` and `/usr/libexec/porelo/builds/forgejo` and speaks `org.fuin.porelo.Build2` with, through `porelo-build-api`. It answers the head commit of a branch and what the
 build of a commit did - the verdict across its workflow runs, the failing job, and the last 64 KiB of that job's
 log. It holds no secret: Porelo reads the forge token from the vault on the host and passes it in each call.
 
@@ -15,6 +15,7 @@ log. It holds no secret: Porelo reads the forge token from the vault on the host
 - **A changelog entry is one YAML file under `changelog/unreleased/`** with a one-sentence `title` and a `type`.
 - **The tests tagged `documents` run alone with `./mvnw -B -s settings.xml -Pdocuments test`.**
 - **Issue prefix: `GH`**, in `issues/`.
+- **`adapters/forgejo/src/test/record/record-forgejo.sh` is shell because it drives podman to capture Forgejo responses.**
 - **Skills used:** `graal`, `java-code-review`, `test-quality`, `security-audit`, `clean-code`.
 
 ## Shared across the Porelo repositories

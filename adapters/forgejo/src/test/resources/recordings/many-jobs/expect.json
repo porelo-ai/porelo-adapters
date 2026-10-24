@@ -1,0 +1,545 @@
+{
+  "jobs": [
+    {
+      "name": "matrix.yml / leg 1",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/0/name"
+      ],
+      "resultFrom": "02.json#/0/status"
+    },
+    {
+      "name": "matrix.yml / leg 2",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/1/name"
+      ],
+      "resultFrom": "02.json#/1/status"
+    },
+    {
+      "name": "matrix.yml / leg 3",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/2/name"
+      ],
+      "resultFrom": "02.json#/2/status"
+    },
+    {
+      "name": "matrix.yml / leg 4",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/3/name"
+      ],
+      "resultFrom": "02.json#/3/status"
+    },
+    {
+      "name": "matrix.yml / leg 5",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/4/name"
+      ],
+      "resultFrom": "02.json#/4/status"
+    },
+    {
+      "name": "matrix.yml / leg 6",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/5/name"
+      ],
+      "resultFrom": "02.json#/5/status"
+    },
+    {
+      "name": "matrix.yml / leg 7",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/6/name"
+      ],
+      "resultFrom": "02.json#/6/status"
+    },
+    {
+      "name": "matrix.yml / leg 8",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/7/name"
+      ],
+      "resultFrom": "02.json#/7/status"
+    },
+    {
+      "name": "matrix.yml / leg 9",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/8/name"
+      ],
+      "resultFrom": "02.json#/8/status"
+    },
+    {
+      "name": "matrix.yml / leg 10",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/9/name"
+      ],
+      "resultFrom": "02.json#/9/status"
+    },
+    {
+      "name": "matrix.yml / leg 11",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/10/name"
+      ],
+      "resultFrom": "02.json#/10/status"
+    },
+    {
+      "name": "matrix.yml / leg 12",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/11/name"
+      ],
+      "resultFrom": "02.json#/11/status"
+    },
+    {
+      "name": "matrix.yml / leg 13",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/12/name"
+      ],
+      "resultFrom": "02.json#/12/status"
+    },
+    {
+      "name": "matrix.yml / leg 14",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/13/name"
+      ],
+      "resultFrom": "02.json#/13/status"
+    },
+    {
+      "name": "matrix.yml / leg 15",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/14/name"
+      ],
+      "resultFrom": "02.json#/14/status"
+    },
+    {
+      "name": "matrix.yml / leg 16",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/15/name"
+      ],
+      "resultFrom": "02.json#/15/status"
+    },
+    {
+      "name": "matrix.yml / leg 17",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/16/name"
+      ],
+      "resultFrom": "02.json#/16/status"
+    },
+    {
+      "name": "matrix.yml / leg 18",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/17/name"
+      ],
+      "resultFrom": "02.json#/17/status"
+    },
+    {
+      "name": "matrix.yml / leg 19",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/18/name"
+      ],
+      "resultFrom": "02.json#/18/status"
+    },
+    {
+      "name": "matrix.yml / leg 20",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/19/name"
+      ],
+      "resultFrom": "02.json#/19/status"
+    },
+    {
+      "name": "matrix.yml / leg 21",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/20/name"
+      ],
+      "resultFrom": "02.json#/20/status"
+    },
+    {
+      "name": "matrix.yml / leg 22",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/21/name"
+      ],
+      "resultFrom": "02.json#/21/status"
+    },
+    {
+      "name": "matrix.yml / leg 23",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/22/name"
+      ],
+      "resultFrom": "02.json#/22/status"
+    },
+    {
+      "name": "matrix.yml / leg 24",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/23/name"
+      ],
+      "resultFrom": "02.json#/23/status"
+    },
+    {
+      "name": "matrix.yml / leg 25",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/24/name"
+      ],
+      "resultFrom": "02.json#/24/status"
+    },
+    {
+      "name": "matrix.yml / leg 26",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/25/name"
+      ],
+      "resultFrom": "02.json#/25/status"
+    },
+    {
+      "name": "matrix.yml / leg 27",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/26/name"
+      ],
+      "resultFrom": "02.json#/26/status"
+    },
+    {
+      "name": "matrix.yml / leg 28",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/27/name"
+      ],
+      "resultFrom": "02.json#/27/status"
+    },
+    {
+      "name": "matrix.yml / leg 29",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/28/name"
+      ],
+      "resultFrom": "02.json#/28/status"
+    },
+    {
+      "name": "matrix.yml / leg 30",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/29/name"
+      ],
+      "resultFrom": "02.json#/29/status"
+    },
+    {
+      "name": "matrix.yml / leg 31",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/30/name"
+      ],
+      "resultFrom": "02.json#/30/status"
+    },
+    {
+      "name": "matrix.yml / leg 32",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/31/name"
+      ],
+      "resultFrom": "02.json#/31/status"
+    },
+    {
+      "name": "matrix.yml / leg 33",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/32/name"
+      ],
+      "resultFrom": "02.json#/32/status"
+    },
+    {
+      "name": "matrix.yml / leg 34",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/33/name"
+      ],
+      "resultFrom": "02.json#/33/status"
+    },
+    {
+      "name": "matrix.yml / leg 35",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/34/name"
+      ],
+      "resultFrom": "02.json#/34/status"
+    },
+    {
+      "name": "matrix.yml / leg 36",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/35/name"
+      ],
+      "resultFrom": "02.json#/35/status"
+    },
+    {
+      "name": "matrix.yml / leg 37",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/36/name"
+      ],
+      "resultFrom": "02.json#/36/status"
+    },
+    {
+      "name": "matrix.yml / leg 38",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/37/name"
+      ],
+      "resultFrom": "02.json#/37/status"
+    },
+    {
+      "name": "matrix.yml / leg 39",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/38/name"
+      ],
+      "resultFrom": "02.json#/38/status"
+    },
+    {
+      "name": "matrix.yml / leg 40",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/39/name"
+      ],
+      "resultFrom": "02.json#/39/status"
+    },
+    {
+      "name": "matrix.yml / leg 41",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/40/name"
+      ],
+      "resultFrom": "02.json#/40/status"
+    },
+    {
+      "name": "matrix.yml / leg 42",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/41/name"
+      ],
+      "resultFrom": "02.json#/41/status"
+    },
+    {
+      "name": "matrix.yml / leg 43",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/42/name"
+      ],
+      "resultFrom": "02.json#/42/status"
+    },
+    {
+      "name": "matrix.yml / leg 44",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/43/name"
+      ],
+      "resultFrom": "02.json#/43/status"
+    },
+    {
+      "name": "matrix.yml / leg 45",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/44/name"
+      ],
+      "resultFrom": "02.json#/44/status"
+    },
+    {
+      "name": "matrix.yml / leg 46",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/45/name"
+      ],
+      "resultFrom": "02.json#/45/status"
+    },
+    {
+      "name": "matrix.yml / leg 47",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/46/name"
+      ],
+      "resultFrom": "02.json#/46/status"
+    },
+    {
+      "name": "matrix.yml / leg 48",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/47/name"
+      ],
+      "resultFrom": "02.json#/47/status"
+    },
+    {
+      "name": "matrix.yml / leg 49",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/48/name"
+      ],
+      "resultFrom": "02.json#/48/status"
+    },
+    {
+      "name": "matrix.yml / leg 50",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/49/name"
+      ],
+      "resultFrom": "02.json#/49/status"
+    },
+    {
+      "name": "matrix.yml / leg 51",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/50/name"
+      ],
+      "resultFrom": "02.json#/50/status"
+    },
+    {
+      "name": "matrix.yml / leg 52",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/51/name"
+      ],
+      "resultFrom": "02.json#/51/status"
+    },
+    {
+      "name": "matrix.yml / leg 53",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/52/name"
+      ],
+      "resultFrom": "02.json#/52/status"
+    },
+    {
+      "name": "matrix.yml / leg 54",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/53/name"
+      ],
+      "resultFrom": "02.json#/53/status"
+    },
+    {
+      "name": "matrix.yml / leg 55",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/54/name"
+      ],
+      "resultFrom": "02.json#/54/status"
+    },
+    {
+      "name": "matrix.yml / leg 56",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/55/name"
+      ],
+      "resultFrom": "02.json#/55/status"
+    },
+    {
+      "name": "matrix.yml / leg 57",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/56/name"
+      ],
+      "resultFrom": "02.json#/56/status"
+    },
+    {
+      "name": "matrix.yml / leg 58",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/57/name"
+      ],
+      "resultFrom": "02.json#/57/status"
+    },
+    {
+      "name": "matrix.yml / leg 59",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/58/name"
+      ],
+      "resultFrom": "02.json#/58/status"
+    },
+    {
+      "name": "matrix.yml / leg 60",
+      "result": "failure",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/59/name"
+      ],
+      "resultFrom": "02.json#/59/status",
+      "log": "03.json"
+    }
+  ]
+}

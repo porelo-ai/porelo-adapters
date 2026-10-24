@@ -1,0 +1,85 @@
+{
+  "jobs": [
+    {
+      "name": "Build / Whether the leased leg is proven",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/0/name"
+      ],
+      "resultFrom": "02.json#/jobs/0/conclusion"
+    },
+    {
+      "name": "Build / Linux",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/1/name"
+      ],
+      "resultFrom": "02.json#/jobs/1/conclusion"
+    },
+    {
+      "name": "Build / Windows",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/2/name"
+      ],
+      "resultFrom": "02.json#/jobs/2/conclusion"
+    },
+    {
+      "name": "Build / Test against a leased machine",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/3/name"
+      ],
+      "resultFrom": "02.json#/jobs/3/conclusion"
+    },
+    {
+      "name": "Build / Prove the packages install (fedora:44, fedora:44@sha256:43b29f65a41eb9c35e1cd5323e3bdf3b655c2357a...",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/4/name"
+      ],
+      "resultFrom": "02.json#/jobs/4/conclusion"
+    },
+    {
+      "name": "Build / Prove the packages install (fedora:43, fedora:43@sha256:a651ddf48ea28a06ed4e1e6519f51c9f47e7a5a13...",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/5/name"
+      ],
+      "resultFrom": "02.json#/jobs/5/conclusion"
+    },
+    {
+      "name": "Build / Prove the packages install (debian:13, debian:13@sha256:913f6706df59a68922d1dd08f78c2476560a8d367...",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/6/name"
+      ],
+      "resultFrom": "02.json#/jobs/6/conclusion"
+    },
+    {
+      "name": "Build / Prove the packages install (ubuntu:26.04, ubuntu:26.04@sha256:f144425ff09be612d6d9ad965196e9cdc23...",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/7/name"
+      ],
+      "resultFrom": "02.json#/jobs/7/conclusion"
+    },
+    {
+      "name": "Build / Publish to Artifactory",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/8/name"
+      ],
+      "resultFrom": "02.json#/jobs/8/conclusion"
+    }
+  ]
+}

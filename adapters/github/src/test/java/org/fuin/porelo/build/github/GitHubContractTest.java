@@ -7,6 +7,6 @@ import org.fuin.porelo.build.contract.AdapterContract;
 class GitHubContractTest extends AdapterContract {
 
     GitHubContractTest() {
-        super(GitHubReader.class, "github", Path.of("src/test/resources/recordings"));
+        super(GitHubReader.class, "github", Path.of("src/test/resources/recordings"), "Bearer");
     }
 }

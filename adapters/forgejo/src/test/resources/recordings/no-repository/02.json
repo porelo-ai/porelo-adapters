@@ -1,0 +1,11 @@
+{
+  "recorded": false,
+  "why": "The missing repository confirmation was not captured; it uses the measured 404 shape.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/no-such-repository-for-the-suite",
+  "status": 404,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": "{\"message\":\"The target couldn't be found.\"}"
+}

@@ -1,4 +1,4 @@
-package org.fuin.porelo.build.github;
+package org.fuin.porelo.build.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -10,6 +10,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.fuin.porelo.build.api.Build;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,5 +71,46 @@ class HttpTest {
         assertThat(Http.overNetwork().get(log(), Map.of(), 0).body())
                 .as("an API answer is read whole, since JSON cut at its start is none")
                 .hasSize(LOG);
+    }
+
+    @Test
+    void redirectsNeverForwardCredentialsToAnotherOrigin() throws Exception {
+        // Automatic redirects would leak a forge token to a response-controlled destination.
+        final AtomicInteger foreignRequests = new AtomicInteger();
+        final HttpServer foreign = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        foreign.createContext(
+                "/stolen",
+                exchange -> {
+                    foreignRequests.incrementAndGet();
+                    exchange.sendResponseHeaders(200, -1);
+                    exchange.close();
+                });
+        foreign.start();
+        try {
+            server.createContext(
+                    "/redirect",
+                    exchange -> {
+                        exchange.getResponseHeaders()
+                                .set(
+                                        "Location",
+                                        "http://127.0.0.1:"
+                                                + foreign.getAddress().getPort()
+                                                + "/stolen");
+                        exchange.sendResponseHeaders(302, -1);
+                        exchange.close();
+                    });
+            final URI redirect =
+                    URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/redirect");
+            final Http.Response response =
+                    Http.overNetwork().get(redirect, Map.of("Authorization", "token test-only"), 0);
+            assertThat(foreignRequests.get())
+                    .as("no request or credential reaches the foreign origin")
+                    .isZero();
+            assertThat(response.status())
+                    .as("the adapter decides what the redirect means")
+                    .isEqualTo(302);
+        } finally {
+            foreign.stop(0);
+        }
     }
 }

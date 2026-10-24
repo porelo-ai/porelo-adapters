@@ -11,6 +11,8 @@
     <packaging>pom</packaging>
     <name>Porelo Adapter Parent</name>
     <modules>
+        <module>http</module>
         <module>github</module>
+        <module>forgejo</module>
     </modules>
 </project>

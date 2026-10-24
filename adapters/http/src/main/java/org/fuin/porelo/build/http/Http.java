@@ -1,4 +1,4 @@
-package org.fuin.porelo.build.github;
+package org.fuin.porelo.build.http;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/** One HTTP GET and its answer: the seam a test fakes GitHub at. */
+/** One HTTP GET and its answer: the transport shared by forge adapters. */
 @FunctionalInterface
 public interface Http {
 

@@ -16,6 +16,11 @@
     <description>Porelo - Reads what the build of a task's push did on GitHub Actions</description>
 
     <dependencies>
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-adapter-http</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- compile: the build API and the wire it speaks, and nothing else of Porelo's. -->
 
@@ -273,6 +278,11 @@
                             </execution>
                         </executions>
                         <dependencies>
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-adapter-http</artifactId>
+            <version>${project.version}</version>
+        </dependency>
                             <dependency>
                                 <groupId>org.fuin.porelo</groupId>
                                 <artifactId>porelo-release</artifactId>

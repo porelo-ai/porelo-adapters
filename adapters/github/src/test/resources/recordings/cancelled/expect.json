@@ -1,0 +1,13 @@
+{
+  "jobs": [
+    {
+      "name": "Build / Linux",
+      "result": "cancelled",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/0/name"
+      ],
+      "resultFrom": "02.json#/jobs/0/conclusion"
+    }
+  ]
+}

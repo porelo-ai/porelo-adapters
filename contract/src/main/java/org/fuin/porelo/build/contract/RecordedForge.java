@@ -19,7 +19,8 @@ import org.fuin.porelo.wire.Json;
 
 final class RecordedForge implements AutoCloseable {
 
-    private record Exchange(
+    record Exchange(
+            String file,
             String method,
             String path,
             String host,
@@ -29,16 +30,26 @@ final class RecordedForge implements AutoCloseable {
 
     private final HttpServer server;
     private final String token;
+    private final String scheme;
     private final List<Exchange> exchanges;
     private final List<String> failures = new CopyOnWriteArrayList<>();
     private int next;
 
-    RecordedForge(final Path directory, final String token) throws IOException {
+    RecordedForge(final Path directory, final String token, final String scheme)
+            throws IOException {
+        if (!scheme.matches("[A-Za-z][A-Za-z0-9+.-]*")) {
+            throw new IllegalArgumentException("Invalid authorization scheme");
+        }
         this.token = token;
+        this.scheme = scheme;
         exchanges = read(directory);
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", this::serve);
         server.start();
+    }
+
+    List<Exchange> exchanges() {
+        return exchanges;
     }
 
     String token() {
@@ -63,13 +74,16 @@ final class RecordedForge implements AutoCloseable {
         try (request) {
             final String asked = request.getRequestMethod() + " " + request.getRequestURI();
             final boolean blob =
-                    ("localhost:" + server.getAddress().getPort())
+                    !("127.0.0.1:" + server.getAddress().getPort())
                             .equalsIgnoreCase(request.getRequestHeaders().getFirst("Host"));
-            final String authorization = request.getRequestHeaders().getFirst("Authorization");
-            if (blob ? authorization != null : !("Bearer " + token).equals(authorization)) {
+            final List<String> authorization =
+                    request.getRequestHeaders().getOrDefault("Authorization", List.of());
+            if (blob
+                    ? !authorization.isEmpty()
+                    : !authorization.equals(List.of(scheme + " " + token))) {
                 failures.add(
                         blob
-                                ? "Authorization reached blob host: " + asked
+                                ? "Authorization left API origin: " + asked
                                 : "API token missing or wrong: " + asked);
             }
             final int index =
@@ -128,8 +142,11 @@ final class RecordedForge implements AutoCloseable {
                 if (!(parsed instanceof Map<?, ?> map)) {
                     throw new IOException("Expected an exchange object: " + path);
                 }
-                for (final Map<?, ?> expanded : expand(map)) {
-                    result.add(readExchange(expanded, directory, path));
+                final List<Map<?, ?>> expanded = expand(map);
+                for (int index = 0; index < expanded.size(); index++) {
+                    final String reference =
+                            path.getFileName() + (map.containsKey("repeat") ? "#" + index : "");
+                    result.add(readExchange(expanded.get(index), directory, path, reference));
                 }
             }
             return List.copyOf(result);
@@ -161,7 +178,8 @@ final class RecordedForge implements AutoCloseable {
         return result;
     }
 
-    private static Exchange readExchange(final Map<?, ?> map, final Path directory, final Path path)
+    private static Exchange readExchange(
+            final Map<?, ?> map, final Path directory, final Path path, final String reference)
             throws IOException {
         final String method = text(map, "method");
         final String requestPath = text(map, "path");
@@ -188,7 +206,13 @@ final class RecordedForge implements AutoCloseable {
             headers.put(name, value);
         }
         return new Exchange(
-                method, requestPath, host, status, Map.copyOf(headers), body(map, directory));
+                reference,
+                method,
+                requestPath,
+                host,
+                status,
+                Map.copyOf(headers),
+                body(map, directory));
     }
 
     private static byte[] body(final Map<?, ?> map, final Path directory) throws IOException {

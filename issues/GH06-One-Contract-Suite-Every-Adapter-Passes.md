@@ -1,6 +1,6 @@
 # GH06 — One Contract Suite Every Adapter Passes
 
-**Status:** Implementing, for sprint 3; blocked by `porelo` [B253](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b253).
+**Status:** Review, published by the Build on `342b5da` of 2026-10-24.
 **Size:** L - a new published module with a suite and its recordings, the adapter on the second contract, its
 packages renamed, and the rename's round across this repository and three others.
 

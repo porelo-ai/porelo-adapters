@@ -1,6 +1,6 @@
 # GH07 — The Forgejo Adapter Answers As The GitHub One
 
-**Status:** Implementing, for sprint 3; blocked by [GH06](README.md#gh06) and `porelo` [B275](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b275).
+**Status:** Review, published by the Build on `342b5da` of 2026-10-24.
 **Size:** M - one adapter module beside the `github` one, a shared HTTP module, recordings made from a Forgejo in
 podman, and its packages.
 

@@ -1,8 +1,9 @@
-site_name: Porelo Build GitHub
+site_name: Porelo Adapters
 docs_dir: doc
 strict: true
 nav:
     - Overview: index.md
+    - Contract recordings: contract.md
 validation:
     links:
         anchors: warn

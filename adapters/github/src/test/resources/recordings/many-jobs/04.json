@@ -1,0 +1,12 @@
+{
+  "recorded": false,
+  "why": "The recorded builds have nine jobs; sixty are needed to exercise the fifty-job limit.",
+  "method": "GET",
+  "path": "/log?sig=x",
+  "status": 200,
+  "headers": {
+    "content-type": "text/plain"
+  },
+  "body": "the last leg failed\n",
+  "host": "blob"
+}

@@ -1,0 +1,11 @@
+{
+  "recorded": true,
+  "source": "github.com, 2026-10-24",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/git/ref/heads/main",
+  "status": 401,
+  "headers": {
+    "content-type": "application/json; charset=utf-8"
+  },
+  "body": "{\"message\":\"Bad credentials\"}"
+}

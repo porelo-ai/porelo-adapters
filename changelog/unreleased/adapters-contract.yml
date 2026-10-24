@@ -1,0 +1,2 @@
+title: "Every build adapter is held to one published contract suite, porelo-build-contract, replaying recorded forge answers over the build contract's second version; the GitHub adapter passes it as the package porelo-adapter-github, which replaces porelo-build-github."
+type: changed

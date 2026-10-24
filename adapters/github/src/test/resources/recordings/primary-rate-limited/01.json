@@ -1,0 +1,15 @@
+{
+  "recorded": false,
+  "why": "A primary rate limit could not be triggered on demand; reset is omitted for the deterministic sixty-second fallback.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=0123456789abcdef0123456789abcdef01234567&per_page=100&page=1",
+  "status": 403,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "0",
+    "x-ratelimit-used": "5000",
+    "x-ratelimit-resource": "core"
+  },
+  "body": "{\"message\":\"API rate limit exceeded.\"}"
+}

@@ -1,0 +1,17 @@
+{
+  "recorded": false,
+  "why": "A secondary rate limit could not be triggered on demand.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=0123456789abcdef0123456789abcdef01234567&per_page=100&page=1",
+  "status": 403,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4981",
+    "x-ratelimit-reset": "1792866848",
+    "x-ratelimit-used": "19",
+    "x-ratelimit-resource": "core",
+    "retry-after": "30"
+  },
+  "body": "{\"message\":\"You have exceeded a secondary rate limit.\"}"
+}

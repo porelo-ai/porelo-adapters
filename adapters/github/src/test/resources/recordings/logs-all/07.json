@@ -1,0 +1,17 @@
+{
+  "recorded": false,
+  "why": "The green job logs were not recorded; this redirect and log body are generated.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/jobs/120879192632/logs",
+  "status": 302,
+  "headers": {
+    "content-type": "text/html;charset=utf-8",
+    "location": "{{blob}}/green-log/120879192632",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4997",
+    "x-ratelimit-reset": "1792866884",
+    "x-ratelimit-used": "3",
+    "x-ratelimit-resource": "core"
+  },
+  "body": ""
+}

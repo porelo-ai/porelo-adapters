@@ -1,6 +1,6 @@
 # GH06 — One Contract Suite Every Adapter Passes
 
-**Status:** Backlog, for sprint 3; blocked by `porelo` [B253](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b253).
+**Status:** Implementing, for sprint 3; blocked by `porelo` [B253](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b253).
 **Size:** L - a new published module with a suite and its recordings, the adapter on the second contract, its
 packages renamed, and the rename's round across this repository and three others.
 
@@ -60,6 +60,19 @@ Read in `pom.xml`, `reader/` (`GitHubReader`, `Http`, their tests, `src/deb`), `
 **Red first:** `GitHubContractTest` on today's adapter: it speaks `Build1`, so every case is refused at the handshake.
 Then each case is seen red once with the adapter broken for it (a mapping changed, a header dropped).
 
+The contract replay uses reduced captures of `porelo-ai/porelo-frontend`: the failed and passed runs each
+have nine jobs, and the failed Windows job's log arrives through a 302 to a blob host without authorization.
+The real head, missing branch, empty run list, 401, and ref 404 are also replayed. The uncaptured repository
+confirmation after the ref 404 and the green jobs' log downloads are explicitly generated. Queued, running,
+cancelled, both rate limits, transport failure, and size boundaries are generated from the real reduced
+shapes; the captures do not establish what a just-pushed queued commit returns. The cases and their
+provenance are specified in [the contract documentation](../doc/contract.md).
+
+The failed-job capture contains no match for the four checked credential markers. Its retained replay body
+has 69,632 bytes, preserving a 4 KiB prefix before the expected 64 KiB tail, whose digest is fixed in the
+suite independently of the replay files. Generated matrix lists use bounded counts; repeated redirect/blob
+exchanges keep all fifty log downloads mandatory with three files for the shared-budget case.
+
 ## Acceptance
 
 - The suite runs every case of *Plan* step 3 against `porelo-adapter-github` from recordings, with no network; each
@@ -70,6 +83,5 @@ Then each case is seen red once with the adapter broken for it (a mapping change
 
 ## To be checked
 
-- That `InstalledBuildReader` over a socket is all the suite needs, so `porelo` adds no in-process seam.
-- Whether GitHub answers a `head_sha` with runs that have not started as `queued` or with no runs at all, in the
-  recording; the case for a commit just pushed follows what it answers.
+- Whether GitHub answers a just-pushed `head_sha` with runs that have not started as `queued` or with no runs;
+  the captures contain only completed runs, so the queued case remains explicitly generated.

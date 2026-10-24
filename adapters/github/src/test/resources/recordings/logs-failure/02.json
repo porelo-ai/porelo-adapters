@@ -1,0 +1,16 @@
+{
+  "recorded": true,
+  "source": "github.com, 2026-10-24",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs/40105516390/jobs?per_page=100&page=1",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4978",
+    "x-ratelimit-reset": "1792866848",
+    "x-ratelimit-used": "22",
+    "x-ratelimit-resource": "core"
+  },
+  "body": "{\"total_count\":9,\"jobs\":[{\"id\":120906272787,\"name\":\"Linux\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"id\":120906272964,\"name\":\"Whether the leased leg is proven\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"id\":120906273007,\"name\":\"Windows\",\"status\":\"completed\",\"conclusion\":\"failure\"},{\"id\":120906394590,\"name\":\"Test against a leased machine\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"id\":120908845473,\"name\":\"Prove the packages install (ubuntu:26.04, ubuntu:26.04@sha256:f144425ff09be612d6d9ad965196e9cdc23...\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"id\":120908845482,\"name\":\"Prove the packages install (debian:13, debian:13@sha256:913f6706df59a68922d1dd08f78c2476560a8d367...\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"id\":120908845495,\"name\":\"Prove the packages install (fedora:43, fedora:43@sha256:a651ddf48ea28a06ed4e1e6519f51c9f47e7a5a13...\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"id\":120908845497,\"name\":\"Prove the packages install (fedora:44, fedora:44@sha256:43b29f65a41eb9c35e1cd5323e3bdf3b655c2357a...\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"id\":120910287412,\"name\":\"Publish to Artifactory\",\"status\":\"completed\",\"conclusion\":\"success\"}]}"
+}

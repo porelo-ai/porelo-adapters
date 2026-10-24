@@ -1,18 +1,5 @@
-# porelo-build-github
+# Porelo Adapters
 
-<img src="doc/images/early-bird.svg" width="350" alt="Early bird - work in progress">
-
-> **Early bird - work in progress.** Porelo is not stable yet: until release 1.0.0, its code, commands
-> and file formats can change without notice.
-
-Porelo's build reader for GitHub Actions: it tells a task in an `online` project what the build of its own push did -
-the verdict, the failing job, and the tail of that job's log - without the forge token entering the task.
-
-It is a build reader, not Porelo: it decides nothing about a task and keeps nothing between calls.
-
-**Modules:** [reader](reader/README.md), the reader and its native executable.
-
-**Documentation: [porelo-ai.github.io/build-github](https://porelo-ai.github.io/build-github/)**, one chapter of
-[all of Porelo's documentation](https://porelo-ai.github.io).
-
-[Contributing](CONTRIBUTING.md), and [reporting a vulnerability](SECURITY.md).
+Porelo Adapters provides build adapters and the shared [contract suite](contract/README.md) that tests them through `org.fuin.porelo.Build2`.
+The [adapters](adapters/README.md) group holds the GitHub executable; adapters depend only on `porelo-build-api` and `porelo-wire` from Porelo and receive the forge token in each call.
+See the [documentation](doc/index.md), [contributing guide](CONTRIBUTING.md), and [security policy](SECURITY.md).

@@ -11,8 +11,8 @@ From the same package repositories as Porelo, on any system Porelo supports (Ubu
 and 44):
 
 ```
-sudo apt install porelo-build-github      # Debian and Ubuntu
-sudo dnf install porelo-build-github      # Fedora
+sudo apt install porelo-adapter-github      # Debian and Ubuntu
+sudo dnf install porelo-adapter-github      # Fedora
 ```
 
 The package depends on `porelo` and puts the reader at `/usr/libexec/porelo/builds/github`, where Porelo looks for the
@@ -20,7 +20,7 @@ reader a project names with `builds: { forge: github }`; nothing is registered o
 is there and answers:
 
 ```
-/usr/libexec/porelo/builds/github describe     # {"protocolVersion":1,"forge":"github"}
+/usr/libexec/porelo/builds/github describe     # {"protocolVersion":2,"forge":"github"}
 ```
 
 A reader in `~/.local/share/porelo/builds/github` is found first, for one account only; the package needs none.

@@ -1,0 +1,17 @@
+{
+  "recorded": false,
+  "why": "A deterministic long log is generated to exercise tail retention across multiple read windows.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/jobs/10/logs",
+  "status": 302,
+  "headers": {
+    "content-type": "text/html;charset=utf-8",
+    "location": "{{blob}}/log?sig=x",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4997",
+    "x-ratelimit-reset": "1792866884",
+    "x-ratelimit-used": "3",
+    "x-ratelimit-resource": "core"
+  },
+  "body": ""
+}

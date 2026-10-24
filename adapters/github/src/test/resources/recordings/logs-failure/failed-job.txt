@@ -1,0 +1,522 @@
+i/ansi_test.dart: stripping takes every escape, not only the colors
+2026-10-24T15:17:10.0307828Z 07:20 +1065 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/ansi_test.dart: stripping leaves the words and nothing else
+2026-10-24T15:17:10.0744434Z 07:20 +1066 ~28: loading D:/a/porelo-frontend/porelo-frontend/test/ui/attention_resolution_test.dart
+2026-10-24T15:17:10.8583637Z 07:21 +1066 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/attention_resolution_test.dart: each waiting row unlocks only its own machine
+2026-10-24T15:17:11.3130987Z 07:21 +1067 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/attention_resolution_test.dart: each row that is not a work tile spans the whole pane
+2026-10-24T15:17:11.3465996Z 07:21 +1068 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/attention_resolution_test.dart: missing and unknown wait reasons never offer unlock
+2026-10-24T15:17:11.3913766Z 07:21 +1069 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/attention_resolution_test.dart: resolved rows disable actions and expire on the supplied clock
+2026-10-24T15:17:11.4363195Z 07:21 +1070 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/attention_resolution_test.dart: zero retention removes a resolved row immediately
+2026-10-24T15:17:11.4608403Z 07:21 +1071 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/attention_resolution_test.dart: a returning condition leaves the resolved list
+2026-10-24T15:17:11.4947030Z 07:21 +1072 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/attention_resolution_test.dart: an explicit read moves a message to recently resolved and keeps its text openable
+2026-10-24T15:17:11.7183209Z 07:22 +1073 ~28: loading D:/a/porelo-frontend/porelo-frontend/test/ui/command_tile_test.dart
+2026-10-24T15:17:12.7903025Z 07:23 +1073 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/command_tile_test.dart: a tile runs exactly its command once per press
+2026-10-24T15:17:13.2580579Z 07:23 +1074 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/command_tile_test.dart: a refused command shows its reason and never runs from its tile
+2026-10-24T15:17:13.3352649Z 07:23 +1075 ~28: loading D:/a/porelo-frontend/porelo-frontend/test/ui/conversation_readiness_test.dart
+2026-10-24T15:17:14.0737579Z 07:24 +1075 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/conversation_readiness_test.dart: a refused join stays a refusal in Messages and never reads as joined
+2026-10-24T15:17:14.6300771Z 07:24 +1076 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/conversation_readiness_test.dart: a refused forward stays a refusal in Messages and never reads as joined
+2026-10-24T15:17:14.7512930Z 07:25 +1077 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/conversation_readiness_test.dart: a joined account becomes ready only after its forward answers
+2026-10-24T15:17:14.7596111Z 07:25 +1078 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/conversation_readiness_test.dart: a failed forward can be retried without another daemon join
+2026-10-24T15:17:14.7653127Z 07:25 +1079 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/conversation_readiness_test.dart: a forward that fails after joining withdraws readiness until it is restored
+2026-10-24T15:17:14.7991696Z 07:25 +1080 ~28: loading D:/a/porelo-frontend/porelo-frontend/test/ui/dialog_height_test.dart
+2026-10-24T15:17:15.5573554Z 07:25 +1080 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/dialog_height_test.dart: closing with a lot running still reaches the answer
+2026-10-24T15:17:15.9859405Z 07:26 +1081 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/dialog_height_test.dart: choosing how much to build fits a short window
+2026-10-24T15:17:16.0312702Z 07:26 +1082 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/dialog_height_test.dart: a changed host key with many fingerprints still reaches the answer
+2026-10-24T15:17:16.1422522Z 07:26 +1083 ~28: loading D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart
+2026-10-24T15:17:17.0668015Z 07:27 +1083 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: connecting and changing a forge offer no token field
+2026-10-24T15:17:17.5236648Z 07:27 +1084 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: invalid forge address [104, 116, 116, 112, 115, 58, 47, 47, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109] opens no terminal
+2026-10-24T15:17:17.7857957Z 07:28 +1085 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: invalid forge address [103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 112, 97, 116, 104] opens no terminal
+2026-10-24T15:17:17.8942536Z 07:28 +1086 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: invalid forge address [103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 59, 105, 100] opens no terminal
+2026-10-24T15:17:17.9938775Z 07:28 +1087 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: invalid forge address [45, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109] opens no terminal
+2026-10-24T15:17:18.1127171Z 07:28 +1088 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: invalid forge address [117, 115, 101, 114, 64, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109] opens no terminal
+2026-10-24T15:17:18.2002512Z 07:28 +1089 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: invalid forge address [103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 58, 52, 52, 51] opens no terminal
+2026-10-24T15:17:18.2869617Z 07:28 +1090 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: invalid forge address [36, 40, 105, 100, 41, 46, 99, 111, 109] opens no terminal
+2026-10-24T15:17:18.3705657Z 07:28 +1091 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: connecting opens the local helper with one host argument and waits for the store
+2026-10-24T15:17:18.4519472Z 07:28 +1092 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: binding and unbinding leave forge keys alone
+2026-10-24T15:17:18.4779090Z 07:28 +1093 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: binding prompts on the chosen machine and confirms the entry by name
+2026-10-24T15:17:18.5445717Z 07:28 +1094 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: binding refuses an unconfirmed vault entry when readable is false
+2026-10-24T15:17:18.5470420Z 07:28 +1095 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: binding refuses an unconfirmed vault entry when readable is true
+2026-10-24T15:17:18.5485068Z 07:28 +1096 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/forge_credentials_test.dart: clearing leaves legacy deploy keys at the forge
+2026-10-24T15:17:18.5831052Z 07:28 +1097 ~28: loading D:/a/porelo-frontend/porelo-frontend/test/ui/held_message_headline_test.dart
+2026-10-24T15:17:19.3230767Z 07:29 +1097 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/held_message_headline_test.dart: one the person wrote is said as theirs
+2026-10-24T15:17:19.3328602Z 07:29 +1098 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/held_message_headline_test.dart: one the task's agent wrote is said as the task's
+2026-10-24T15:17:19.5260235Z 07:29 +1099 ~28: loading D:/a/porelo-frontend/porelo-frontend/test/ui/host_key_refusal_test.dart
+2026-10-24T15:17:20.3185089Z 07:30 +1099 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/host_key_refusal_test.dart: a managed host key refusal has no trust action
+2026-10-24T15:17:20.7791007Z 07:31 +1100 ~28: loading D:/a/porelo-frontend/porelo-frontend/test/ui/host_preparation_test.dart
+2026-10-24T15:17:21.6752083Z 07:32 +1100 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/host_preparation_test.dart: a preparing server opens its protocol and its Needs you stop reaches the same terminal
+2026-10-24T15:17:22.6046112Z 07:32 +1101 ~28: loading D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart
+2026-10-24T15:17:23.3336144Z 07:33 +1101 ~28: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart false with an earlier save false
+2026-10-24T15:17:23.9782493Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:23.9783368Z The following LateError was thrown while running async test code:
+2026-10-24T15:17:23.9783845Z LateInitializationError: Field '_pending@25166824' has not been initialized.
+2026-10-24T15:17:23.9784192Z 
+2026-10-24T15:17:23.9784315Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:23.9784825Z #0      _PendingTunnelFiles._pending (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart)
+2026-10-24T15:17:23.9785520Z #1      _PendingTunnelFiles.complete (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:380:30)
+2026-10-24T15:17:23.9786950Z #2      AutomatedTestWidgetsFlutterBinding.runAsync.<anonymous closure> (package:flutter_test/src/binding.dart:2308:17)
+2026-10-24T15:17:23.9787641Z #5      AutomatedTestWidgetsFlutterBinding.runAsync (package:flutter_test/src/binding.dart:2304:26)
+2026-10-24T15:17:23.9788182Z #6      WidgetTester.runAsync (package:flutter_test/src/widget_tester.dart:838:17)
+2026-10-24T15:17:23.9788696Z #7      main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:161:24)
+2026-10-24T15:17:23.9789140Z <asynchronous suspension>
+2026-10-24T15:17:23.9789565Z #8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:23.9790013Z <asynchronous suspension>
+2026-10-24T15:17:23.9790387Z #9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:23.9790788Z <asynchronous suspension>
+2026-10-24T15:17:23.9790989Z <asynchronous suspension>
+2026-10-24T15:17:23.9791554Z (elided 3 frames from dart:async and package:stack_trace)
+2026-10-24T15:17:23.9791773Z 
+2026-10-24T15:17:23.9791874Z The exception was caught synchronously.
+2026-10-24T15:17:23.9792377Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:23.9802286Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:23.9803022Z The following PathNotFoundException was thrown while running async test code:
+2026-10-24T15:17:23.9803568Z Cannot open file, path = 'C:\Users\RUNNER~1\AppData\Local\Temp\host-vpn-save-513d2102/first.conf'
+2026-10-24T15:17:23.9804061Z (OS Error: The system cannot find the file specified, errno = 2)
+2026-10-24T15:17:23.9804211Z 
+2026-10-24T15:17:23.9804286Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:23.9804495Z #0      _checkForErrorResponse (dart:io/common.dart:58:9)
+2026-10-24T15:17:23.9804717Z #1      _File.open.<anonymous closure> (dart:io/file_impl.dart:438:7)
+2026-10-24T15:17:23.9804928Z <asynchronous suspension>
+2026-10-24T15:17:23.9805120Z #7      _File.readAsBytes.<anonymous closure> (dart:io/file_impl.dart:645:24)
+2026-10-24T15:17:23.9805324Z <asynchronous suspension>
+2026-10-24T15:17:23.9805517Z #8      _File.readAsString (dart:io/file_impl.dart:712:18)
+2026-10-24T15:17:23.9805746Z <asynchronous suspension>
+2026-10-24T15:17:23.9805872Z <asynchronous suspension>
+2026-10-24T15:17:23.9806120Z #10     main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:163:28)
+2026-10-24T15:17:23.9808165Z <asynchronous suspension>
+2026-10-24T15:17:23.9808683Z #11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:23.9809172Z <asynchronous suspension>
+2026-10-24T15:17:23.9809552Z #12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:23.9809980Z <asynchronous suspension>
+2026-10-24T15:17:23.9810203Z <asynchronous suspension>
+2026-10-24T15:17:23.9810466Z (elided 7 frames from dart:async and package:stack_trace)
+2026-10-24T15:17:23.9810691Z 
+2026-10-24T15:17:23.9810800Z The exception was caught asynchronously.
+2026-10-24T15:17:23.9811323Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:23.9811953Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:23.9812403Z The following TestFailure was thrown running a test:
+2026-10-24T15:17:23.9812836Z Expected: contains 'PublicKey = V9tLNZ8jrl4Ubk4lEgVnBHIlBjSMFQwUdT0Mkz0E1CE='
+2026-10-24T15:17:23.9813217Z   Actual: <null>
+2026-10-24T15:17:23.9813424Z    Which: is not a string, map or iterable
+2026-10-24T15:17:23.9813611Z 
+2026-10-24T15:17:23.9813731Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:23.9814163Z #4      main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:164:11)
+2026-10-24T15:17:23.9814604Z <asynchronous suspension>
+2026-10-24T15:17:23.9815035Z #5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:23.9815490Z <asynchronous suspension>
+2026-10-24T15:17:23.9816183Z #6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:23.9816891Z <asynchronous suspension>
+2026-10-24T15:17:23.9817122Z <asynchronous suspension>
+2026-10-24T15:17:23.9817361Z (elided one frame from package:stack_trace)
+2026-10-24T15:17:23.9817541Z 
+2026-10-24T15:17:23.9817696Z This was caught by the test expectation on the following line:
+2026-10-24T15:17:23.9818145Z   file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart line 164
+2026-10-24T15:17:23.9818524Z The test description was:
+2026-10-24T15:17:23.9818851Z   the server menu saves the VPN after restart false with an earlier save false
+2026-10-24T15:17:23.9819696Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:23.9820261Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:23.9820687Z The following message was thrown:
+2026-10-24T15:17:23.9821090Z Multiple exceptions (3) were detected during the running of the current test, and at least one was
+2026-10-24T15:17:23.9821493Z unexpected.
+2026-10-24T15:17:23.9822740Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:23.9837988Z 07:34 +1101 ~28 -1: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart false with an earlier save false [E]
+2026-10-24T15:17:23.9839950Z   Test failed. See exception logs above.
+2026-10-24T15:17:23.9840383Z   The test description was: the server menu saves the VPN after restart false with an earlier save false
+2026-10-24T15:17:23.9841929Z   
+2026-10-24T15:17:23.9844698Z 07:34 +1101 ~28 -1: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart false with an earlier save true
+2026-10-24T15:17:24.1017898Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.1018311Z The following LateError was thrown while running async test code:
+2026-10-24T15:17:24.1018590Z LateInitializationError: Field '_pending@25166824' has not been initialized.
+2026-10-24T15:17:24.1018767Z 
+2026-10-24T15:17:24.1018894Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:24.1019202Z #0      _PendingTunnelFiles._pending (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart)
+2026-10-24T15:17:24.1019604Z #1      _PendingTunnelFiles.complete (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:380:30)
+2026-10-24T15:17:24.1020038Z #2      AutomatedTestWidgetsFlutterBinding.runAsync.<anonymous closure> (package:flutter_test/src/binding.dart:2308:17)
+2026-10-24T15:17:24.1020462Z #5      AutomatedTestWidgetsFlutterBinding.runAsync (package:flutter_test/src/binding.dart:2304:26)
+2026-10-24T15:17:24.1020790Z #6      WidgetTester.runAsync (package:flutter_test/src/widget_tester.dart:838:17)
+2026-10-24T15:17:24.1021123Z #7      main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:161:24)
+2026-10-24T15:17:24.1021387Z <asynchronous suspension>
+2026-10-24T15:17:24.1021648Z #8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:24.1021910Z <asynchronous suspension>
+2026-10-24T15:17:24.1022163Z #9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:24.1022411Z <asynchronous suspension>
+2026-10-24T15:17:24.1022540Z <asynchronous suspension>
+2026-10-24T15:17:24.1022703Z (elided 3 frames from dart:async and package:stack_trace)
+2026-10-24T15:17:24.1024385Z 
+2026-10-24T15:17:24.1024497Z The exception was caught synchronously.
+2026-10-24T15:17:24.1024881Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.1025752Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.1026147Z The following PathNotFoundException was thrown while running async test code:
+2026-10-24T15:17:24.1026664Z Cannot open file, path = 'C:\Users\RUNNER~1\AppData\Local\Temp\host-vpn-save-3102f4f4/first.conf'
+2026-10-24T15:17:24.1027101Z (OS Error: The system cannot find the file specified, errno = 2)
+2026-10-24T15:17:24.1027303Z 
+2026-10-24T15:17:24.1027420Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:24.1027718Z #0      _checkForErrorResponse (dart:io/common.dart:58:9)
+2026-10-24T15:17:24.1028060Z #1      _File.open.<anonymous closure> (dart:io/file_impl.dart:438:7)
+2026-10-24T15:17:24.1028373Z <asynchronous suspension>
+2026-10-24T15:17:24.1028647Z #7      _File.readAsBytes.<anonymous closure> (dart:io/file_impl.dart:645:24)
+2026-10-24T15:17:24.1028954Z <asynchronous suspension>
+2026-10-24T15:17:24.1029167Z #8      _File.readAsString (dart:io/file_impl.dart:712:18)
+2026-10-24T15:17:24.1029433Z <asynchronous suspension>
+2026-10-24T15:17:24.1029611Z <asynchronous suspension>
+2026-10-24T15:17:24.1029992Z #10     main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:163:28)
+2026-10-24T15:17:24.1031059Z <asynchronous suspension>
+2026-10-24T15:17:24.1031430Z #11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:24.1031812Z <asynchronous suspension>
+2026-10-24T15:17:24.1032141Z #12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:24.1032504Z <asynchronous suspension>
+2026-10-24T15:17:24.1032687Z <asynchronous suspension>
+2026-10-24T15:17:24.1032912Z (elided 7 frames from dart:async and package:stack_trace)
+2026-10-24T15:17:24.1033098Z 
+2026-10-24T15:17:24.1033186Z The exception was caught asynchronously.
+2026-10-24T15:17:24.1033627Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.1034145Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.1034526Z The following TestFailure was thrown running a test:
+2026-10-24T15:17:24.1034899Z Expected: contains 'PublicKey = V9tLNZ8jrl4Ubk4lEgVnBHIlBjSMFQwUdT0Mkz0E1CE='
+2026-10-24T15:17:24.1035221Z   Actual: <null>
+2026-10-24T15:17:24.1035412Z    Which: is not a string, map or iterable
+2026-10-24T15:17:24.1035568Z 
+2026-10-24T15:17:24.1035679Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:24.1036134Z #4      main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:164:11)
+2026-10-24T15:17:24.1037089Z <asynchronous suspension>
+2026-10-24T15:17:24.1037516Z #5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:24.1038295Z <asynchronous suspension>
+2026-10-24T15:17:24.1038639Z #6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:24.1038996Z <asynchronous suspension>
+2026-10-24T15:17:24.1039180Z <asynchronous suspension>
+2026-10-24T15:17:24.1039388Z (elided one frame from package:stack_trace)
+2026-10-24T15:17:24.1039549Z 
+2026-10-24T15:17:24.1039683Z This was caught by the test expectation on the following line:
+2026-10-24T15:17:24.1040067Z   file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart line 164
+2026-10-24T15:17:24.1040388Z The test description was:
+2026-10-24T15:17:24.1040669Z   the server menu saves the VPN after restart false with an earlier save true
+2026-10-24T15:17:24.1041747Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.1042262Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.1042638Z The following message was thrown:
+2026-10-24T15:17:24.1043029Z Multiple exceptions (3) were detected during the running of the current test, and at least one was
+2026-10-24T15:17:24.1043399Z unexpected.
+2026-10-24T15:17:24.1043732Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.1044555Z 07:34 +1101 ~28 -2: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart false with an earlier save true [E]
+2026-10-24T15:17:24.1045082Z   Test failed. See exception logs above.
+2026-10-24T15:17:24.1045453Z   The test description was: the server menu saves the VPN after restart false with an earlier save true
+2026-10-24T15:17:24.1045809Z   
+2026-10-24T15:17:24.1046239Z 07:34 +1101 ~28 -2: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart true with an earlier save false
+2026-10-24T15:17:24.1809468Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.1809984Z The following LateError was thrown while running async test code:
+2026-10-24T15:17:24.1810407Z LateInitializationError: Field '_pending@25166824' has not been initialized.
+2026-10-24T15:17:24.1810691Z 
+2026-10-24T15:17:24.1810832Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:24.1811140Z #0      _PendingTunnelFiles._pending (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart)
+2026-10-24T15:17:24.1811550Z #1      _PendingTunnelFiles.complete (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:380:30)
+2026-10-24T15:17:24.1811973Z #2      AutomatedTestWidgetsFlutterBinding.runAsync.<anonymous closure> (package:flutter_test/src/binding.dart:2308:17)
+2026-10-24T15:17:24.1812398Z #5      AutomatedTestWidgetsFlutterBinding.runAsync (package:flutter_test/src/binding.dart:2304:26)
+2026-10-24T15:17:24.1812727Z #6      WidgetTester.runAsync (package:flutter_test/src/widget_tester.dart:838:17)
+2026-10-24T15:17:24.1813065Z #7      main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:161:24)
+2026-10-24T15:17:24.1813336Z <asynchronous suspension>
+2026-10-24T15:17:24.1813601Z #8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:24.1813866Z <asynchronous suspension>
+2026-10-24T15:17:24.1814098Z #9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:24.1814349Z <asynchronous suspension>
+2026-10-24T15:17:24.1814478Z <asynchronous suspension>
+2026-10-24T15:17:24.1814646Z (elided 3 frames from dart:async and package:stack_trace)
+2026-10-24T15:17:24.1815747Z 
+2026-10-24T15:17:24.1815833Z The exception was caught synchronously.
+2026-10-24T15:17:24.1816295Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.1818085Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.1818450Z The following PathNotFoundException was thrown while running async test code:
+2026-10-24T15:17:24.1818915Z Cannot open file, path = 'C:\Users\RUNNER~1\AppData\Local\Temp\host-vpn-save-9b3ecf3d/first.conf'
+2026-10-24T15:17:24.1819394Z (OS Error: The system cannot find the file specified, errno = 2)
+2026-10-24T15:17:24.1819543Z 
+2026-10-24T15:17:24.1819623Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:24.1819828Z #0      _checkForErrorResponse (dart:io/common.dart:58:9)
+2026-10-24T15:17:24.1820058Z #1      _File.open.<anonymous closure> (dart:io/file_impl.dart:438:7)
+2026-10-24T15:17:24.1820270Z <asynchronous suspension>
+2026-10-24T15:17:24.1820550Z #7      _File.readAsBytes.<anonymous closure> (dart:io/file_impl.dart:645:24)
+2026-10-24T15:17:24.1820883Z <asynchronous suspension>
+2026-10-24T15:17:24.1821112Z #8      _File.readAsString (dart:io/file_impl.dart:712:18)
+2026-10-24T15:17:24.1821294Z <asynchronous suspension>
+2026-10-24T15:17:24.1821420Z <asynchronous suspension>
+2026-10-24T15:17:24.1821676Z #10     main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:163:28)
+2026-10-24T15:17:24.1821942Z <asynchronous suspension>
+2026-10-24T15:17:24.1822397Z #11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:24.1822730Z <asynchronous suspension>
+2026-10-24T15:17:24.1823017Z #12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:24.1823266Z <asynchronous suspension>
+2026-10-24T15:17:24.1823388Z <asynchronous suspension>
+2026-10-24T15:17:24.1823549Z (elided 7 frames from dart:async and package:stack_trace)
+2026-10-24T15:17:24.1823675Z 
+2026-10-24T15:17:24.1823743Z The exception was caught asynchronously.
+2026-10-24T15:17:24.1824023Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.1824446Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.1824708Z The following TestFailure was thrown running a test:
+2026-10-24T15:17:24.1824964Z Expected: contains 'PublicKey = V9tLNZ8jrl4Ubk4lEgVnBHIlBjSMFQwUdT0Mkz0E1CE='
+2026-10-24T15:17:24.1825175Z   Actual: <null>
+2026-10-24T15:17:24.1825299Z    Which: is not a string, map or iterable
+2026-10-24T15:17:24.1825400Z 
+2026-10-24T15:17:24.1825469Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:24.1825751Z #4      main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:164:11)
+2026-10-24T15:17:24.1826793Z <asynchronous suspension>
+2026-10-24T15:17:24.1827044Z #5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:24.1827336Z <asynchronous suspension>
+2026-10-24T15:17:24.1827554Z #6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:24.1827859Z <asynchronous suspension>
+2026-10-24T15:17:24.1828043Z <asynchronous suspension>
+2026-10-24T15:17:24.1828180Z (elided one frame from package:stack_trace)
+2026-10-24T15:17:24.1828294Z 
+2026-10-24T15:17:24.1828393Z This was caught by the test expectation on the following line:
+2026-10-24T15:17:24.1828647Z   file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart line 164
+2026-10-24T15:17:24.1828866Z The test description was:
+2026-10-24T15:17:24.1829050Z   the server menu saves the VPN after restart true with an earlier save false
+2026-10-24T15:17:24.1829409Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.1829744Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.1829977Z The following message was thrown:
+2026-10-24T15:17:24.1830218Z Multiple exceptions (3) were detected during the running of the current test, and at least one was
+2026-10-24T15:17:24.1830588Z unexpected.
+2026-10-24T15:17:24.1830912Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.1831647Z 07:34 +1101 ~28 -3: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart true with an earlier save false [E]
+2026-10-24T15:17:24.1832156Z   Test failed. See exception logs above.
+2026-10-24T15:17:24.1832404Z   The test description was: the server menu saves the VPN after restart true with an earlier save false
+2026-10-24T15:17:24.1832746Z   
+2026-10-24T15:17:24.1833051Z 07:34 +1101 ~28 -3: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart true with an earlier save true
+2026-10-24T15:17:24.2757156Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.2757639Z The following LateError was thrown while running async test code:
+2026-10-24T15:17:24.2758250Z LateInitializationError: Field '_pending@25166824' has not been initialized.
+2026-10-24T15:17:24.2758529Z 
+2026-10-24T15:17:24.2758641Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:24.2759127Z #0      _PendingTunnelFiles._pending (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart)
+2026-10-24T15:17:24.2759632Z #1      _PendingTunnelFiles.complete (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:380:30)
+2026-10-24T15:17:24.2760053Z #2      AutomatedTestWidgetsFlutterBinding.runAsync.<anonymous closure> (package:flutter_test/src/binding.dart:2308:17)
+2026-10-24T15:17:24.2760566Z #5      AutomatedTestWidgetsFlutterBinding.runAsync (package:flutter_test/src/binding.dart:2304:26)
+2026-10-24T15:17:24.2761038Z #6      WidgetTester.runAsync (package:flutter_test/src/widget_tester.dart:838:17)
+2026-10-24T15:17:24.2761515Z #7      main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:161:24)
+2026-10-24T15:17:24.2761895Z <asynchronous suspension>
+2026-10-24T15:17:24.2762263Z #8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:24.2762666Z <asynchronous suspension>
+2026-10-24T15:17:24.2762993Z #9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:24.2763351Z <asynchronous suspension>
+2026-10-24T15:17:24.2763477Z <asynchronous suspension>
+2026-10-24T15:17:24.2763628Z (elided 3 frames from dart:async and package:stack_trace)
+2026-10-24T15:17:24.2764959Z 
+2026-10-24T15:17:24.2765064Z The exception was caught synchronously.
+2026-10-24T15:17:24.2765540Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.2766330Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.2766839Z The following PathNotFoundException was thrown while running async test code:
+2026-10-24T15:17:24.2767247Z Cannot open file, path = 'C:\Users\RUNNER~1\AppData\Local\Temp\host-vpn-save-56deac51/first.conf'
+2026-10-24T15:17:24.2768101Z (OS Error: The system cannot find the file specified, errno = 2)
+2026-10-24T15:17:24.2768324Z 
+2026-10-24T15:17:24.2768432Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:24.2768715Z #0      _checkForErrorResponse (dart:io/common.dart:58:9)
+2026-10-24T15:17:24.2768933Z #1      _File.open.<anonymous closure> (dart:io/file_impl.dart:438:7)
+2026-10-24T15:17:24.2769123Z <asynchronous suspension>
+2026-10-24T15:17:24.2769318Z #7      _File.readAsBytes.<anonymous closure> (dart:io/file_impl.dart:645:24)
+2026-10-24T15:17:24.2769517Z <asynchronous suspension>
+2026-10-24T15:17:24.2769670Z #8      _File.readAsString (dart:io/file_impl.dart:712:18)
+2026-10-24T15:17:24.2769838Z <asynchronous suspension>
+2026-10-24T15:17:24.2769962Z <asynchronous suspension>
+2026-10-24T15:17:24.2770206Z #10     main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:163:28)
+2026-10-24T15:17:24.2770469Z <asynchronous suspension>
+2026-10-24T15:17:24.2770716Z #11     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:24.2785740Z <asynchronous suspension>
+2026-10-24T15:17:24.2786152Z #12     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:24.2786415Z <asynchronous suspension>
+2026-10-24T15:17:24.2786668Z <asynchronous suspension>
+2026-10-24T15:17:24.2786844Z (elided 7 frames from dart:async and package:stack_trace)
+2026-10-24T15:17:24.2786976Z 
+2026-10-24T15:17:24.2787046Z The exception was caught asynchronously.
+2026-10-24T15:17:24.2787368Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.2787718Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.2788117Z The following TestFailure was thrown running a test:
+2026-10-24T15:17:24.2788369Z Expected: contains 'PublicKey = V9tLNZ8jrl4Ubk4lEgVnBHIlBjSMFQwUdT0Mkz0E1CE='
+2026-10-24T15:17:24.2788609Z   Actual: <null>
+2026-10-24T15:17:24.2788736Z    Which: is not a string, map or iterable
+2026-10-24T15:17:24.2788846Z 
+2026-10-24T15:17:24.2788919Z When the exception was thrown, this was the stack:
+2026-10-24T15:17:24.2789239Z #4      main.<anonymous closure> (file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart:164:11)
+2026-10-24T15:17:24.2790105Z <asynchronous suspension>
+2026-10-24T15:17:24.2790356Z #5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+2026-10-24T15:17:24.2790619Z <asynchronous suspension>
+2026-10-24T15:17:24.2790857Z #6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+2026-10-24T15:17:24.2791096Z <asynchronous suspension>
+2026-10-24T15:17:24.2791223Z <asynchronous suspension>
+2026-10-24T15:17:24.2791358Z (elided one frame from package:stack_trace)
+2026-10-24T15:17:24.2791469Z 
+2026-10-24T15:17:24.2791566Z This was caught by the test expectation on the following line:
+2026-10-24T15:17:24.2791821Z   file:///D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart line 164
+2026-10-24T15:17:24.2792042Z The test description was:
+2026-10-24T15:17:24.2792238Z   the server menu saves the VPN after restart true with an earlier save true
+2026-10-24T15:17:24.2792568Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.2792905Z ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+2026-10-24T15:17:24.2793144Z The following message was thrown:
+2026-10-24T15:17:24.2793391Z Multiple exceptions (3) were detected during the running of the current test, and at least one was
+2026-10-24T15:17:24.2793635Z unexpected.
+2026-10-24T15:17:24.2793862Z ════════════════════════════════════════════════════════════════════════════════════════════════════
+2026-10-24T15:17:24.2794351Z 07:34 +1101 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart true with an earlier save true [E]
+2026-10-24T15:17:24.2794713Z   Test failed. See exception logs above.
+2026-10-24T15:17:24.2794974Z   The test description was: the server menu saves the VPN after restart true with an earlier save true
+2026-10-24T15:17:24.2795215Z   
+2026-10-24T15:17:24.2795517Z 07:34 +1101 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu shows a VPN export refusal for path and keeps the old path
+2026-10-24T15:17:24.3381768Z 07:34 +1102 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu shows a VPN export refusal for settings and keeps the old path
+2026-10-24T15:17:24.4055579Z 07:34 +1103 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu shows a VPN export refusal for file and keeps the old path
+2026-10-24T15:17:24.4578904Z 07:34 +1104 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu shows a VPN export refusal for store and keeps the old path
+2026-10-24T15:17:24.5129224Z 07:34 +1105 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: saving the VPN is unavailable without a kept host record
+2026-10-24T15:17:24.5148274Z 07:34 +1106 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: an unsafe saved VPN path [47, 116, 109, 112, 47, 97, 39, 98, 46, 99, 111, 110, 102] opens no terminal
+2026-10-24T15:17:24.5359401Z 07:34 +1107 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: an unsafe saved VPN path [47, 116, 109, 112, 47, 97, 34, 98, 46, 99, 111, 110, 102] opens no terminal
+2026-10-24T15:17:24.5551778Z 07:34 +1108 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: an unsafe saved VPN path [45, 102, 105, 108, 101] opens no terminal
+2026-10-24T15:17:24.5778975Z 07:34 +1109 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: an unsafe saved VPN path [47, 116, 109, 112, 47, 36, 102, 105, 108, 101] opens no terminal
+2026-10-24T15:17:24.6011883Z 07:34 +1110 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: an unsafe saved VPN path [47, 116, 109, 112, 47, 97, 10, 98] opens no terminal
+2026-10-24T15:17:24.6197293Z 07:34 +1111 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: an unsafe saved VPN path [114, 101, 108, 97, 116, 105, 118, 101, 46, 99, 111, 110, 102] opens no terminal
+2026-10-24T15:17:24.6551758Z 07:35 +1112 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: an unsafe saved VPN path [47, 116, 109, 112, 47, 97, 0, 98] opens no terminal
+2026-10-24T15:17:24.6804949Z 07:35 +1113 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: an unsafe saved VPN path [47, 116, 109, 112, 47, 97, 59, 98] opens no terminal
+2026-10-24T15:17:24.7002103Z 07:35 +1114 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: an unsafe saved VPN path [47, 116, 109, 112, 47, 96, 105, 100, 96] opens no terminal
+2026-10-24T15:17:24.7225071Z 07:35 +1115 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: an unsafe saved VPN path [47, 116, 109, 112, 47, 97, 92, 98] opens no terminal
+2026-10-24T15:17:24.7435949Z 07:35 +1116 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: VPN bring-up without an exported file is unavailable with its reason
+2026-10-24T15:17:24.7451930Z 07:35 +1117 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: VPN bring-up passes the saved path as one positional argument
+2026-10-24T15:17:24.8316866Z 07:35 +1118 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: VPN exit 0 offers deletion only after success and deletes only with consent false
+2026-10-24T15:17:24.8987507Z 07:35 +1119 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: VPN exit 0 offers deletion only after success and deletes only with consent true
+2026-10-24T15:17:24.9628119Z 07:35 +1120 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: VPN exit 1 offers deletion only after success and deletes only with consent false
+2026-10-24T15:17:25.0131627Z 07:35 +1121 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: VPN exit 1 offers deletion only after success and deletes only with consent true
+2026-10-24T15:17:25.0566659Z 07:35 +1122 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: VPN exit 129 offers deletion only after success and deletes only with consent false
+2026-10-24T15:17:25.0962566Z 07:35 +1123 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: VPN exit 129 offers deletion only after success and deletes only with consent true
+2026-10-24T15:17:25.1496743Z 07:35 +1124 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: VPN down runs only wg-quick locally without needing a saved file
+2026-10-24T15:17:25.2113271Z 07:35 +1125 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/how_long_test.dart
+2026-10-24T15:17:25.8727913Z 07:36 +1125 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/how_long_test.dart: answers the question "idle for how long"
+2026-10-24T15:17:25.8839603Z 07:36 +1126 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/how_long_test.dart: a runtime that cannot say gets no answer invented for it
+2026-10-24T15:17:25.8854787Z 07:36 +1127 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/how_long_test.dart: a clock that disagrees does not produce a negative age
+2026-10-24T15:17:25.9080781Z 07:36 +1128 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/no_literal_sizes_test.dart
+2026-10-24T15:17:26.7987344Z 07:37 +1128 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/no_literal_sizes_test.dart: the interface directory was found at all
+2026-10-24T15:17:26.8077556Z 07:37 +1129 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/no_literal_sizes_test.dart: the pattern recognizes a literal size in every shape it looks for
+2026-10-24T15:17:26.8103308Z 07:37 +1130 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/no_literal_sizes_test.dart: no size is spelled out outside tokens.dart
+2026-10-24T15:17:26.8903451Z 07:37 +1131 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/probe_look_test.dart
+2026-10-24T15:17:27.6101371Z 07:37 +1131 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/probe_look_test.dart: OK is green, MISSING red, DEGRADED and UNKNOWN yellow
+2026-10-24T15:17:27.6202367Z 07:37 +1132 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/probe_look_test.dart: each state has a shape of its own, so it reads without colour
+2026-10-24T15:17:27.6435853Z 07:38 +1133 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/project_actions_test.dart
+2026-10-24T15:17:28.4428423Z 07:38 +1133 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/project_actions_test.dart: a row start keeps its repository until Change chooses another
+2026-10-24T15:17:30.1144999Z 07:40 +1134 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/project_actions_test.dart: the row button and menu start work in the same repository
+2026-10-24T15:17:30.6907536Z 07:41 +1135 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/project_actions_test.dart: the project start tile asks which repository to use
+2026-10-24T15:17:31.3008884Z 07:41 +1136 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/project_actions_test.dart: an unavailable row start has the menu reason and cannot start
+2026-10-24T15:17:31.5472504Z 07:41 +1137 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/project_actions_test.dart: a project tile runs its own command
+2026-10-24T15:17:31.7915689Z 07:42 +1138 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/project_actions_test.dart: an unavailable tile shows its reason and does not run
+2026-10-24T15:17:31.9757160Z 07:42 +1139 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/project_actions_test.dart: every project menu command has exactly one tile and every tile a menu item
+2026-10-24T15:17:32.2448096Z 07:42 +1140 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/session_keys_on_windows_test.dart
+2026-10-24T15:17:33.7935868Z 07:44 +1140 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/session_keys_on_windows_test.dart: on Windows a letter and a digit reach the far end, as Enter does
+2026-10-24T15:17:34.1855373Z 07:44 +1141 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/session_keys_on_windows_test.dart: on Windows the wheel goes to tmux as a wheel report, up and down
+2026-10-24T15:17:34.2343376Z 07:44 +1142 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/session_keys_on_windows_test.dart: on Linux the terminal itself answers the wheel, as before
+2026-10-24T15:17:34.2854301Z 07:44 +1143 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/terminal_copy_test.dart
+2026-10-24T15:17:35.0441632Z 07:45 +1143 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/terminal_copy_test.dart: a gap the program jumped over is copied as the spaces it shows
+2026-10-24T15:17:35.0690370Z 07:45 +1144 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/terminal_copy_test.dart: a line ends where its last written cell does, and a wide character is one character
+2026-10-24T15:17:35.0739849Z 07:45 +1145 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/terminal_copy_test.dart: Ctrl+Shift+C in a terminal copies the selection as it shows
+2026-10-24T15:17:35.4139318Z 07:45 +1146 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/terminal_diagnosis_test.dart
+2026-10-24T15:17:36.1538534Z 07:46 +1146 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/terminal_diagnosis_test.dart: a key, the bytes for it, and a wheel turn are shown and written to the log
+2026-10-24T15:17:36.8937256Z 07:47 +1147 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/terminal_diagnosis_test.dart: what was typed goes into the chosen distribution and what od read is shown
+2026-10-24T15:17:37.2347422Z 07:47 +1148 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/terminal_paste_test.dart
+2026-10-24T15:17:38.1951503Z 07:48 +1148 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/terminal_paste_test.dart: session terminal sends the clipboard once for each paste shortcut
+2026-10-24T15:17:38.6272265Z 07:48 +1149 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/terminal_paste_test.dart: unlock terminal sends the clipboard once for each paste shortcut
+2026-10-24T15:17:38.7787224Z 07:49 +1150 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/terminal_paste_test.dart: vault terminal sends the clipboard once for each paste shortcut
+2026-10-24T15:17:38.8533688Z 07:49 +1151 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart
+2026-10-24T15:17:39.6441803Z 07:50 +1151 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme has the brightness it is named for
+2026-10-24T15:17:39.6545812Z 07:50 +1152 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme onSurface reads as text on every surface
+2026-10-24T15:17:39.6571364Z 07:50 +1153 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme onSurfaceVariant reads as text on every surface
+2026-10-24T15:17:39.6581840Z 07:50 +1154 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme primary reads as text on every surface
+2026-10-24T15:17:39.6591527Z 07:50 +1155 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme secondary reads as text on every surface
+2026-10-24T15:17:39.6601191Z 07:50 +1156 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme tertiary reads as text on every surface
+2026-10-24T15:17:39.6611218Z 07:50 +1157 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme error reads as text on every surface
+2026-10-24T15:17:39.6621502Z 07:50 +1158 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme onPrimary on primary reads as text
+2026-10-24T15:17:39.6634055Z 07:50 +1159 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme onSecondary on secondary reads as text
+2026-10-24T15:17:39.6643179Z 07:50 +1160 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme onTertiary on tertiary reads as text
+2026-10-24T15:17:39.6651895Z 07:50 +1161 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme onError on error reads as text
+2026-10-24T15:17:39.6661962Z 07:50 +1162 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme onPrimaryContainer on primaryContainer reads as text
+2026-10-24T15:17:39.6671732Z 07:50 +1163 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme onSecondaryContainer on secondaryContainer reads as text
+2026-10-24T15:17:39.6681698Z 07:50 +1164 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme onTertiaryContainer on tertiaryContainer reads as text
+2026-10-24T15:17:39.6691767Z 07:50 +1165 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme onErrorContainer on errorContainer reads as text
+2026-10-24T15:17:39.6702623Z 07:50 +1166 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme onInverseSurface on inverseSurface reads as text
+2026-10-24T15:17:39.6711729Z 07:50 +1167 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme outline stands out as a mark on every surface
+2026-10-24T15:17:39.6724179Z 07:50 +1168 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme the working state stands out as a mark on every surface
+2026-10-24T15:17:39.6734208Z 07:50 +1169 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme the waiting state stands out as a mark on every surface
+2026-10-24T15:17:39.6743993Z 07:50 +1170 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the light theme the stopped state stands out as a mark on every surface
+2026-10-24T15:17:39.6755738Z 07:50 +1171 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme has the brightness it is named for
+2026-10-24T15:17:39.6765480Z 07:50 +1172 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme onSurface reads as text on every surface
+2026-10-24T15:17:39.6775032Z 07:50 +1173 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme onSurfaceVariant reads as text on every surface
+2026-10-24T15:17:39.6784243Z 07:50 +1174 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme primary reads as text on every surface
+2026-10-24T15:17:39.6793257Z 07:50 +1175 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme secondary reads as text on every surface
+2026-10-24T15:17:39.6825966Z 07:50 +1176 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme tertiary reads as text on every surface
+2026-10-24T15:17:39.6886259Z 07:50 +1177 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme error reads as text on every surface
+2026-10-24T15:17:39.6909061Z 07:50 +1178 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme onPrimary on primary reads as text
+2026-10-24T15:17:39.6922476Z 07:50 +1179 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme onSecondary on secondary reads as text
+2026-10-24T15:17:39.6933729Z 07:50 +1180 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme onTertiary on tertiary reads as text
+2026-10-24T15:17:39.6944340Z 07:50 +1181 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme onError on error reads as text
+2026-10-24T15:17:39.6955219Z 07:50 +1182 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme onPrimaryContainer on primaryContainer reads as text
+2026-10-24T15:17:39.6965156Z 07:50 +1183 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme onSecondaryContainer on secondaryContainer reads as text
+2026-10-24T15:17:39.6975766Z 07:50 +1184 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme onTertiaryContainer on tertiaryContainer reads as text
+2026-10-24T15:17:39.6984726Z 07:50 +1185 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme onErrorContainer on errorContainer reads as text
+2026-10-24T15:17:39.6993897Z 07:50 +1186 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme onInverseSurface on inverseSurface reads as text
+2026-10-24T15:17:39.7002878Z 07:50 +1187 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme outline stands out as a mark on every surface
+2026-10-24T15:17:39.7013280Z 07:50 +1188 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme the working state stands out as a mark on every surface
+2026-10-24T15:17:39.7022620Z 07:50 +1189 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme the waiting state stands out as a mark on every surface
+2026-10-24T15:17:39.7032651Z 07:50 +1190 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the dark theme the stopped state stands out as a mark on every surface
+2026-10-24T15:17:39.7050692Z 07:50 +1191 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal its text reads on its background
+2026-10-24T15:17:39.7062369Z 07:50 +1192 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal red reads on its background
+2026-10-24T15:17:39.7072227Z 07:50 +1193 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal green reads on its background
+2026-10-24T15:17:39.7082504Z 07:50 +1194 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal yellow reads on its background
+2026-10-24T15:17:39.7092272Z 07:50 +1195 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal blue reads on its background
+2026-10-24T15:17:39.7110969Z 07:50 +1196 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal magenta reads on its background
+2026-10-24T15:17:39.7120532Z 07:50 +1197 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal cyan reads on its background
+2026-10-24T15:17:39.7131257Z 07:50 +1198 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal white reads on its background
+2026-10-24T15:17:39.7142140Z 07:50 +1199 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal bright red reads on its background
+2026-10-24T15:17:39.7153562Z 07:50 +1200 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal bright green reads on its background
+2026-10-24T15:17:39.7165450Z 07:50 +1201 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal bright yellow reads on its background
+2026-10-24T15:17:39.7174576Z 07:50 +1202 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal bright blue reads on its background
+2026-10-24T15:17:39.7184395Z 07:50 +1203 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal bright magenta reads on its background
+2026-10-24T15:17:39.7193604Z 07:50 +1204 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal bright cyan reads on its background
+2026-10-24T15:17:39.7202129Z 07:50 +1205 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/theme_contrast_test.dart: the terminal bright white reads on its background
+2026-10-24T15:17:39.7429030Z 07:50 +1206 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/tile_console_test.dart
+2026-10-24T15:17:40.5671730Z 07:50 +1206 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/tile_console_test.dart: a look at the screen not answered yet is not asked again beside itself
+2026-10-24T15:17:40.8888368Z 07:51 +1207 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/which_branch_test.dart
+2026-10-24T15:17:41.7956778Z 07:52 +1207 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/which_branch_test.dart: the default branch is offered first and chosen
+2026-10-24T15:17:42.3448969Z 07:52 +1208 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/which_branch_test.dart: where no forge said the branches, one is typed, and a name git refuses is not sent
+2026-10-24T15:17:42.5348705Z 07:52 +1209 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/which_branch_test.dart: what git takes and refuses as a branch name
+2026-10-24T15:17:42.5615347Z 07:52 +1210 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/windows_machine_wizard_test.dart
+2026-10-24T15:17:43.3819335Z 07:53 +1210 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/windows_machine_wizard_test.dart: the Windows wizard offers ssh and saves no local socket
+2026-10-24T15:17:44.2410502Z 07:54 +1211 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/windows_machine_wizard_test.dart: the Windows wizard refuses an option host before anything runs
+2026-10-24T15:17:44.4982829Z 07:54 +1212 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/wizard_test.dart
+2026-10-24T15:17:45.3898593Z 07:55 +1212 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/wizard_test.dart: next refuses an incomplete step and names the reason
+2026-10-24T15:17:46.0163067Z 07:56 +1213 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/wizard_test.dart: a stale next button cannot accept the start decision
+2026-10-24T15:17:46.1200332Z 07:56 +1214 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/wizard_test.dart: back keeps both steps values
+2026-10-24T15:17:46.2482408Z 07:56 +1215 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/wizard_test.dart: leave asks before dropping supplied values
+2026-10-24T15:17:46.3486278Z 07:56 +1216 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/wizard_test.dart: returning from a refused action runs it again after correcting an answer
+2026-10-24T15:17:46.5158251Z 07:56 +1217 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/wizard_test.dart: a running action asks before back and cannot finish early
+2026-10-24T15:17:46.6775852Z 07:57 +1218 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/wizard_test.dart: a running action asks before leave and cannot finish early
+2026-10-24T15:17:46.8170189Z 07:57 +1219 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/ui/work_page_questions_test.dart
+2026-10-24T15:17:47.6567971Z 07:58 +1219 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/ui/work_page_questions_test.dart: two questions for work not listed yet show as two tiles
+2026-10-24T15:17:48.4687173Z 07:58 +1220 ~28 -4: loading D:/a/porelo-frontend/porelo-frontend/test/wire/varlink_over_a_stream_test.dart
+2026-10-24T15:17:49.1661120Z 07:59 +1220 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/wire/varlink_over_a_stream_test.dart: a call goes out NUL-ended and its reply comes back, with no socket file anywhere
+2026-10-24T15:17:49.1789534Z 07:59 +1221 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/wire/varlink_over_a_stream_test.dart: a stream of replies arrives as it comes, and ends with the last one
+2026-10-24T15:17:49.1822461Z 07:59 +1222 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/wire/varlink_over_a_stream_test.dart: a stream that ends before the reply is a lost connection, never an empty answer
+2026-10-24T15:17:49.1862073Z 07:59 +1223 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/wire/varlink_over_a_stream_test.dart: bytes that are not a reply break the connection off, and the stream is ended
+2026-10-24T15:17:49.1897778Z 07:59 +1224 ~28 -4: D:/a/porelo-frontend/porelo-frontend/test/wire/varlink_over_a_stream_test.dart: closing it ends the stream rather than waiting for the far end
+2026-10-24T15:17:49.2147229Z 07:59 +1225 ~28 -4: Some tests failed.
+2026-10-24T15:17:49.2151277Z 
+2026-10-24T15:17:49.2151412Z Failing tests:
+2026-10-24T15:17:49.2151978Z   D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart false with an earlier save false
+2026-10-24T15:17:49.2152506Z   D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart false with an earlier save true
+2026-10-24T15:17:49.2152988Z   D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart true with an earlier save false
+2026-10-24T15:17:49.2153468Z   D:/a/porelo-frontend/porelo-frontend/test/ui/host_vpn_test.dart: the server menu saves the VPN after restart true with an earlier save true
+2026-10-24T15:17:49.3826350Z ##[error]Process completed with exit code 1.
+2026-10-24T15:17:49.4046738Z Post job cleanup.
+2026-10-24T15:17:49.4049943Z ##[start-action display=Cache pub dependencies;id=__35bf30db-d14a-4f80-9517-7aed66ecac9c.cache-pub]
+2026-10-24T15:17:49.4051981Z ##[end-action id=__35bf30db-d14a-4f80-9517-7aed66ecac9c.cache-pub;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-24T15:17:49.4053015Z ##[start-action display=Cache Flutter;id=__35bf30db-d14a-4f80-9517-7aed66ecac9c.cache-flutter]
+2026-10-24T15:17:49.4054032Z ##[end-action id=__35bf30db-d14a-4f80-9517-7aed66ecac9c.cache-flutter;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-24T15:17:49.4167689Z Post job cleanup.
+2026-10-24T15:17:49.5264238Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-24T15:17:49.5510962Z git version 2.56.0.windows.2
+2026-10-24T15:17:49.5555926Z Temporarily overriding HOME='D:\a\_temp\2d2af801-29cc-48a7-9924-3c91d361b55c' before making global git config changes
+2026-10-24T15:17:49.5556477Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-24T15:17:49.5563000Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\porelo-frontend\porelo-frontend
+2026-10-24T15:17:49.5809431Z Removing SSH command configuration
+2026-10-24T15:17:49.5816544Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-24T15:17:49.6062916Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-24T15:17:49.9975728Z Removing HTTP extra header
+2026-10-24T15:17:49.9983707Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-24T15:17:50.0224853Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-24T15:17:50.4007537Z Removing includeIf entries pointing to credentials config files
+2026-10-24T15:17:50.4017048Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-24T15:17:50.4305752Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-24T15:17:50.8169791Z Cleaning up orphan processes

@@ -46,14 +46,17 @@ jobs:
             - name: The reader answers as one
               run: |
                   set -eu
-                  reader/target/porelo-build-github describe | tee /dev/stderr | grep -q '"forge":"github"'
+                  description="$(adapters/github/target/porelo-adapter-github describe)"
+                  echo "$description"
+                  echo "$description" | grep -q '"forge":"github"'
+                  echo "$description" | grep -q '"protocolVersion":2'
 
             - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               with:
                   name: packages
                   path: |
-                      reader/target/*.deb
-                      reader/target/*.rpm
+                      adapters/github/target/*.deb
+                      adapters/github/target/*.rpm
                   if-no-files-found: error
 
             - name: Not publishing
@@ -100,6 +103,13 @@ jobs:
                   ./mvnw -B -s settings.xml help:effective-pom -Doutput=target/effective-pom.xml
                   ./mvnw -B -s settings.xml -N exec:exec@check-releases
 
+            - name: Publish the contract suite to Central
+              if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+              env:
+                  OSS_SONATYPE_USERNAME: ${{ secrets.OSS_SONATYPE_USERNAME }}
+                  OSS_SONATYPE_TOKEN: ${{ secrets.OSS_SONATYPE_TOKEN }}
+              run: ./mvnw -B -s settings.xml -Pcentral-sonatype-release deploy
+
             # The action publishes build-info by itself at the end of the workflow.
             - uses: jfrog/setup-jfrog-cli@1e584506871998c267b7c100c02628a5b9c81db6 # v5.3.0
               with:
@@ -120,14 +130,14 @@ jobs:
                   set -eux
                   # A published release is never replaced, as on Central.
                   if [ "$CHANNEL" = releases ] && curl -sfL "${JF_URL}/artifactory/porelo-dist-deb/dists/releases/main/binary-amd64/Packages" \
-                          | grep -qF "Filename: pool/main/p/porelo-build-github/$(basename reader/target/*.deb)"; then
+                          | grep -qF "Filename: pool/main/p/porelo-adapter-github/$(basename adapters/github/target/*.deb)"; then
                       echo "::error::this release is published already"; exit 1
                   fi
                   # --flat, or the source directory travels and the package lands away from its siblings.
-                  jf rt upload "reader/target/*.deb" "porelo-dist-deb/pool/main/p/porelo-build-github/" \
+                  jf rt upload "adapters/github/target/*.deb" "porelo-dist-deb/pool/main/p/porelo-adapter-github/" \
                       --flat=true \
                       --target-props="deb.distribution=${CHANNEL};deb.component=main;deb.architecture=amd64"
-                  jf rt upload "reader/target/*.rpm" "porelo-dist-rpm/${CHANNEL}/" --flat=true
+                  jf rt upload "adapters/github/target/*.rpm" "porelo-dist-rpm/${CHANNEL}/" --flat=true
 
             # Uploaded is not installable.
             - name: The package is indexed, not merely stored
@@ -138,12 +148,12 @@ jobs:
                   CHANNEL: ${{ steps.channel.outputs.channel }}
               run: |
                   set -eu
-                  DEB="$(basename reader/target/*.deb)"
+                  DEB="$(basename adapters/github/target/*.deb)"
                   tries=0
                   # -L: Artifactory answers a file with a redirect to its cloud storage, and without it the body is empty.
                   while [ "$tries" -lt 20 ]; do
                       if jf rt curl -sL -XGET "/porelo-dist-deb/dists/${CHANNEL}/main/binary-amd64/Packages" 2>/dev/null \
-                          | grep -qF "Filename: pool/main/p/porelo-build-github/$DEB"; then
+                          | grep -qF "Filename: pool/main/p/porelo-adapter-github/$DEB"; then
                           echo "  OK    the Debian index lists $DEB"
                           exit 0
                       fi

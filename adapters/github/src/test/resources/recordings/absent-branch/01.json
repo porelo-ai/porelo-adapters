@@ -1,0 +1,16 @@
+{
+  "recorded": true,
+  "source": "github.com, 2026-10-24",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/git/ref/heads/no-such-branch-for-the-suite",
+  "status": 404,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4983",
+    "x-ratelimit-reset": "1792866848",
+    "x-ratelimit-used": "17",
+    "x-ratelimit-resource": "core"
+  },
+  "body": "{\"message\":\"Not Found\"}"
+}

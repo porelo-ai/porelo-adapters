@@ -1,0 +1,16 @@
+{
+  "recorded": true,
+  "source": "github.com, 2026-10-24",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=e95e5cc23d1b979120b3ca160c40a32514f1bd8b&per_page=100&page=1",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4981",
+    "x-ratelimit-reset": "1792866848",
+    "x-ratelimit-used": "19",
+    "x-ratelimit-resource": "core"
+  },
+  "body": "{\"total_count\":1,\"workflow_runs\":[{\"id\":40105516390,\"name\":\"Build\",\"status\":\"completed\",\"conclusion\":\"failure\"}]}"
+}

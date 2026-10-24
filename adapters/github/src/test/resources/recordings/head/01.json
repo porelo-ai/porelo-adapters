@@ -1,0 +1,16 @@
+{
+  "recorded": true,
+  "source": "github.com, 2026-10-24",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/git/ref/heads/main",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4984",
+    "x-ratelimit-reset": "1792866848",
+    "x-ratelimit-used": "16",
+    "x-ratelimit-resource": "core"
+  },
+  "body": "{\"object\":{\"sha\":\"068ad307633718a7b9fdaf5381f9b8d53c3b87ec\"}}"
+}

@@ -1,0 +1,12 @@
+{
+  "recorded": false,
+  "why": "A deterministic long log is generated to exercise tail retention across multiple read windows.",
+  "method": "GET",
+  "path": "/log?sig=x",
+  "status": 200,
+  "headers": {
+    "content-type": "text/plain"
+  },
+  "host": "blob",
+  "bodyBytes": 262173
+}

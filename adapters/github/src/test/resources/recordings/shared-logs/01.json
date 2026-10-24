@@ -1,0 +1,16 @@
+{
+  "recorded": false,
+  "why": "The recordings lack fifty logs totaling over 2 MiB; generated logs exercise the shared byte budget.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=0123456789abcdef0123456789abcdef01234567&per_page=100&page=1",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4981",
+    "x-ratelimit-reset": "1792866848",
+    "x-ratelimit-used": "19",
+    "x-ratelimit-resource": "core"
+  },
+  "body": "{\"total_count\":1,\"workflow_runs\":[{\"id\":1,\"name\":\"Matrix\",\"status\":\"completed\",\"conclusion\":\"success\"}]}"
+}

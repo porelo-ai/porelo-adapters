@@ -1,0 +1,32 @@
+{
+  "recorded": false,
+  "why": "The recordings lack fifty logs totaling over 2 MiB; generated logs exercise the shared byte budget.",
+  "repeat": 50,
+  "exchanges": [
+    {
+      "method": "GET",
+      "path": "/repos/porelo-ai/porelo-frontend/actions/jobs/{{id}}/logs",
+      "status": 302,
+      "headers": {
+        "content-type": "text/html;charset=utf-8",
+        "location": "{{blob}}/log?sig=x",
+        "x-ratelimit-limit": "5000",
+        "x-ratelimit-remaining": "4997",
+        "x-ratelimit-reset": "1792866884",
+        "x-ratelimit-used": "3",
+        "x-ratelimit-resource": "core"
+      },
+      "body": ""
+    },
+    {
+      "method": "GET",
+      "path": "/log?sig=x",
+      "host": "blob",
+      "status": 200,
+      "headers": {
+        "content-type": "text/plain"
+      },
+      "bodyBytes": 65555
+    }
+  ]
+}

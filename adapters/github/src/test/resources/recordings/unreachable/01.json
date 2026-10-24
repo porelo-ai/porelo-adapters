@@ -1,0 +1,9 @@
+{
+  "recorded": false,
+  "why": "A transport failure has no HTTP response to record.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=0123456789abcdef0123456789abcdef01234567&per_page=100&page=1",
+  "status": 0,
+  "headers": {},
+  "body": ""
+}

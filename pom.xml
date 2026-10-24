@@ -14,11 +14,11 @@
     </parent>
 
     <groupId>org.fuin.porelo</groupId>
-    <artifactId>porelo-build-github</artifactId>
+    <artifactId>porelo-adapters</artifactId>
     <version>0.5.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Porelo Build GitHub</name>
-    <description>Porelo - Reads what the build of a task's push did on GitHub Actions (PARENT)</description>
+    <name>Porelo Adapters</name>
+    <description>Porelo build adapters and their executable contract suite</description>
 
     <!-- Overrides the LGPL block inherited from org.fuin:pom. -->
     <licenses>
@@ -31,26 +31,26 @@
     </licenses>
 
     <!-- Without the inherit.append.path attributes Maven appends each child's artifactId to these. -->
-    <url>https://github.com/porelo-ai/porelo-build-github/</url>
+    <url>https://github.com/porelo-ai/porelo-adapters/</url>
 
     <scm child.scm.url.inherit.append.path="false"
          child.scm.connection.inherit.append.path="false"
          child.scm.developerConnection.inherit.append.path="false">
-        <url>https://github.com/porelo-ai/porelo-build-github/</url>
-        <connection>scm:git:git://github.com/porelo-ai/porelo-build-github.git</connection>
-        <developerConnection>scm:git:git@github.com:porelo-ai/porelo-build-github.git</developerConnection>
+        <url>https://github.com/porelo-ai/porelo-adapters/</url>
+        <connection>scm:git:git://github.com/porelo-ai/porelo-adapters.git</connection>
+        <developerConnection>scm:git:git@github.com:porelo-ai/porelo-adapters.git</developerConnection>
     </scm>
 
     <issueManagement>
         <system>GitHub Issues</system>
-        <url>https://github.com/porelo-ai/porelo-build-github/issues</url>
+        <url>https://github.com/porelo-ai/porelo-adapters/issues</url>
     </issueManagement>
 
     <properties>
         <!-- The Porelo this reader is built against: porelo-build-api and porelo-wire, through porelo-bom. A snapshot while
              it is developed; a release depends only on releases. Everything else it builds with - the Java release,
              nothing published, the plugin and tool versions - comes from porelo-parent. -->
-        <porelo.version>0.5.0</porelo.version>
+        <porelo.version>0.5.1-SNAPSHOT</porelo.version>
         <!-- What makes one snapshot package newer than the last; CI passes the run number. -->
         <reader.snapshot.run>0</reader.snapshot.run>
         <!-- The C library and zlib the native reader needs, measured with readelf, which both packages declare by
@@ -64,7 +64,8 @@
     </properties>
 
     <modules>
-        <module>reader</module>
+        <module>contract</module>
+        <module>adapters</module>
     </modules>
 
     <dependencyManagement>
@@ -99,6 +100,14 @@
     <build>
 
         <plugins>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <configuration>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                </configuration>
+            </plugin>
 
             <!-- The shared code style, from porelo-parent: google-java-format (AOSP) and shfmt, checked in validate.
                  'spotless:apply' formats; the formatting commit is in .git-blame-ignore-revs. -->

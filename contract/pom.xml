@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.fuin.porelo</groupId>
+        <artifactId>porelo-adapters</artifactId>
+        <version>0.5.1-SNAPSHOT</version>
+    </parent>
+    <artifactId>porelo-build-contract</artifactId>
+    <name>Porelo Build Contract</name>
+    <description>The socket contract suite every Porelo build adapter passes</description>
+    <properties>
+        <maven.deploy.skip>false</maven.deploy.skip>
+        <skipPublishing>false</skipPublishing>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-build-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-wire</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>cyclonedx</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>makeBom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

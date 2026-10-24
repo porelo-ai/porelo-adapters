@@ -1,0 +1,12 @@
+{
+  "recorded": false,
+  "why": "The green job logs were not recorded; this redirect and log body are generated.",
+  "method": "GET",
+  "path": "/green-log/120881677996",
+  "status": 200,
+  "headers": {
+    "content-type": "text/plain"
+  },
+  "body": "generated green job 120881677996\n",
+  "host": "blob"
+}

@@ -1,9 +1,9 @@
-# Working on Porelo Build GitHub
+# Working on Porelo Adapters
 
 ## What this repository is
 
-Porelo's build reader for GitHub Actions: an executable Porelo finds under `/usr/libexec/porelo/builds/github` and
-speaks `org.fuin.porelo.Build1` with, through `porelo-build-api`. It answers the head commit of a branch and what the
+Porelo's build adapters and their published contract suite. Porelo finds the GitHub adapter under
+`/usr/libexec/porelo/builds/github` and speaks `org.fuin.porelo.Build2` with, through `porelo-build-api`. It answers the head commit of a branch and what the
 build of a commit did - the verdict across its workflow runs, the failing job, and the last 64 KiB of that job's
 log. It holds no secret: Porelo reads the forge token from the vault on the host and passes it in each call.
 

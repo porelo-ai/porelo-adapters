@@ -1,0 +1,16 @@
+{
+  "recorded": false,
+  "method": "GET",
+  "path": "/repos/porelo-ai/no-such-repository-for-the-suite",
+  "status": 404,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4976",
+    "x-ratelimit-reset": "1792866848",
+    "x-ratelimit-used": "24",
+    "x-ratelimit-resource": "core"
+  },
+  "body": "{\"message\":\"Not Found\"}",
+  "why": "The recording has only the ref 404; the repository confirmation is generated with the same refusal shape."
+}

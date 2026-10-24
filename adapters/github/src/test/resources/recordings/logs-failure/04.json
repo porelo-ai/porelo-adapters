@@ -1,0 +1,19 @@
+{
+  "recorded": true,
+  "source": "github.com, 2026-10-24",
+  "method": "GET",
+  "path": "/log?sig=x",
+  "status": 200,
+  "headers": {
+    "content-type": "text/plain"
+  },
+  "host": "blob",
+  "bodyFile": "failed-job.txt",
+  "reduction": {
+    "originalBytes": 383260,
+    "retainedBytes": 69632,
+    "tailBytes": 65536,
+    "sha256": "594dc4bf2a4c26b6b8e1c1fa890f7a9f50a8099cf147074bd5d8a079839d8be2",
+    "tailSha256": "9644b1658189cff86b405a6faeded2c204ac8c077c86735c172c7cec1fcf6ca9"
+  }
+}

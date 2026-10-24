@@ -13,8 +13,8 @@ on:
         # content builds with it.
         paths-ignore: ['**.md', 'doc/**', 'issues/**', 'mkdocs.yml', '.github/**', 'porelo.yml']
     pull_request:
-        # The image a Porelo task builds in: it changes no build here.
-        paths-ignore: ['porelo.yml']
+        # The image a Porelo task builds in changes no build here, and a workflow-only change is the Workflow check's.
+        paths-ignore: ['porelo.yml', '.github/**']
     workflow_dispatch:
 
 permissions:

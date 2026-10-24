@@ -1,6 +1,6 @@
 # GH07 — The Forgejo Adapter Answers As The GitHub One
 
-**Status:** Idea; blocked by [GH06](README.md#gh06).
+**Status:** Accepted; blocked by [GH06](README.md#gh06).
 
 **What must be true.** A project whose `builds:` names `forgejo` gets from `porelo build status`, and an `online` task
 from its pushes, the same answer in the same shape as from GitHub: the commit, the verdict, the jobs and a failed

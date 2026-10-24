@@ -1,6 +1,6 @@
 # GH06 — One Contract Suite Every Adapter Passes
 
-**Status:** Idea; blocked by `porelo` [B253](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b253).
+**Status:** Accepted; blocked by `porelo` [B253](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b253).
 
 **What must be true.** This repository builds the module `porelo-build-contract`, a suite that drives an adapter
 over `org.fuin.porelo.Build2` from recorded answers and holds every case the build contract names, and the `github`

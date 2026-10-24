@@ -16,11 +16,6 @@ left out.
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
 | <a id="gh05"></a>[GH05](GH05-Publish-Without-A-Downloaded-Client.md) | - | - | `Publish` speaks to Artifactory with `curl` through porelo's `artifactory.sh`, downloading no client beside the token. |
-
-## Idea
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
 | <a id="gh06"></a>[GH06](GH06-One-Contract-Suite-Every-Adapter-Passes.md) | - | `porelo` [B253](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b253) | `porelo-build-contract`, one suite from recorded answers that every adapter passes over `Build2`, and the `github` adapter passing it as `porelo-adapter-github` in place of `porelo-build-github` |
 | <a id="gh07"></a>[GH07](GH07-The-Forgejo-Adapter-Answers-As-The-GitHub-One.md) | - | [GH06](README.md#gh06) | `porelo-adapter-forgejo`, reading Forgejo Actions so `porelo build status` and an `online` task get the same answer in the same shape as from GitHub |
 

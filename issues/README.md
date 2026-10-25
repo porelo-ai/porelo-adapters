@@ -5,6 +5,12 @@ issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questio
 waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
 
+## Implementing
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh08"></a>[GH08](GH08-The-Forgejo-Adapter-Trusts-The-Accounts-Authorities.md) | S | - | `Http.overNetwork()` trusts the account's `~/.config/porelo/ca-certificates.pem` beside the built-in roots, so a reader reaches a forge signed by the host's own authority |
+
 ## Analyzed
 
 | # | Size | Blocked by | What it covers | Open questions |

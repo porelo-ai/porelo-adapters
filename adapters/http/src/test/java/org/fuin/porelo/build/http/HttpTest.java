@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,6 +16,7 @@ import org.fuin.porelo.build.api.Build;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests the GET the reader sends over the network, against a stand-in on 127.0.0.1. */
 class HttpTest {
@@ -26,9 +28,13 @@ class HttpTest {
             "\nERROR the test failed here\n".getBytes(StandardCharsets.UTF_8);
 
     private HttpServer server;
+    private Http http;
+
+    @TempDir Path directory;
 
     @BeforeEach
     void serve() throws Exception {
+        http = Http.overNetwork(directory.resolve("absent.pem"));
         server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
         server.createContext(
                 "/log",
@@ -57,7 +63,7 @@ class HttpTest {
     void aLogIsReadThroughKeepingOnlyItsEnd() throws Exception {
         // A job's log can be hundreds of megabytes, of which 64 KiB are handed over; held whole, a
         // large one ends the reader on the host, and its commit never gets a verdict.
-        final Http.Response answer = Http.overNetwork().get(log(), Map.of(), Build.TAIL);
+        final Http.Response answer = http.get(log(), Map.of(), Build.TAIL);
 
         assertThat(answer.status()).as("the stand-in answered").isEqualTo(200);
         assertThat(answer.body()).as("only the end is kept").hasSize(Build.TAIL);
@@ -68,7 +74,7 @@ class HttpTest {
 
     @Test
     void anAnswerAskedWholeIsWhole() throws Exception {
-        assertThat(Http.overNetwork().get(log(), Map.of(), 0).body())
+        assertThat(http.get(log(), Map.of(), 0).body())
                 .as("an API answer is read whole, since JSON cut at its start is none")
                 .hasSize(LOG);
     }
@@ -102,7 +108,7 @@ class HttpTest {
             final URI redirect =
                     URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/redirect");
             final Http.Response response =
-                    Http.overNetwork().get(redirect, Map.of("Authorization", "token test-only"), 0);
+                    http.get(redirect, Map.of("Authorization", "token test-only"), 0);
             assertThat(foreignRequests.get())
                     .as("no request or credential reaches the foreign origin")
                     .isZero();

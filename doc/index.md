@@ -67,6 +67,9 @@ passed to the adapter in each call, as `Authorization: token <token>` on API req
 credentials never travel to a redirect destination. Public repositories can allow anonymous reads, although
 a configured credential still accompanies the adapter's requests.
 
+Like Porelo, the adapter trusts the account's `~/.config/porelo/ca-certificates.pem` in addition to the public
+certificate roots. An absolute `XDG_CONFIG_HOME` selects that configuration directory instead of `~/.config`.
+
 The adapter reads each workflow's single status: failure takes precedence over outstanding runs, then
 cancellation, then success. `waiting` and `blocked` are queued, `running` is running, and `success` and `skipped`
 are successful. Unrecognized statuses produce an unknown verdict naming the value. Jobs are named

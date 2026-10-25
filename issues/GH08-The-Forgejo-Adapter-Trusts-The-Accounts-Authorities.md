@@ -1,6 +1,6 @@
 # GH08 — The Forgejo Adapter Trusts The Account's Authorities
 
-**Status:** Implementing.
+**Status:** Implementing; built, unit and native contract suite green on the host.
 **Size:** S - one module, `adapters/http`, the transport both readers share, and its tests; no contract changes.
 
 **What must be true.** A reader asking a forge whose TLS is signed by the host's own authority gets its answer when

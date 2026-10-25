@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -51,13 +52,26 @@ public interface Http {
     }
 
     /**
-     * Returns the ordinary way a GET is sent: no redirect followed, a deadline on each.
+     * Returns a GET transport trusting public roots and the account's configured authorities.
      *
      * @return It.
      */
     static Http overNetwork() {
+        return overNetwork(TrustedCertificates.file(System.getenv()));
+    }
+
+    /**
+     * Returns a GET transport with additional authorities, no redirects, and a deadline on each
+     * GET.
+     *
+     * @param certificates The account's PEM certificates; a missing regular file adds no authority.
+     * @return The transport.
+     * @throws IllegalStateException When the certificates cannot be read or contain no certificate.
+     */
+    static Http overNetwork(final Path certificates) {
         final HttpClient client =
                 HttpClient.newBuilder()
+                        .sslContext(TrustedCertificates.context(certificates))
                         .followRedirects(HttpClient.Redirect.NEVER)
                         .connectTimeout(Duration.ofSeconds(15))
                         .build();

@@ -5,13 +5,6 @@ issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questio
 waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
 
-## Review
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
-| <a id="gh06"></a>[GH06](GH06-One-Contract-Suite-Every-Adapter-Passes.md) | L | - | `porelo-build-contract`, one suite with shared answer rules, evidence-checked per-forge values, and generated boundary cases that every adapter passes over `Build2`, and the `github` adapter passing it as `porelo-adapter-github` in place of `porelo-build-github` |
-| <a id="gh07"></a>[GH07](GH07-The-Forgejo-Adapter-Answers-As-The-GitHub-One.md) | M | - | `porelo-adapter-forgejo`, reading Forgejo Actions so `porelo build status` and an `online` task get the same answer in the same shape as from GitHub |
-
 ## Analyzed
 
 | # | Size | Blocked by | What it covers | Open questions |
@@ -28,6 +21,8 @@ left out.
 
 | # | Title | What was built |
 |---|---|---|
+| <a id="gh06"></a>GH06 | One Contract Suite Every Adapter Passes | `porelo-build-contract` holds one suite of questions, answer rules and generated boundary cases with evidence-checked recordings per forge, and the GitHub reader passes it over `Build2` as `porelo-adapter-github`, replacing `porelo-build-github`. |
+| <a id="gh07"></a>GH07 | The Forgejo Adapter Answers As The GitHub One | `porelo-adapter-forgejo` reads Forgejo Actions over `Build2` and passes the same contract suite with recordings made from Forgejo 17 in podman. |
 | <a id="gh03"></a>GH03 | The Code Read Against The Skills It Names | `reader` read against the five skills `AGENTS.md` names, each finding fixed with a test seen red or declined. |
 | <a id="gh01"></a>GH01 | Release The Reader As A Package | A tag and `main` publish the reader as a `.deb` and an `.rpm` to the package repositories, where Porelo finds it. |
 | <a id="gh04"></a>GH04 | Renamed Porelo Here | The reader is `org.fuin.porelo:porelo-build-github`, packaged as `porelo-build-github` at `/usr/libexec/porelo/builds/github`, where Porelo looks; a documents test refuses the old word. |

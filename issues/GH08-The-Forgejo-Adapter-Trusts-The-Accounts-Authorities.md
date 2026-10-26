@@ -24,3 +24,8 @@ reaches a forge signed by a public authority.
   certificate in it, the same server is refused.
 - A file with no certificate fails naming the file.
 - The native reader passes the contract suite under `-Pnative,dist verify`.
+
+**Decided:**
+- The contract suite runs the reader on the JVM against a plain-HTTP recording; the native reader trusting the
+  account's file over TLS against the forge is measured by the operator's test on a rented host, and nothing more is
+  built for it here.

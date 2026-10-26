@@ -1,6 +1,6 @@
 # Issues
 
-The open tasks of `porelo-build-github`, grouped by state; the order within a group is the priority. The rules for an
+The open tasks of `porelo-adapters`, grouped by state; the order within a group is the priority. The rules for an
 issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questions*, in *Analyzed* only, counts what
 waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
@@ -15,13 +15,20 @@ left out.
 
 | # | Size | Blocked by | What it covers | Open questions |
 |---|---|---|---|---|
-| <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | M | `porelo` [B171](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b171) | `Review1` beside `Build1`: a pull request's review comments, threads and suggestions read into `porelo`'s comment model, and comments and replies written with a write token of their own | - |
+| <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | porelo [B166](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b166), [B171](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b171), [B291](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b291), [B292](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b292), [B293](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b293); porelo-project [PJ66](https://github.com/porelo-ai/porelo-project/blob/main/issues/README.md#pj66), [PJ74](https://github.com/porelo-ai/porelo-project/blob/main/issues/README.md#pj74); [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials | 0 |
 
 ## Accepted
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
 | <a id="gh05"></a>[GH05](GH05-Publish-Without-A-Downloaded-Client.md) | - | - | `Publish` speaks to Artifactory with `curl` through porelo's `artifactory.sh`, downloading no client beside the token. |
+
+## Idea
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh09"></a>[GH09](GH09-Review-Cases-In-The-Contract-Suite.md) | - | porelo [B166](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b166), [B171](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b171), [B291](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b291), [B292](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b292), [B293](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b293); porelo-project [PJ66](https://github.com/porelo-ai/porelo-project/blob/main/issues/README.md#pj66), [PJ74](https://github.com/porelo-ai/porelo-project/blob/main/issues/README.md#pj74) | Shared `Review1` cases in `porelo-build-contract` guard SARIF fidelity and native client calls, unsupported capabilities and authorized writes without duplicates; blocks [GH02](README.md#gh02) and [GH10](README.md#gh10) |
+| <a id="gh10"></a>[GH10](GH10-The-Forgejo-Adapter-Reads-And-Writes-Reviews.md) | - | porelo [B166](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b166), [B171](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b171), [B291](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b291), [B292](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b292), [B293](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b293); porelo-project [PJ66](https://github.com/porelo-ai/porelo-project/blob/main/issues/README.md#pj66), [PJ74](https://github.com/porelo-ai/porelo-project/blob/main/issues/README.md#pj74); [GH09](README.md#gh09) | Forgejo serves reviews as SARIF beside `Build2` through the `forgejo` client, preserving origin and position evidence and holding unsupported writes |
 
 ## Finished
 

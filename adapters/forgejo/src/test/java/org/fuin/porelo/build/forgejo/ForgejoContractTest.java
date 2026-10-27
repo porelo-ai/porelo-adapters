@@ -8,4 +8,9 @@ class ForgejoContractTest extends AdapterContract {
     ForgejoContractTest() {
         super(ForgejoReader.class, "forgejo", Path.of("src/test/resources/recordings"), "token");
     }
+
+    @Override
+    protected boolean opensPullRequests() {
+        return true;
+    }
 }

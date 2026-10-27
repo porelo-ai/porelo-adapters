@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/** One HTTP GET and its answer: the transport shared by forge adapters. */
+/** One HTTP GET, or a POST, and its answer: the transport shared by forge adapters. */
 @FunctionalInterface
 public interface Http {
 
@@ -29,6 +29,21 @@ public interface Http {
      * @throws IOException When nothing answered.
      */
     Response get(URI uri, Map<String, String> headers, int tail) throws IOException;
+
+    /**
+     * Sends a POST of a JSON body and follows no redirect.
+     *
+     * @param uri Where.
+     * @param headers What to send.
+     * @param json The body, sent as {@code application/json}.
+     * @return The answer, its whole body.
+     * @throws IOException When nothing answered.
+     * @throws UnsupportedOperationException When this transport only reads.
+     */
+    default Response post(final URI uri, final Map<String, String> headers, final String json)
+            throws IOException {
+        throw new UnsupportedOperationException("this transport only reads");
+    }
 
     /**
      * An HTTP answer.
@@ -75,29 +90,59 @@ public interface Http {
                         .followRedirects(HttpClient.Redirect.NEVER)
                         .connectTimeout(Duration.ofSeconds(15))
                         .build();
-        return (uri, headers, tail) -> {
-            final HttpRequest.Builder request =
-                    HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(60)).GET();
-            headers.forEach(request::header);
-            try {
-                final HttpResponse<InputStream> answer =
-                        client.send(request.build(), HttpResponse.BodyHandlers.ofInputStream());
-                final Map<String, List<String>> named = new LinkedHashMap<>();
-                answer.headers()
-                        .map()
-                        .forEach(
-                                (name, values) -> named.put(name.toLowerCase(Locale.ROOT), values));
-                try (InputStream body = answer.body()) {
-                    return new Response(
-                            answer.statusCode(),
-                            named,
-                            tail > 0 ? tail(body, tail) : body.readAllBytes());
-                }
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                throw new IOException("interrupted", ex);
+        return new Http() {
+            @Override
+            public Response get(final URI uri, final Map<String, String> headers, final int tail)
+                    throws IOException {
+                return send(
+                        client,
+                        HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(60)).GET(),
+                        headers,
+                        tail);
+            }
+
+            @Override
+            public Response post(
+                    final URI uri, final Map<String, String> headers, final String json)
+                    throws IOException {
+                return send(
+                        client,
+                        HttpRequest.newBuilder(uri)
+                                .timeout(Duration.ofSeconds(60))
+                                .header("Content-Type", "application/json")
+                                .POST(
+                                        HttpRequest.BodyPublishers.ofString(
+                                                json, java.nio.charset.StandardCharsets.UTF_8)),
+                        headers,
+                        0);
             }
         };
+    }
+
+    private static Response send(
+            final HttpClient client,
+            final HttpRequest.Builder request,
+            final Map<String, String> headers,
+            final int tail)
+            throws IOException {
+        headers.forEach(request::header);
+        try {
+            final HttpResponse<InputStream> answer =
+                    client.send(request.build(), HttpResponse.BodyHandlers.ofInputStream());
+            final Map<String, List<String>> named = new LinkedHashMap<>();
+            answer.headers()
+                    .map()
+                    .forEach((name, values) -> named.put(name.toLowerCase(Locale.ROOT), values));
+            try (InputStream body = answer.body()) {
+                return new Response(
+                        answer.statusCode(),
+                        named,
+                        tail > 0 ? tail(body, tail) : body.readAllBytes());
+            }
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IOException("interrupted", ex);
+        }
     }
 
     /**

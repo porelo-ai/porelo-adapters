@@ -18,7 +18,11 @@ import org.fuin.porelo.wire.Json;
 import org.jspecify.annotations.Nullable;
 
 /** Values evidenced by a case's exchanges; contract rules never come from this file. */
-record CaseExpectation(String head, List<Job> jobs, long retryAfter) {
+record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url) {
+    CaseExpectation(final String head, final List<Job> jobs, final long retryAfter) {
+        this(head, jobs, retryAfter, "");
+    }
+
     record Job(String name, String result, byte @Nullable [] log) {
         boolean failed() {
             return List.of("failure", "timed_out", "action_required", "startup_failure")
@@ -56,6 +60,14 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter) {
                     .as("expect.json head must appear in a recorded body")
                     .isEqualTo(sha);
             return new CaseExpectation(sha, List.of(), 0);
+        }
+        if (test.expected() instanceof ContractCase.PullRequestAnswer) {
+            keys(map, Set.of("url", "urlFrom"));
+            final String url = text(map, "url");
+            assertThat(evidence.value(text(map, "urlFrom")))
+                    .as("expect.json url must appear in a recorded body")
+                    .isEqualTo(url);
+            return new CaseExpectation("", List.of(), 0, url);
         }
         if (test.expected() instanceof ContractCase.Refusal refusal) {
             if (refusal.reason() != BuildRefused.Reason.RATE_LIMITED) {

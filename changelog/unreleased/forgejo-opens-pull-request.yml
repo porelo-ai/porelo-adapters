@@ -1,0 +1,2 @@
+title: The Forgejo adapter opens the pull request from a task's branch into the default branch, or answers the open one, titled with the branch's newest commit when Porelo gives no title; the contract suite checks it against Forgejo 17 recordings, and every other adapter must say it cannot
+type: added

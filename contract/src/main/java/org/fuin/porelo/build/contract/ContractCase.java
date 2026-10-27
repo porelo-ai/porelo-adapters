@@ -6,7 +6,9 @@ import java.util.List;
 import org.fuin.porelo.build.api.Build;
 import org.fuin.porelo.build.api.BuildRefused;
 import org.fuin.porelo.build.api.InstalledBuildReader;
+import org.fuin.porelo.build.api.PullRequest;
 import org.fuin.porelo.build.api.Target;
+import org.jspecify.annotations.Nullable;
 
 record ContractCase(String name, String repository, Question question, Expected expected) {
     ContractCase(final String name, final Question question, final Expected expected) {
@@ -36,7 +38,22 @@ record ContractCase(String name, String repository, Question question, Expected 
         }
     }
 
+    /** Opens the pull request from a branch, with the reader's own title when none is given. */
+    record OpenPullRequest(String branch, @Nullable String title) implements Question {
+        @Override
+        public Object ask(final InstalledBuildReader reader, final Target target) {
+            final PullRequest answer = reader.openPullRequest(target, branch, title);
+            if (answer == null) {
+                throw new AssertionError("the reader says it opens no pull request");
+            }
+            return answer;
+        }
+    }
+
     sealed interface Expected {}
+
+    /** The pull request at the recorded address; {@code opened} whether this call opened it. */
+    record PullRequestAnswer(boolean opened) implements Expected {}
 
     record HeadAnswer(boolean absent) implements Expected {}
 
@@ -81,6 +98,26 @@ record ContractCase(String name, String repository, Question question, Expected 
                         new Refusal(BuildRefused.Reason.NO_SUCH_REPOSITORY)),
                 refusal("unreachable", BuildRefused.Reason.UNREACHABLE));
     }
+
+    /**
+     * The cases of an adapter that opens pull requests, recorded on a repository of their own.
+     *
+     * @return Them.
+     */
+    static List<ContractCase> pullRequests() {
+        final OpenPullRequest asked = new OpenPullRequest("porelo/t", null);
+        return List.of(
+                new ContractCase("pull-request-opened", PULLS, asked, new PullRequestAnswer(true)),
+                new ContractCase("pull-request-open", PULLS, asked, new PullRequestAnswer(false)),
+                new ContractCase(
+                        "pull-request-refused",
+                        PULLS,
+                        asked,
+                        new Refusal(BuildRefused.Reason.CREDENTIAL_REFUSED)));
+    }
+
+    /** The repository the pull request recordings were made on. */
+    static final String PULLS = "core/probe";
 
     private static ContractCase build(
             final String name, final String commit, final Build.Logs logs, final String verdict) {

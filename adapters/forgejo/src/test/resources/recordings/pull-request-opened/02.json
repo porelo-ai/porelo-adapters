@@ -1,0 +1,13 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-10-27",
+  "capture": "pulls-none",
+  "method": "GET",
+  "path": "/repos/core/probe/pulls?state=open&limit=50&page=1",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json;charset=utf-8",
+    "x-total-count": "0"
+  },
+  "body": "[]\n"
+}

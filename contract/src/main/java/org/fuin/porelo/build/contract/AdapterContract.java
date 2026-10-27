@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.fuin.porelo.build.api.Build;
 import org.fuin.porelo.build.api.BuildRefused;
 import org.fuin.porelo.build.api.InstalledBuildReader;
+import org.fuin.porelo.build.api.PullRequest;
 import org.fuin.porelo.build.api.Target;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -54,6 +55,58 @@ public abstract class AdapterContract {
         // A wrong verdict or refusal sends a task down the wrong path; tokens must stay at the API.
         return ContractCase.all().stream()
                 .map(each -> DynamicTest.dynamicTest(each.name(), () -> run(each)));
+    }
+
+    /**
+     * Whether this adapter opens pull requests; one that does not must say it cannot, asking its
+     * forge nothing.
+     *
+     * @return {@code false} unless the adapter overrides it.
+     */
+    protected boolean opensPullRequests() {
+        return false;
+    }
+
+    /**
+     * Returns the pull request cases: recorded ones for an adapter that opens them, one that it
+     * cannot for any other.
+     *
+     * @return One dynamic test per case.
+     */
+    @TestFactory
+    Stream<DynamicTest> pullRequestContract() {
+        if (opensPullRequests()) {
+            return ContractCase.pullRequests().stream()
+                    .map(each -> DynamicTest.dynamicTest(each.name(), () -> run(each)));
+        }
+        return Stream.of(DynamicTest.dynamicTest("pull-request-cannot", this::cannot));
+    }
+
+    private void cannot() throws Exception {
+        Files.createDirectories(Path.of("target"));
+        final Path scratch = Files.createTempDirectory(Path.of("target"), "c-");
+        try (InstalledBuildReader reader =
+                new InstalledBuildReader(
+                        JavaExecutable.write(scratch, main), forge, scratch.resolve("s"))) {
+            // Port 9 answers nothing: an adapter that asks its forge fails here instead of saying
+            // it cannot.
+            assertThat(
+                            reader.openPullRequest(
+                                    new Target(
+                                            "git@forge.example:" + ContractCase.PULLS + ".git",
+                                            "http://127.0.0.1:9",
+                                            UUID.randomUUID().toString()),
+                                    "porelo/t",
+                                    null))
+                    .as("an adapter that opens no pull request says it cannot")
+                    .isNull();
+        } finally {
+            try (Stream<Path> paths = Files.walk(scratch)) {
+                for (final Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                    Files.delete(path);
+                }
+            }
+        }
     }
 
     private void run(final ContractCase test) throws Exception {
@@ -110,6 +163,12 @@ public abstract class AdapterContract {
             return;
         }
         final Object answer = test.question().ask(reader, target);
+        if (test.expected() instanceof ContractCase.PullRequestAnswer expected) {
+            assertThat(answer)
+                    .as("%s recorded pull request", test.name())
+                    .isEqualTo(new PullRequest(values.url(), expected.opened()));
+            return;
+        }
         if (test.expected() instanceof ContractCase.HeadAnswer) {
             assertThat(answer).as("%s recorded head", test.name()).isEqualTo(values.head());
             return;

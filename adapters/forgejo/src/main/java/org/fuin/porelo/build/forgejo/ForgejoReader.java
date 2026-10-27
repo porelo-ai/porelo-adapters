@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -12,6 +13,7 @@ import org.fuin.porelo.build.api.Build;
 import org.fuin.porelo.build.api.BuildMain;
 import org.fuin.porelo.build.api.BuildReader;
 import org.fuin.porelo.build.api.BuildRefused;
+import org.fuin.porelo.build.api.PullRequest;
 import org.fuin.porelo.build.api.Target;
 import org.fuin.porelo.build.http.Http;
 import org.fuin.porelo.wire.Json;
@@ -110,6 +112,97 @@ public final class ForgejoReader implements BuildReader {
                 failed && jobs.stream().noneMatch(job -> job.result().equals("failure"))
                         ? "no single job failed; the workflow did"
                         : "");
+    }
+
+    @Override
+    public PullRequest openPullRequest(
+            final Target target, final String branch, final @Nullable String title) {
+        requireApi(target);
+        final Repository repository = repository(target);
+        if (!BRANCH.matcher(branch).matches() || branch.contains("..")) {
+            throw new IllegalArgumentException("'" + branch + "' is not a branch Porelo names");
+        }
+        final Http.Response found = api(target, repository.path(), 0);
+        refuse(found);
+        final String base = text(object(json(found)).get("default_branch"));
+        final String open = open(target, repository, branch, base);
+        if (open != null) return new PullRequest(open, false);
+        final Map<String, Object> asked = new LinkedHashMap<>();
+        asked.put("head", branch);
+        asked.put("base", base);
+        asked.put("title", title == null ? subject(target, repository, branch) : title);
+        final Http.Response opened;
+        try {
+            opened =
+                    http.post(
+                            URI.create(requireApi(target) + repository.path() + "/pulls"),
+                            Map.of(
+                                    "Authorization",
+                                    "token " + target.token(),
+                                    "Accept",
+                                    "application/json"),
+                            Json.write(asked));
+        } catch (IOException ex) {
+            throw unreachable("Forgejo did not answer: " + ex.getClass().getSimpleName());
+        }
+        refuse(opened);
+        return new PullRequest(url(object(json(opened))), true);
+    }
+
+    /** The open pull request from the branch into the default branch, or {@code null}. */
+    private @Nullable String open(
+            final Target target,
+            final Repository repository,
+            final String branch,
+            final String base) {
+        final String path = repository.path() + "/pulls?state=open&limit=" + PER_PAGE + "&page=";
+        long seen = 0;
+        for (int page = 1; page <= MOST_PAGES; page++) {
+            final Http.Response response = api(target, path + page, 0);
+            refuse(response);
+            final List<Map<?, ?>> entries = entries(json(response));
+            for (final Map<?, ?> pull : entries) {
+                final Map<?, ?> head = object(pull.get("head"));
+                // From this repository's own branch only: a fork's branch of the same name is
+                // somebody else's.
+                if (branch.equals(text(head.get("ref")))
+                        && repository
+                                .toString()
+                                .equalsIgnoreCase(text(object(head.get("repo")).get("full_name")))
+                        && base.equals(text(object(pull.get("base")).get("ref")))) {
+                    return url(pull);
+                }
+            }
+            seen += entries.size();
+            final String total = response.header("x-total-count");
+            if (entries.isEmpty()
+                    || entries.size() < PER_PAGE
+                    || total.matches("[0-9]+") && seen >= Long.parseLong(total)) {
+                return null;
+            }
+        }
+        throw unreachable(
+                "Forgejo's open pull requests exceed " + MOST_PAGES + " pages; none was opened");
+    }
+
+    /** The first line of the branch's newest commit's message. */
+    private String subject(final Target target, final Repository repository, final String branch) {
+        final Http.Response response = api(target, repository.path() + "/branches/" + branch, 0);
+        if (response.status() == 404)
+            throw unreachable("Forgejo has no branch " + branch + " to open a pull request from");
+        refuse(response);
+        final String message =
+                text(object(object(json(response)).get("commit")).get("message")).strip();
+        final int end = message.indexOf('\n');
+        final String first = (end < 0 ? message : message.substring(0, end)).strip();
+        return first.isEmpty() ? branch : first;
+    }
+
+    private static String url(final Map<?, ?> pull) {
+        final String url = text(pull.get("html_url"));
+        if (!url.startsWith("https://") && !url.startsWith("http://"))
+            throw unreachable("Forgejo returned a pull request without an address");
+        return url;
     }
 
     private List<Map<?, ?>> runs(

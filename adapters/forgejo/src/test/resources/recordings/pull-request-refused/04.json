@@ -1,0 +1,12 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-10-27",
+  "capture": "open-read-only",
+  "method": "POST",
+  "path": "/repos/core/probe/pulls",
+  "status": 403,
+  "headers": {
+    "content-type": "application/json;charset=utf-8"
+  },
+  "body": "{\"message\":\"token does not have at least one of required scope(s): [write:repository]\",\"url\":\"http://localhost:3000/api/swagger\"}\n"
+}

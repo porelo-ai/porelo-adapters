@@ -41,6 +41,14 @@ each logged job gets at most an equal share of that budget. The suite calculates
 of `Build`'s constructor. Its boundary cases require a source log over `Build.TAIL`, a failed job beyond
 `Build.MOST_JOBS`, and retained tails totaling more than `Build.MOST_LOG_BYTES`, respectively.
 
+## Pull requests
+
+An adapter that opens pull requests overrides `opensPullRequests()` to return `true`. It then has three more
+recordings, made on the repository `core/probe` with the branch `porelo/t` and no title given:
+`pull-request-opened` (none open, the branch's newest commit read for the title, the pull request opened),
+`pull-request-open` (the one open from the branch found, nothing opened) and `pull-request-refused` (a token that may
+only read, refused as `CREDENTIAL_REFUSED`). Any other adapter must answer that it cannot, without asking its forge.
+
 ## Expected recording values
 
 Every case directory requires `expect.json`. Only the following fields are accepted; a verdict, refusal,
@@ -56,6 +64,9 @@ log policy, size limit, or alternative question cannot be supplied here.
   When that header is absent, the suite checks the 60-second fallback. GitHub's primary-limit recording
   deliberately exercises this fallback; Forgejo records an explicit 60-second header.
 - Absent branches and other refusals use `{}` because they supply no additional answer values.
+- Pull requests: `url` is the pull request's address and `urlFrom` its exchange and JSON pointer, for example
+  `{"url":"http://localhost:3000/core/probe/pulls/1","urlFrom":"04.json#/html_url"}`; whether it was opened is
+  the case's, not the recording's.
 
 A job example:
 

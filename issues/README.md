@@ -5,12 +5,6 @@ issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questio
 waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
 
-## Review
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
-| <a id="gh08"></a>[GH08](GH08-The-Forgejo-Adapter-Trusts-The-Accounts-Authorities.md) | S | - | `Http.overNetwork()` trusts the account's `~/.config/porelo/ca-certificates.pem` beside the built-in roots, so a reader reaches a forge signed by the host's own authority |
-
 ## Analyzed
 
 | # | Size | Blocked by | What it covers | Open questions |
@@ -34,6 +28,7 @@ left out.
 
 | # | Title | What was built |
 |---|---|---|
+| <a id="gh08"></a>GH08 | The Forgejo Adapter Trusts The Account's Authorities | `Http.overNetwork()` trusts the account's `~/.config/porelo/ca-certificates.pem` beside the built-in roots, so a reader reaches a forge signed by the host's own authority and still one signed by a public one |
 | <a id="gh06"></a>GH06 | One Contract Suite Every Adapter Passes | `porelo-build-contract` holds one suite of questions, answer rules and generated boundary cases with evidence-checked recordings per forge, and the GitHub reader passes it over `Build2` as `porelo-adapter-github`, replacing `porelo-build-github`. |
 | <a id="gh07"></a>GH07 | The Forgejo Adapter Answers As The GitHub One | `porelo-adapter-forgejo` reads Forgejo Actions over `Build2` and passes the same contract suite with recordings made from Forgejo 17 in podman. |
 | <a id="gh03"></a>GH03 | The Code Read Against The Skills It Names | `reader` read against the five skills `AGENTS.md` names, each finding fixed with a test seen red or declined. |

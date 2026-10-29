@@ -1,13 +1,9 @@
 # [GH02](README.md#gh02) — Review Comments Read And Written
 
-**Status:** Analyzed; blocked by porelo [B166](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b166),
-[B171](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b171),
-[B291](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b291),
-[B292](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b292),
-[B293](https://github.com/porelo-ai/porelo/blob/main/issues/base/README.md#b293),
-porelo-project [PJ66](https://github.com/porelo-ai/porelo-project/blob/main/issues/README.md#pj66),
-[PJ74](https://github.com/porelo-ai/porelo-project/blob/main/issues/README.md#pj74), and
-[GH09](README.md#gh09).
+**Status:** Analyzed; blocked by porelo's review contract (`Review1`, and comments on lines sent
+back to the agent), its forge review synchronization, its written SARIF profile, its hardened SARIF reader and its
+source levels and risk classes; by each adapter listing the services it offers, each by contract and version; and
+by `porelo-forge-clients`, which knows nothing of Porelo; and by [GH09](README.md#gh09).
 **Size:** L - review serving, SARIF conversion, delegation of existing build calls to a separate client's contract,
 and shared contract tests cross repository boundaries and require several days.
 

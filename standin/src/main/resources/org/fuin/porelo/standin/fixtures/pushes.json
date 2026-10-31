@@ -2,7 +2,7 @@
   {
     "name": "fixture-threads",
     "subject": "Review approval threads and a suggested constant",
-    "shows": "Compare an open file thread, a resolved line thread with two replies, an open suggestion, two review summaries, a general forge comment, and a local comment.",
+    "shows": "Compare an open file thread, a resolved line thread with two replies, an open suggestion, two review summaries, a general forge comment, a local comment, and a task's finding with a fix.",
     "base": {
       "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals > 0;\n    }\n\n    String label() {\n        return \"Pending\";\n    }\n}\n"
     },
@@ -32,6 +32,12 @@
         "kind": "person",
         "round": 2,
         "document": "fixture-threads/person-r2.json"
+      },
+      {
+        "name": "fixture-task",
+        "kind": "task",
+        "round": 2,
+        "document": "fixture-threads/task-r2.json"
       }
     ]
   },

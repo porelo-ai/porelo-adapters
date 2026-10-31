@@ -1,0 +1,78 @@
+{
+  "version": "2.1.0",
+  "properties": {
+    "porelo/profileVersion": "1"
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "fixture-task"
+        }
+      },
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "${repositoryUri}",
+          "revisionId": "${head}"
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "porelo/baseRevisionId": "${base}",
+        "porelo/completeness": "complete"
+      },
+      "results": [
+        {
+          "kind": "fail",
+          "level": "warning",
+          "ruleId": "review.label-constant",
+          "message": {
+            "text": "The label is shown in two places; name it once."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Gate.java"
+                },
+                "region": {
+                  "startLine": 9,
+                  "endLine": 9
+                }
+              }
+            }
+          ],
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "task",
+            "porelo/taskId": "fixture-task-1",
+            "porelo/taskRole": "reviewer"
+          },
+          "fixes": [
+            {
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "src/Gate.java"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "startLine": 9,
+                        "endLine": 9
+                      },
+                      "insertedContent": {
+                        "text": "        return READY_LABEL;"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

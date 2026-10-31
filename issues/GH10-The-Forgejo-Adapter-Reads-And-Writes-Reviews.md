@@ -46,6 +46,11 @@ origin and conversion limits, and holds unsupported writes without changing thei
 - Confirm the client's published calls, native records and evidence for reply/grouping rules, position asymmetry,
   completeness and supported operations on the configured Forgejo version, including resolver and outdated state.
   Do not assume client class or method names before that contract is published.
+- The `forgejo` client has no call yet for general pull request comments (list with `since`, create, edit, delete) or
+  for the server's version, and does not say whether Forgejo can reply to a review comment through its API or whether
+  editing an issue comment reaches a review comment; its exceptions carry no retry delay, and a list does not say
+  whether another page follows. All are planned there, the reply and edit questions answered by a recording; confirm
+  each against the published client before building on it.
 - Confirm stable PR/comment/resolver identities, membership and fork evidence, exact read/write scopes, unknown
   evidence representation and least privilege. Verify suggestion fences, mention behavior and native retry behavior.
 - Confirm the upstream review discovery, authorization and retry contracts, client origin/size/cut-off guarantees and

@@ -98,5 +98,10 @@ token supplied for that call; every forge interaction, including builds, goes th
   both anchor sides, file comments, nested completeness, edits/deletes, thread state and identity/membership evidence.
   No client class or method name is assumed to exist. Confirm its origin, byte-limit and pagination guarantees and
   documented minimum read/write scopes; do not infer them from build credentials.
+- The `github` client has no call yet for general pull request comments (issue comments: list with `since`, create,
+  edit, delete), for editing or deleting a review comment, or for one thread with its resolved and outdated state and
+  resolver by its ID (`threadComments` reads only the comments); its exceptions carry no retry delay, a rate-limit 403
+  is not told from a permission 403, and a list does not say whether another page follows. All are planned there;
+  confirm each against the published client before building on it.
 - Confirm suggestion fence escaping, mention behavior and serialization defaults against the selected client and
   library versions. Decide exact helper placement and reuse after the shared profile and parser are published.

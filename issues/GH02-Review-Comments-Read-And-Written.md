@@ -1,9 +1,9 @@
 # [GH02](README.md#gh02) — Review Comments Read And Written
 
-**Status:** Analyzed; blocked by porelo's review contract (`Review1`, and comments on lines sent
-back to the agent), its forge review synchronization, its written SARIF profile, its hardened SARIF reader and its
-source levels and risk classes; by each adapter listing the services it offers, each by contract and version; and
-by `porelo-forge-clients`, which knows nothing of Porelo; and by [GH09](README.md#gh09).
+**Status:** Backlog (Estimated and Backlog by the operator); blocked by porelo's review contract (`Review1`, and
+comments on lines sent back to the agent), its forge review synchronization, its written SARIF profile, its hardened
+SARIF reader and its source levels and risk classes; by each adapter listing the services it offers, each by contract
+and version; and by `porelo-forge-clients`, which knows nothing of Porelo; and by [GH09](README.md#gh09).
 **Size:** L - review serving, SARIF conversion, delegation of existing build calls to a separate client's contract,
 and shared contract tests cross repository boundaries and require several days.
 
@@ -44,6 +44,11 @@ token supplied for that call; every forge interaction, including builds, goes th
 
 ## Plan
 
+- **Built first, now:** the GitHub to SARIF conversion in both directions in `adapters/github`, against the review
+  profile and GitHub mapping as Porelo's review contract draft states them, through the `github` client's local
+  snapshot; the stand-in for the daemon's review calls ([GH12](README.md#gh12)) uses it. **Waits for the daemon's
+  side:** serving `Review1` and its discovery, the published profile and its fixtures, the hardened reader, and the
+  release binding of writes. **Waits for [GH09](README.md#gh09):** the shared contract cases both adapters pass.
 - Consume the API and discovery contract supplied by the dependencies. `GitHubReader` in `adapters/github` currently
   implements `BuildReader` and enters through `BuildMain.run`; wire review serving and capability discovery there
   using the published contract, rather than assuming a review interface already exists. Keep build behavior covered

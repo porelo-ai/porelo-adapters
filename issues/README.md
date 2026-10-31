@@ -11,12 +11,17 @@ left out.
 |---|---|---|---|
 | <a id="gh05"></a>[GH05](GH05-Publish-Without-A-Downloaded-Client.md) | S | - | `Publish` speaks to Artifactory with inline `curl`, the token on standard input, downloading no client beside the token |
 
+## Backlog
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials |
+
 ## Analyzed
 
 | # | Size | Blocked by | What it covers | Open questions |
 |---|---|---|---|---|
 | <a id="gh12"></a>[GH12](GH12-A-Stand-In-For-The-Daemons-Review-Calls.md) | L | - | A test-only stand-in serves the daemon's `Tasks1` review calls on a unix socket from a real GitHub pull request, through the forge clients and the GitHub-SARIF conversion, with the daemon's decisions as marked fixed values | 3 |
-| <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials | 0 |
 
 ## Idea
 

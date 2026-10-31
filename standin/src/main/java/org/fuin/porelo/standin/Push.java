@@ -258,7 +258,9 @@ final class Push {
         final String replyTo = properties.path("porelo/nativeReplyTo").asText(null);
         if (replyTo != null) {
             properties.put(
-                    "porelo/replyTo", guids.computeIfAbsent("comment:" + replyTo, k -> newGuid()));
+                    "porelo/replyTo",
+                    // GitHub replies only to a review comment.
+                    guids.computeIfAbsent("comment:review:" + replyTo, k -> newGuid()));
         }
         final String level = level(kind, properties);
         if (level != null) {
@@ -283,7 +285,11 @@ final class Push {
         final JsonNode properties = result.path("properties");
         final String comment = properties.path("porelo/nativeCommentId").asText(null);
         if (comment != null) {
-            return "comment:" + comment;
+            // Issue and review comments are numbered apart, so one ID can name two comments.
+            return "comment:"
+                    + properties.path("porelo/nativeCommentKind").asText()
+                    + ":"
+                    + comment;
         }
         final String review = properties.path("porelo/nativeReviewId").asText(null);
         if (review != null) {
@@ -312,8 +318,13 @@ final class Push {
                         findings++;
                     }
                     final JsonNode properties = result.path("properties");
-                    if ("open".equals(properties.path("porelo/threadState").asText())) {
-                        openThreads.add(properties.path("porelo/threadId").asText());
+                    final String thread = properties.path("porelo/threadId").asText();
+                    // A resolve here overrides what the producer said, as Comments shows it.
+                    final String state =
+                            localThreadState.getOrDefault(
+                                    thread, properties.path("porelo/threadState").asText());
+                    if ("open".equals(state)) {
+                        openThreads.add(thread);
                     }
                 }
             }

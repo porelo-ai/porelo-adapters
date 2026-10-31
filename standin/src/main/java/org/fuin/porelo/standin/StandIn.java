@@ -715,24 +715,26 @@ final class StandIn {
         }
     }
 
-    private static String cursor(Push push, Push.Run run, int offset) {
-        final String raw = push.name + "\n" + run.id + "\n" + run.round + "\n" + offset;
+    static String cursor(Push push, Push.Run run, int offset) {
+        final String raw =
+                push.name + "\n" + push.commit + "\n" + run.id + "\n" + run.round + "\n" + offset;
         return Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
     }
 
-    private static int offset(String cursor, Push push, Push.Run run) {
+    static int offset(String cursor, Push push, Push.Run run) {
         try {
             final String[] parts =
                     new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8)
                             .split("\n", -1);
-            if (parts.length == 4
+            if (parts.length == 5
                     && parts[0].equals(push.name)
-                    && parts[1].equals(run.id)
-                    && parts[2].equals(Integer.toString(run.round))) {
-                final int offset = Integer.parseInt(parts[3]);
-                if (offset > 0) {
+                    && parts[1].equals(push.commit)
+                    && parts[2].equals(run.id)
+                    && parts[3].equals(Integer.toString(run.round))) {
+                final int offset = Integer.parseInt(parts[4]);
+                if (offset > 0 && offset < run.results.size()) {
                     return offset;
                 }
             }

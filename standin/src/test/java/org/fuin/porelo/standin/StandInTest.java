@@ -319,38 +319,38 @@ class StandInTest {
     @Test
     void resolvingAThreadShowsItResolvedAndReopeningOpensIt() throws Exception {
         final String run = run("fixture-threads", "github.com");
-        final String thread =
-                JSON.readTree(
-                                (String)
-                                        call(
-                                                        "Comments",
-                                                        Map.of(
-                                                                "name",
-                                                                "fixture-threads",
-                                                                "run",
-                                                                run))
-                                                .get("sarif"))
-                        .at("/runs/0/results/6/properties/porelo~1threadId")
-                        .asText();
+        final String thread = stateOfResult6(run).path("porelo/threadId").asText();
+        final int open = openThreads("fixture-threads");
 
-        assertThat(
-                        call("ResolveThread", Map.of("name", "fixture-threads", "thread", thread))
-                                .get("state"))
+        call("ResolveThread", Map.of("name", "fixture-threads", "thread", thread));
+
+        assertThat(stateOfResult6(run).path("porelo/threadState").asText())
+                .as("Comments shows it resolved")
                 .isEqualTo("resolved");
-        assertThat(
-                        call(
-                                        "ResolveThread",
-                                        Map.of(
-                                                "name",
-                                                "fixture-threads",
-                                                "thread",
-                                                thread,
-                                                "reopen",
-                                                true))
-                                .get("state"))
+        assertThat(openThreads("fixture-threads"))
+                .as("Pending counts one open thread less")
+                .isEqualTo(open - 1);
+
+        call("ResolveThread", Map.of("name", "fixture-threads", "thread", thread, "reopen", true));
+
+        assertThat(stateOfResult6(run).path("porelo/threadState").asText())
+                .as("reopened")
                 .isEqualTo("open");
-        assertThat(errorOf("ResolveThread", Map.of("name", "fixture-threads", "thread", "nope")))
-                .endsWith(".NoSuchThread");
+        assertThat(openThreads("fixture-threads")).as("counted open again").isEqualTo(open);
+    }
+
+    private JsonNode stateOfResult6(String run) throws Exception {
+        return JSON.readTree(
+                        (String)
+                                call("Comments", Map.of("name", "fixture-threads", "run", run))
+                                        .get("sarif"))
+                .at("/runs/0/results/6/properties");
+    }
+
+    @SuppressWarnings("unchecked")
+    private int openThreads(String push) {
+        return ((Number) ((Map<String, Object>) push(push).get("review")).get("openThreads"))
+                .intValue();
     }
 
     // Harm: work leaves without review.
@@ -554,5 +554,71 @@ class StandInTest {
         assertThat(errorOf("Comment", Map.of("name", "fixture-anchor", "sarif", sarif)))
                 .as("never coerced")
                 .endsWith(".ProfileViolation");
+    }
+
+    private static Push pullRequestPush(String commit) {
+        return new Push(
+                "pr-1",
+                "s",
+                "2026-01-01T00:00:00Z",
+                1L,
+                "E1",
+                "C3",
+                Map.of(),
+                2,
+                null,
+                null,
+                "",
+                commit,
+                "0".repeat(40));
+    }
+
+    private static ObjectNode shell() throws Exception {
+        return (ObjectNode) JSON.readTree("{\"runs\":[{}]}");
+    }
+
+    private static ObjectNode comment(String kind, String id) throws Exception {
+        return (ObjectNode)
+                JSON.readTree(
+                        """
+                        {"properties":{"porelo/nativeCommentKind":"%s","porelo/nativeCommentId":"%s"}}
+                        """
+                                .formatted(kind, id));
+    }
+
+    // Harm: a cursor taken before the pull request moved reads a page of another commit's run.
+    @Test
+    void aCursorOfAnEarlierCommitIsRefused() throws Exception {
+        final Push push = pullRequestPush("a".repeat(40));
+        final List<ObjectNode> results = new java.util.ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            results.add(comment("review", Integer.toString(i + 1)));
+        }
+        final Push.Run run = push.putRun("github.com", "forge", 1, shell(), results, List.of());
+        final String cursor = StandIn.cursor(push, run, 1);
+
+        push.commit = "b".repeat(40);
+
+        assertThatThrownBy(() -> StandIn.offset(cursor, push, run))
+                .as("the cursor names the commit it was read at")
+                .isInstanceOf(VarlinkException.class);
+    }
+
+    // Harm: two comments with one guid make a reply or a resolve land on the wrong one.
+    @Test
+    void anIssueCommentAndAReviewCommentWithTheSameIdGetTwoGuids() throws Exception {
+        final Push push = pullRequestPush("a".repeat(40));
+        final Push.Run run =
+                push.putRun(
+                        "github.com",
+                        "forge",
+                        1,
+                        shell(),
+                        List.of(comment("issue", "10"), comment("review", "10")),
+                        List.of());
+
+        assertThat(run.results.get(0).path("guid").asText())
+                .as("GitHub numbers the two kinds apart")
+                .isNotEqualTo(run.results.get(1).path("guid").asText());
     }
 }

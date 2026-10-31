@@ -25,12 +25,14 @@ work needs anyway.
   shapes the daemon's gate interface has today and its review additions are drafted in: `Pending` and `Review` with
   each push's level, class, approvals needed and per-push counts and runs; paged `Comments` of one run as one profile
   document; `Comment`, a reply by `replyTo`, `toForge`; `ResolveThread` with `reopen`; `Approve` and `Reject` bound to
-  the push's commit, which never push anything and say so in their answer. Every other method answers `Failed` naming
-  the stand-in.
+  the push's commit, which never push anything and say so in their answer; `Projects` and `WatchProjects` with only
+  the fields a review display reads, for the stand-in's one project and repository. Every other method answers
+  `Failed` naming the stand-in.
 - **Where the pushes come from:** one configured GitHub repository and pull request numbers, given on the command line,
   never guessed. Each pull request is one push: its head is the push's commit, its merge base the review's base. A bare
   clone the stand-in owns mirrors the repository, the head under `refs/porelo/incoming/<name>`, refetched when the head
-  moves, so the review fetch reads both sides through it. `Review`'s diff, log and files come from git over that clone;
+  moves, so the review fetch reads both sides through it. The clone's HEAD names a default branch made of every
+  push's base, so the merge base of HEAD and a push's head is that push's base, as a review display computes it. `Review`'s diff, log and files come from git over that clone;
   each file's rank is `ORDINARY` and its reason says it is the stand-in's.
 - **The conversion, taken from [GH02](README.md#gh02):** reviews, review comments, replies and threads read through the
   `github` client and converted to the review profile (anchors and diff side, outdated with its original anchor, the
@@ -69,9 +71,19 @@ work needs anyway.
   rest over the socket; the replaying cases wait for the forge clients' published recordings and replaying
   `HttpClient`, which their next snapshot attaches as a `tests` jar.
 - **Built so far:** the conversion in `adapters/github` (`GitHubReviewRead`, `GitHubReviewWrite`, `ReviewText`,
-  `RepositoryPath`, `ReviewDocument`), the stand-in in `standin/` with its own interface copy, the ten fixture pushes,
-  and `StandInTest`; every guard seen red once. **Still to do:** the replaying cases above, and the live run against
-  the test repository with the operator's token.
+  `RepositoryPath`, `ReviewDocument`), the stand-in in `standin/` with its own interface copy, eleven fixture pushes,
+  and `StandInTest`; every guard seen red once. The live run against the test repository passed: a line comment and
+  a reply with `toForge` reached GitHub and read back in one thread, and a resolve showed. **Still to do:** the
+  replaying cases above, and one defect they reproduce: after a `toForge` comment the stand-in keeps a local copy
+  beside the forge's, so the push counts the thread twice (seen live).
+- **The first reading's findings not fixed, and why:** a `porelo/resolverType` of `user` stays, since GitHub's
+  GraphQL types a thread's `resolvedBy` as `User`; a thread's `startDiffSide` is not compared, since a comment whose
+  `start_side` differs from its `side` is already held; REST IDs are not checked to be positive, since GitHub numbers
+  from 1 and a wrong one costs nothing here; the socket directory's owner is compared with the home directory's
+  owner, which refuses where it is wrong and never lets more through; a token encoded in git's header is not searched
+  for in answers, since git never prints that header; reading a push's runs while a comment is stored is not under
+  one lock, since the stand-in is a test tool and a collision answers `Failed`, loud; a pull request from a deleted
+  fork or a review with a null body fails the whole read in the forge client, which the forge clients change.
 - **What it builds against:** `porelo-forge-client-github` 0.1.0-SNAPSHOT, installed locally and not yet on Sonatype,
   so the change is pushed only after the forge clients publish that snapshot; and `porelo-wire` 0.5.1-SNAPSHOT.
 
@@ -84,5 +96,5 @@ work needs anyway.
 
 ## To be checked
 
-- Which calls the review display makes before these (a project list, a describe), and whether its fetch takes the
-  local path `PendingPush.fetch` now names - asked of the plugin's agent.
+- That the review display, pointed at the restarted stand-in, lists the project and shows every fixture push with its
+  base.

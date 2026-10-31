@@ -1,0 +1,47 @@
+{
+  "version": "2.1.0",
+  "properties": {
+    "porelo/profileVersion": "1"
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "fixture-client"
+        }
+      },
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "${repositoryUri}",
+          "revisionId": "${head}"
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "porelo/baseRevisionId": "${base}",
+        "porelo/completeness": "complete",
+        "porelo/forgeInstanceId": "github.com",
+        "porelo/pullRequestId": "17",
+        "porelo/nativeRepositoryId": "88127341"
+      },
+      "results": [
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "I will check the approval count before releasing this push."
+          },
+          "properties": {
+            "porelo/anchorKind": "general",
+            "porelo/sourceKind": "person",
+            "porelo/authorId": "michi",
+            "porelo/nativeCommentId": "9000000020",
+            "porelo/nativeCommentKind": "issue",
+            "porelo/nativeCommentNodeId": "IC_fixture0020",
+            "porelo/draft": false
+          }
+        }
+      ]
+    }
+  ]
+}

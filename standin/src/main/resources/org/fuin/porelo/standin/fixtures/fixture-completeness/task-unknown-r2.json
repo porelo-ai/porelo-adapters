@@ -1,0 +1,61 @@
+{
+  "version": "2.1.0",
+  "properties": {
+    "porelo/profileVersion": "1"
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "fixture-reviewer"
+        }
+      },
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "${repositoryUri}",
+          "revisionId": "${head}"
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "porelo/baseRevisionId": "${base}",
+        "porelo/completeness": "unknown",
+        "porelo/forgeInstanceId": "github.com",
+        "porelo/pullRequestId": "17",
+        "porelo/nativeRepositoryId": "88127341"
+      },
+      "results": [
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "Check whether the named minimum should replace the literal."
+          },
+          "properties": {
+            "porelo/anchorKind": "general",
+            "porelo/sourceKind": "task",
+            "porelo/nativeCommentId": "9000000047",
+            "porelo/nativeCommentKind": "issue",
+            "porelo/nativeCommentNodeId": "IC_fixture0047",
+            "porelo/draft": false
+          }
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "The gate label can be reviewed independently of the approval policy."
+          },
+          "properties": {
+            "porelo/anchorKind": "general",
+            "porelo/sourceKind": "task",
+            "porelo/nativeCommentId": "9000000048",
+            "porelo/nativeCommentKind": "issue",
+            "porelo/nativeCommentNodeId": "IC_fixture0048",
+            "porelo/draft": false
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,343 @@
+{
+  "version": "2.1.0",
+  "properties": {
+    "porelo/profileVersion": "1"
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "github"
+        }
+      },
+      "conversion": {
+        "tool": {
+          "driver": {
+            "name": "porelo-adapter-github",
+            "version": "0.5.1-SNAPSHOT"
+          }
+        }
+      },
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "${repositoryUri}",
+          "revisionId": "${head}"
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "porelo/baseRevisionId": "${base}",
+        "porelo/completeness": "complete",
+        "porelo/reviewVerdict": "approved",
+        "porelo/forgeInstanceId": "github.com",
+        "porelo/pullRequestId": "17",
+        "porelo/nativeRepositoryId": "88127341",
+        "porelo/fromFork": "false"
+      },
+      "results": [
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "The review gate is clear; the remaining naming suggestion is optional."
+          },
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#pullrequestreview-9000000001",
+          "properties": {
+            "porelo/anchorKind": "general",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000002",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0002",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeReviewId": "9000000001",
+            "porelo/nativeReviewNodeId": "PRR_fixture0001",
+            "porelo/reviewState": "approved",
+            "porelo/reviewCommitId": "${head}",
+            "porelo/bodyless": false,
+            "porelo/draft": false
+          }
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "Commented."
+          },
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#pullrequestreview-9000000003",
+          "properties": {
+            "porelo/anchorKind": "general",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000004",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0004",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeReviewId": "9000000003",
+            "porelo/nativeReviewNodeId": "PRR_fixture0003",
+            "porelo/reviewState": "commented",
+            "porelo/reviewCommitId": "${head}",
+            "porelo/bodyless": true,
+            "porelo/draft": false
+          }
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "Keep the approval policy in this class so callers share one rule."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Gate.java"
+                }
+              }
+            }
+          ],
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#discussion_r9000000005",
+          "properties": {
+            "porelo/anchorKind": "file",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000006",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0006",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000005",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0005",
+            "porelo/nativeThreadId": "PRRT_fixture0007",
+            "porelo/threadState": "open",
+            "porelo/outdated": false,
+            "porelo/draft": false
+          }
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "Should the minimum approval count be named?"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Gate.java"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 5
+                }
+              }
+            }
+          ],
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#discussion_r9000000008",
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000009",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0009",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000008",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0008",
+            "porelo/nativeThreadId": "PRRT_fixture0010",
+            "porelo/threadState": "resolved",
+            "porelo/resolverId": "unknown",
+            "porelo/resolverType": "unknown",
+            "porelo/resolverMember": "unknown",
+            "porelo/outdated": false,
+            "porelo/draft": false
+          }
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "Yes, MIN_APPROVALS describes the policy."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Gate.java"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 5
+                }
+              }
+            }
+          ],
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#discussion_r9000000011",
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000012",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0012",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000011",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0011",
+            "porelo/nativeThreadId": "PRRT_fixture0010",
+            "porelo/nativeReplyTo": "9000000008",
+            "porelo/threadState": "resolved",
+            "porelo/resolverId": "unknown",
+            "porelo/resolverType": "unknown",
+            "porelo/resolverMember": "unknown",
+            "porelo/outdated": false,
+            "porelo/draft": false
+          }
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "Agreed; keep the remaining suggestion open until the constant is used."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Gate.java"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 5
+                }
+              }
+            }
+          ],
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#discussion_r9000000013",
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000014",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0014",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000013",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0013",
+            "porelo/nativeThreadId": "PRRT_fixture0010",
+            "porelo/nativeReplyTo": "9000000008",
+            "porelo/threadState": "resolved",
+            "porelo/resolverId": "unknown",
+            "porelo/resolverType": "unknown",
+            "porelo/resolverMember": "unknown",
+            "porelo/outdated": false,
+            "porelo/draft": false
+          }
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "Use the named minimum approval count here."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Gate.java"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 5
+                }
+              }
+            }
+          ],
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#discussion_r9000000015",
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000016",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0016",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000015",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0015",
+            "porelo/nativeThreadId": "PRRT_fixture0017",
+            "porelo/threadState": "open",
+            "porelo/outdated": false,
+            "porelo/draft": false
+          },
+          "fixes": [
+            {
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "src/Gate.java"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "startLine": 5,
+                        "endLine": 5
+                      },
+                      "insertedContent": {
+                        "text": "        return approvals >= MIN_APPROVALS;"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "The review display should keep this conversation separate from file threads."
+          },
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#issuecomment-9000000018",
+          "properties": {
+            "porelo/anchorKind": "general",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000019",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0019",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000018",
+            "porelo/nativeCommentKind": "issue",
+            "porelo/nativeCommentNodeId": "IC_fixture0018",
+            "porelo/draft": false
+          }
+        }
+      ]
+    }
+  ]
+}

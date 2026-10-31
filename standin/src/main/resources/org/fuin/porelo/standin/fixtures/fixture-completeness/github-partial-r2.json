@@ -1,0 +1,39 @@
+{
+  "version": "2.1.0",
+  "properties": {
+    "porelo/profileVersion": "1"
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "github"
+        }
+      },
+      "conversion": {
+        "tool": {
+          "driver": {
+            "name": "porelo-adapter-github",
+            "version": "0.5.1-SNAPSHOT"
+          }
+        }
+      },
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "${repositoryUri}",
+          "revisionId": "${head}"
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "porelo/baseRevisionId": "${base}",
+        "porelo/completeness": "partial",
+        "porelo/forgeInstanceId": "github.com",
+        "porelo/pullRequestId": "17",
+        "porelo/nativeRepositoryId": "88127341",
+        "porelo/fromFork": "false"
+      },
+      "results": []
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "version": "2.1.0",
+  "properties": {
+    "porelo/profileVersion": "1"
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "fixture-client"
+        }
+      },
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "${repositoryUri}",
+          "revisionId": "${head}"
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "porelo/baseRevisionId": "${base}",
+        "porelo/completeness": "complete",
+        "porelo/forgeInstanceId": "github.com",
+        "porelo/pullRequestId": "17",
+        "porelo/nativeRepositoryId": "88127341"
+      },
+      "results": [
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "Try an anchor past the end of the five-line file."
+          },
+          "properties": {
+            "porelo/anchorKind": "general",
+            "porelo/sourceKind": "person",
+            "porelo/authorId": "michi",
+            "porelo/nativeCommentId": "9000000055",
+            "porelo/nativeCommentKind": "issue",
+            "porelo/nativeCommentNodeId": "IC_fixture0055",
+            "porelo/draft": false
+          }
+        }
+      ]
+    }
+  ]
+}

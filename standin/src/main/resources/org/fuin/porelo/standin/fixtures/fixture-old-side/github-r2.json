@@ -1,0 +1,80 @@
+{
+  "version": "2.1.0",
+  "properties": {
+    "porelo/profileVersion": "1"
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "github"
+        }
+      },
+      "conversion": {
+        "tool": {
+          "driver": {
+            "name": "porelo-adapter-github",
+            "version": "0.5.1-SNAPSHOT"
+          }
+        }
+      },
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "${repositoryUri}",
+          "revisionId": "${head}"
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "porelo/baseRevisionId": "${base}",
+        "porelo/completeness": "complete",
+        "porelo/forgeInstanceId": "github.com",
+        "porelo/pullRequestId": "17",
+        "porelo/nativeRepositoryId": "88127341",
+        "porelo/fromFork": "false"
+      },
+      "results": [
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "The bypass was removed; this old-side suggestion is historical text.\n\n```suggestion\n        boolean bypass = false;\n```"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/LegacyGate.java"
+                },
+                "region": {
+                  "startLine": 3,
+                  "endLine": 3
+                }
+              }
+            }
+          ],
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#discussion_r9000000030",
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "old",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000031",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0031",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000030",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0030",
+            "porelo/nativeThreadId": "PRRT_fixture0032",
+            "porelo/threadState": "open",
+            "porelo/outdated": false,
+            "porelo/draft": false
+          }
+        }
+      ]
+    }
+  ]
+}

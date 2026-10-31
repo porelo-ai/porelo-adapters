@@ -1,0 +1,245 @@
+{
+  "version": "2.1.0",
+  "properties": {
+    "porelo/profileVersion": "1"
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "github"
+        }
+      },
+      "conversion": {
+        "tool": {
+          "driver": {
+            "name": "porelo-adapter-github",
+            "version": "0.5.1-SNAPSHOT"
+          }
+        }
+      },
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "${repositoryUri}",
+          "revisionId": "${head}"
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "porelo/baseRevisionId": "${base}",
+        "porelo/completeness": "complete",
+        "porelo/forgeInstanceId": "github.com",
+        "porelo/pullRequestId": "17",
+        "porelo/nativeRepositoryId": "88127341",
+        "porelo/fromFork": "false"
+      },
+      "results": [
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "The displayed order hides a control: \u202eapproved."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Gate.java"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 5
+                }
+              }
+            }
+          ],
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#discussion_r9000000033",
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000034",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0034",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000033",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0033",
+            "porelo/nativeThreadId": "PRRT_fixture0035",
+            "porelo/threadState": "open",
+            "porelo/outdated": false,
+            "porelo/draft": false
+          }
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "There is a zero-width space in app\u200broved."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Gate.java"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 5
+                }
+              }
+            }
+          ],
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#discussion_r9000000036",
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000037",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0037",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000036",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0036",
+            "porelo/nativeThreadId": "PRRT_fixture0038",
+            "porelo/threadState": "open",
+            "porelo/outdated": false,
+            "porelo/draft": false
+          }
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "The viewer link must never execute script."
+          },
+          "hostedViewerUri": "javascript:alert(1)",
+          "properties": {
+            "porelo/anchorKind": "general",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000040",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0040",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000039",
+            "porelo/nativeCommentKind": "issue",
+            "porelo/nativeCommentNodeId": "IC_fixture0039",
+            "porelo/draft": false
+          }
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "This path must never read a file outside the repository."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../../.ssh/id_ed25519"
+                },
+                "region": {
+                  "startLine": 1,
+                  "endLine": 1
+                }
+              }
+            }
+          ],
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#discussion_r9000000041",
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000042",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0042",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000041",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0041",
+            "porelo/nativeThreadId": "PRRT_fixture0043",
+            "porelo/threadState": "open",
+            "porelo/outdated": false,
+            "porelo/draft": false
+          }
+        },
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "This replacement attempts to change a different line."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Gate.java"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 5
+                }
+              }
+            }
+          ],
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#discussion_r9000000044",
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000045",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0045",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000044",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0044",
+            "porelo/nativeThreadId": "PRRT_fixture0046",
+            "porelo/threadState": "open",
+            "porelo/outdated": false,
+            "porelo/draft": false
+          },
+          "fixes": [
+            {
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "src/Gate.java"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "startLine": 9,
+                        "endLine": 9
+                      },
+                      "insertedContent": {
+                        "text": "        return \"Changed outside the anchor\";"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

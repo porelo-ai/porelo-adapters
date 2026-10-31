@@ -1,0 +1,839 @@
+package org.fuin.porelo.standin;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import org.fuin.porelo.build.github.review.GitHubReviewWrite;
+import org.fuin.porelo.build.github.review.ReviewDocument;
+import org.fuin.porelo.build.github.review.ReviewRefusal;
+import org.fuin.porelo.wire.varlink.VarlinkException;
+import org.fuin.porelo.wire.varlink.VarlinkServer;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * The daemon's review calls on {@code org.fuin.porelo.Tasks1}, served by the stand-in. What only
+ * the daemon decides it answers with fixed values and says so; it forwards nothing, drops nothing
+ * and tells no task; a comment reaches GitHub only when the caller asks with {@code toForge}.
+ */
+final class StandIn {
+
+    /** The one project the stand-in serves. */
+    static final String PROJECT = "standin";
+
+    /** The one repository of that project. */
+    static final String REPOSITORY = "standin";
+
+    static final String INTERFACE = "org.fuin.porelo.Tasks1";
+
+    private static final String FIXED =
+            "the stand-in's fixed values: sourceLevel, riskClass, approvalsNeeded and the counts of held"
+                    + " and outgoing forge comments; the daemon decides these";
+
+    private static final Set<String> SERVED =
+            Set.of(
+                    "Pending",
+                    "Review",
+                    "Comments",
+                    "Comment",
+                    "ResolveThread",
+                    "Approve",
+                    "Reject");
+
+    /** Every other method of the daemon's interface, at the commit the interface copy names. */
+    private static final List<String> NOT_SERVED =
+            List.of(
+                    "List",
+                    "Watch",
+                    "Start",
+                    "RefreshTask",
+                    "Stop",
+                    "Remove",
+                    "Panic",
+                    "Lock",
+                    "CanStart",
+                    "Label",
+                    "Prepare",
+                    "Logs",
+                    "LogArchive",
+                    "WorkHeld",
+                    "Tail",
+                    "Screen",
+                    "HandIn",
+                    "TakeBack",
+                    "HandIns",
+                    "HostKeys",
+                    "TrustHostKey",
+                    "Projects",
+                    "WatchProjects",
+                    "SyncUpstream",
+                    "Backups",
+                    "RestoreBackup",
+                    "DeleteBackup",
+                    "DefaultRepositories",
+                    "AddToDefault",
+                    "RemoveFromDefault",
+                    "Prune",
+                    "Following",
+                    "RefreshProjects",
+                    "Follow",
+                    "Unfollow",
+                    "Clear",
+                    "DeployKey",
+                    "ProjectFileSchema",
+                    "CheckProjectFile",
+                    "Sets",
+                    "Egress",
+                    "SetEgress",
+                    "SetClearance",
+                    "NarrowTask",
+                    "WidenTask",
+                    "Prompts",
+                    "Decide",
+                    "Credentials",
+                    "CredentialDeclare",
+                    "CredentialForget",
+                    "SshKeys",
+                    "CredentialCheck",
+                    "ImportCredential",
+                    "Keyslots",
+                    "EnrollDevice",
+                    "RevokeKeyslot",
+                    "UnlockWithShare",
+                    "Authorizations",
+                    "Authorize",
+                    "Destinations",
+                    "Destination",
+                    "WriteDestination",
+                    "RemoveDestination",
+                    "VaultClear",
+                    "KeepHostVaultShare",
+                    "HostVaultShare",
+                    "ReadHostVaultShare",
+                    "ForgetHostVaultShare",
+                    "PendingBundle",
+                    "Landed",
+                    "Agents",
+                    "Providers",
+                    "Installable",
+                    "MessageKey",
+                    "Peers",
+                    "Talk",
+                    "Held",
+                    "Say",
+                    "Tell",
+                    "ReadHeld",
+                    "Release",
+                    "Moderate",
+                    "SetUpMessages",
+                    "JoinMessages",
+                    "AdmitMachine",
+                    "DismissMachine",
+                    "CreateRoom",
+                    "MessageMembers",
+                    "RemoveMessageMember",
+                    "Doctor",
+                    "Node",
+                    "Process",
+                    "Events",
+                    "VerifyEvents");
+
+    private static final ObjectMapper JSON = new ObjectMapper();
+
+    private static final String PEOPLE_HERE = "people here";
+
+    private final Pushes pushes;
+
+    private final Git git;
+
+    private final @Nullable GitHubSource github;
+
+    private final List<Long> pullRequests;
+
+    private final @Nullable String token;
+
+    private final Clock clock;
+
+    private final PrintStream log;
+
+    private final String person;
+
+    StandIn(
+            Pushes pushes,
+            Git git,
+            @Nullable GitHubSource github,
+            List<Long> pullRequests,
+            @Nullable String token,
+            Clock clock,
+            PrintStream log) {
+        this.pushes = pushes;
+        this.git = git;
+        this.github = github;
+        this.pullRequests = List.copyOf(pullRequests);
+        this.token = token;
+        this.clock = clock;
+        this.log = log;
+        final String user = System.getProperty("user.name", "person");
+        this.person = user.matches("[A-Za-z0-9._-]{1,128}") ? user : "person";
+    }
+
+    /**
+     * Registers every method on a server.
+     *
+     * @param server The server.
+     * @return The server.
+     */
+    VarlinkServer register(VarlinkServer server) {
+        server.describedBy(idl()).reporting("review stand-in " + ReviewDocument.version());
+        server.method("Pending", guarded("Pending", this::pending));
+        server.method("Review", guarded("Review", this::review));
+        server.method("Comments", guarded("Comments", this::comments));
+        server.method("Comment", guarded("Comment", this::comment));
+        server.method("ResolveThread", guarded("ResolveThread", this::resolveThread));
+        server.method("Approve", guarded("Approve", this::approve));
+        server.method("Reject", guarded("Reject", this::reject));
+        for (final String name : NOT_SERVED) {
+            server.method(
+                    name,
+                    (parameters, replies) -> {
+                        throw failed(
+                                "The review stand-in serves only "
+                                        + String.join(", ", new java.util.TreeSet<>(SERVED))
+                                        + "; "
+                                        + name
+                                        + " is the daemon's");
+                    });
+        }
+        return server;
+    }
+
+    /** A method's body, answering one map. */
+    @FunctionalInterface
+    private interface Body {
+        Map<String, Object> call(Map<String, Object> parameters);
+    }
+
+    /**
+     * Runs a method so that neither its answer nor its error nor its log line can carry the token,
+     * and every error is the interface's own.
+     */
+    private VarlinkServer.Method guarded(String method, Body body) {
+        return (parameters, replies) -> {
+            Map<String, Object> answer;
+            try {
+                answer = body.call(parameters);
+            } catch (ReviewRefusal ex) {
+                log(method + " refused: " + ex.reason().error() + " at " + ex.path());
+                throw refused(ex);
+            } catch (VarlinkException ex) {
+                log(method + " answered " + ex.getErrorName());
+                throw clean(ex);
+            } catch (RuntimeException ex) {
+                log(method + " failed: " + ex.getClass().getSimpleName());
+                throw clean(failed(String.valueOf(ex.getMessage())));
+            }
+            final String text = json(answer);
+            if (carriesToken(text)) {
+                log(method + " failed: its answer would have carried the token");
+                throw failed(
+                        "The stand-in's answer would have carried the token; nothing was sent");
+            }
+            log(method + " answered");
+            replies.last(answer);
+        };
+    }
+
+    private VarlinkException clean(VarlinkException ex) {
+        final Object parameters = ex.getParameters();
+        if (carriesToken(String.valueOf(parameters))
+                || carriesToken(String.valueOf(ex.getMessage()))) {
+            return failed("The stand-in's error would have carried the token; it is not shown");
+        }
+        return ex;
+    }
+
+    private boolean carriesToken(String text) {
+        return token != null && !token.isEmpty() && text.contains(token);
+    }
+
+    private void log(String line) {
+        log.println(carriesToken(line) ? "a log line that would have carried the token" : line);
+    }
+
+    // ------------------------------------------------------------------------------- the calls
+
+    private Map<String, Object> pending(Map<String, Object> parameters) {
+        gate(parameters);
+        refresh(false);
+        final List<Object> pending = new ArrayList<>();
+        for (final Push push : pushes.all()) {
+            pending.add(pendingPush(push));
+        }
+        final Map<String, Object> answer = new LinkedHashMap<>();
+        answer.put("mirror", git.dir().toString());
+        answer.put("mode", "gatekeeping");
+        answer.put("seededFrom", "");
+        answer.put("pending", pending);
+        return answer;
+    }
+
+    private Map<String, Object> pendingPush(Push push) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("name", push.name);
+        out.put("commit", push.commit);
+        out.put("subject", push.subject);
+        out.put("waiting", waiting(push.at));
+        out.put("at", push.at);
+        out.put(
+                "fetch",
+                "git fetch "
+                        + git.dir()
+                        + " refs/porelo/incoming/"
+                        + push.name
+                        + ":refs/remotes/porelo/"
+                        + push.name);
+        out.put("sourceLevel", push.sourceLevel);
+        out.put("sourceWords", push.shows);
+        out.put("riskClass", push.riskClass);
+        out.put("approvalsNeeded", push.approvalsNeeded);
+        out.put("review", summary(push));
+        out.put("standIn", FIXED);
+        return out;
+    }
+
+    private Map<String, Object> summary(Push push) {
+        final int[] open = push.openCounts();
+        final List<Object> runs = new ArrayList<>();
+        final int round = push.round();
+        for (final Push.Run run : push.runs.values()) {
+            if (run.round != round) {
+                continue;
+            }
+            int findings = 0;
+            synchronized (run.results) {
+                for (final ObjectNode result : run.results) {
+                    if ("fail".equals(result.path("kind").asText())) {
+                        findings++;
+                    }
+                }
+            }
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("run", run.id);
+            out.put("name", run.name);
+            out.put("kind", run.kind);
+            out.put("state", run.completeness());
+            out.put("findings", findings);
+            // Nothing here clears a finding: every finding is open.
+            out.put("openFindings", findings);
+            runs.add(out);
+        }
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("round", round);
+        out.put("openFindings", open[0]);
+        out.put("openThreads", open[1]);
+        out.put("heldInbound", 0);
+        out.put("waitingOutbound", 0);
+        out.put("runs", runs);
+        return out;
+    }
+
+    private Map<String, Object> review(Map<String, Object> parameters) {
+        gate(parameters);
+        final Push push = push(parameters);
+        final String against = optional(parameters, "against");
+        final String base = against == null ? push.base : git.commit(against);
+        final List<Object> files = new ArrayList<>();
+        final Map<String, String> status = new LinkedHashMap<>();
+        for (final String line :
+                git.read("diff", "--no-renames", "--name-status", base, push.commit).split("\n")) {
+            if (!line.isBlank()) {
+                final String[] parts = line.split("\t", 2);
+                status.put(parts[1], parts[0]);
+            }
+        }
+        for (final String line :
+                git.read("diff", "--no-renames", "--numstat", base, push.commit).split("\n")) {
+            if (line.isBlank()) {
+                continue;
+            }
+            final String[] parts = line.split("\t", 3);
+            final Map<String, Object> file = new LinkedHashMap<>();
+            file.put("path", parts[2]);
+            file.put("status", status.getOrDefault(parts[2], "M"));
+            file.put("added", "-".equals(parts[0]) ? -1 : Integer.parseInt(parts[0]));
+            file.put("removed", "-".equals(parts[1]) ? -1 : Integer.parseInt(parts[1]));
+            file.put("rank", "ORDINARY");
+            file.put("reason", "the stand-in ranks nothing");
+            final String risk = push.fileClasses.get(parts[2]);
+            if (risk != null) {
+                file.put("riskClass", risk);
+            }
+            files.add(file);
+        }
+        final Map<String, Object> answer = new LinkedHashMap<>();
+        answer.put("diff", git.read("diff", "--no-color", "--no-renames", base, push.commit));
+        answer.put(
+                "log", git.read("log", "--no-color", "--format=%H %s", base + ".." + push.commit));
+        answer.put("files", files);
+        answer.put("base", base);
+        answer.put(
+                "standIn",
+                "every file ORDINARY and its class from a fixture or C1: the stand-in's fixed values");
+        return answer;
+    }
+
+    private Map<String, Object> comments(Map<String, Object> parameters) {
+        gate(parameters);
+        final Push push = push(parameters);
+        final String runId = required(parameters, "run");
+        final Push.Run run = push.runs.get(runId);
+        if (run == null) {
+            throw failed("No run " + runId + " on " + push.name);
+        }
+        final Object roundParameter = parameters.get("round");
+        final int round = roundParameter instanceof Number n ? n.intValue() : push.round();
+        if (round != run.round) {
+            throw failed("Run " + runId + " is of round " + run.round + ", not " + round);
+        }
+        final String cursor = optional(parameters, "cursor");
+        final int from = cursor == null ? 0 : offset(cursor, push, run);
+        final ObjectNode document = run.shell.deepCopy();
+        final var page = Push.page(run, from, ReviewDocument.RESULT_LIMIT);
+        page.forEach(result -> overlayLocalState(push, (ObjectNode) result));
+        ((ObjectNode) document.at("/runs/0")).set("results", page);
+        final Map<String, Object> answer = new LinkedHashMap<>();
+        answer.put("sarif", ReviewDocument.text(document));
+        final int next = from + page.size();
+        final int total;
+        synchronized (run.results) {
+            total = run.results.size();
+        }
+        if (next < total) {
+            answer.put("cursor", cursor(push, run, next));
+        }
+        if (!run.held.isEmpty()) {
+            final List<Object> held = new ArrayList<>();
+            for (final var item : run.held) {
+                held.add(
+                        Map.of(
+                                "kind",
+                                item.kind(),
+                                "id",
+                                Long.toString(item.id()),
+                                "reason",
+                                item.reason()));
+            }
+            answer.put("held", held);
+        }
+        return answer;
+    }
+
+    private Map<String, Object> comment(Map<String, Object> parameters) {
+        gate(parameters);
+        final Push push = push(parameters);
+        final String sarif = required(parameters, "sarif");
+        final String id = optional(parameters, "id");
+        if (id != null) {
+            if (!id.matches("[A-Za-z0-9._-]{1,64}")) {
+                throw refusal(
+                        "ProfileViolation",
+                        Map.of("detail", "id is [A-Za-z0-9._-]{1,64}", "rule", "id", "path", "id"));
+            }
+            final var earlier = push.commentIds.get(id);
+            if (earlier != null) {
+                if (!earlier.getKey().equals(sarif)) {
+                    throw refusal("IdReused", Map.of("id", id));
+                }
+                return earlier.getValue();
+            }
+        }
+        final Submission submission = Submission.read(sarif);
+        if (!submission.revision.equals(push.commit) || !submission.base.equals(push.base)) {
+            throw refusal(
+                    "MovedSinceReview",
+                    Map.of("name", push.name, "reviewed", submission.revision, "now", push.commit));
+        }
+        anchorInBlob(push, submission);
+        final String replyTo = optional(parameters, "replyTo");
+        final ObjectNode parent = replyTo == null ? null : push.result(replyTo);
+        if (replyTo != null && parent == null) {
+            throw refusal("NoSuchResult", Map.of("guid", replyTo));
+        }
+        final boolean toForge = Boolean.TRUE.equals(parameters.get("toForge"));
+        final Map<String, Object> sent = toForge ? send(push, submission, parent) : null;
+        final Map<String, Object> answer = store(push, submission, parent);
+        if (sent != null) {
+            answer.put("sentToForge", sent);
+        }
+        if (id != null) {
+            push.commentIds.put(id, Map.entry(sarif, answer));
+        }
+        return answer;
+    }
+
+    private Map<String, Object> store(
+            Push push, Submission submission, @Nullable ObjectNode parent) {
+        final ObjectNode document = submission.document;
+        final ObjectNode run = (ObjectNode) document.at("/runs/0");
+        ((ObjectNode) run.at("/versionControlProvenance/0"))
+                .put(
+                        "repositoryUri",
+                        github == null
+                                ? "porelo://" + PROJECT + "/" + REPOSITORY
+                                : github.repositoryUri());
+        ((ObjectNode) run.get("properties")).put("porelo/completeness", "complete");
+        final ObjectNode result = submission.result;
+        final ObjectNode properties = result.with("properties");
+        final String guid = java.util.UUID.randomUUID().toString();
+        final String thread;
+        if (parent == null) {
+            thread = push.newThread(guid);
+        } else {
+            final ObjectNode parentProperties = parent.with("properties");
+            final String parentThread = parentProperties.path("porelo/threadId").asText(null);
+            thread =
+                    parentThread != null
+                            ? parentThread
+                            : push.newThread(parent.path("guid").asText());
+            if (parentThread == null) {
+                parentProperties.put("porelo/threadId", thread);
+                parentProperties.put("porelo/threadState", "open");
+            }
+            properties.put("porelo/replyTo", parent.path("guid").asText());
+        }
+        result.put("guid", guid);
+        properties.put("porelo/threadId", thread);
+        properties.put("porelo/threadState", push.localThreadState.getOrDefault(thread, "open"));
+        properties.put("porelo/sourceKind", "person");
+        properties.put("porelo/authorId", person);
+        properties.put("porelo/sourceLevel", "I1");
+        final int round = push.round();
+        final ObjectNode shell = document.deepCopy();
+        ((ObjectNode) shell.at("/runs/0")).remove("results");
+        synchronized (push) {
+            Push.Run local = null;
+            for (final Push.Run existing : push.runs.values()) {
+                if (existing.name.equals(PEOPLE_HERE) && existing.round == round) {
+                    local = existing;
+                }
+            }
+            if (local == null) {
+                local = push.putRun(PEOPLE_HERE, "person", round, shell, List.of(), List.of());
+            }
+            synchronized (local.results) {
+                local.results.add(result);
+            }
+        }
+        final Map<String, Object> answer = new LinkedHashMap<>();
+        answer.put("guid", guid);
+        answer.put("thread", thread);
+        answer.put("sarif", ReviewDocument.text(document));
+        answer.put(
+                "standIn",
+                "porelo/sourceLevel I1 is the stand-in's fixed value for a comment here");
+        return answer;
+    }
+
+    /**
+     * Sends a comment to GitHub at once, as the caller asked; the daemon would hold it for release.
+     */
+    private Map<String, Object> send(
+            Push push, Submission submission, @Nullable ObjectNode parent) {
+        final Long number = push.pullRequest;
+        if ("PullRequestMoved".equals(push.refuseToForge)) {
+            throw refusal(
+                    "PullRequestMoved",
+                    Map.of("pullRequest", 0, "written", push.commit, "now", "0".repeat(40)));
+        }
+        if (number == null || github == null || token == null) {
+            throw refusal("NoPullRequest", Map.of("name", push.name));
+        }
+        final String head = github.head(number);
+        if (!head.equals(push.commit)) {
+            throw refusal(
+                    "PullRequestMoved",
+                    Map.of("pullRequest", number.intValue(), "written", push.commit, "now", head));
+        }
+        if ("LEFT".equals(submission.rendered.side())) {
+            final String mergeBase = github.mergeBase(number);
+            if (!mergeBase.equals(push.base)) {
+                throw refusal(
+                        "PullRequestBaseMoved",
+                        Map.of(
+                                "pullRequest",
+                                number.intValue(),
+                                "written",
+                                push.base,
+                                "now",
+                                mergeBase));
+            }
+        }
+        final Long replyTo = forgeParent(parent);
+        final GitHubReviewWrite.Written written;
+        try {
+            written =
+                    GitHubReviewWrite.send(
+                            github.client(),
+                            token,
+                            github.owner(),
+                            github.repo(),
+                            number,
+                            push.commit,
+                            submission.rendered,
+                            replyTo);
+        } catch (RuntimeException ex) {
+            throw refusal(
+                    "AdapterRefused",
+                    Map.of("error", "Failed", "detail", String.valueOf(ex.getMessage())));
+        }
+        refresh(true);
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("commentId", Long.toString(written.commentId()));
+        out.put("commentKind", written.commentKind());
+        out.put(
+                "words",
+                "Sent to GitHub at once, without the release step the daemon will have"
+                        + (submission.rendered.losses().isEmpty()
+                                ? ""
+                                : "; GitHub could not carry: "
+                                        + String.join(
+                                                ", ", submission.rendered.losses().keySet())));
+        return out;
+    }
+
+    /**
+     * A reply on GitHub goes to the root of a review comment's thread; other parents get a new
+     * comment.
+     */
+    private static @Nullable Long forgeParent(@Nullable ObjectNode parent) {
+        if (parent == null) {
+            return null;
+        }
+        final JsonNode properties = parent.path("properties");
+        if (!"review".equals(properties.path("porelo/nativeCommentKind").asText())) {
+            return null;
+        }
+        final String root =
+                properties.has("porelo/nativeReplyTo")
+                        ? properties.path("porelo/nativeReplyTo").asText()
+                        : properties.path("porelo/nativeCommentId").asText();
+        return Long.valueOf(root);
+    }
+
+    private void anchorInBlob(Push push, Submission submission) {
+        final GitHubReviewWrite.Rendered rendered = submission.rendered;
+        if (rendered.anchor() == GitHubReviewWrite.Anchor.GENERAL) {
+            return;
+        }
+        final String path = Objects.requireNonNull(rendered.path());
+        final String revision = "LEFT".equals(rendered.side()) ? push.base : push.commit;
+        final String content = git.file(revision, path);
+        final int start = rendered.startLine() == null ? 0 : rendered.startLine();
+        final int end = rendered.line() == null ? 0 : rendered.line();
+        if (content == null
+                || (rendered.anchor() == GitHubReviewWrite.Anchor.LINE && end > lines(content))) {
+            throw refusal(
+                    "AnchorOutsideBlob", Map.of("path", path, "startLine", start, "endLine", end));
+        }
+    }
+
+    private static int lines(String content) {
+        if (content.isEmpty()) {
+            return 0;
+        }
+        final int newlines = (int) content.chars().filter(c -> c == '\n').count();
+        return content.endsWith("\n") ? newlines : newlines + 1;
+    }
+
+    private Map<String, Object> resolveThread(Map<String, Object> parameters) {
+        gate(parameters);
+        final Push push = push(parameters);
+        final String thread = required(parameters, "thread");
+        if (!push.hasThread(thread)) {
+            throw refusal("NoSuchThread", Map.of("thread", thread));
+        }
+        final String state = Boolean.TRUE.equals(parameters.get("reopen")) ? "open" : "resolved";
+        push.localThreadState.put(thread, state);
+        return Map.of("thread", thread, "state", state);
+    }
+
+    private Map<String, Object> approve(Map<String, Object> parameters) {
+        gate(parameters);
+        final Push push = push(parameters);
+        final String commit = optional(parameters, "commit");
+        if (commit != null
+                && (!commit.equals(push.commit) || "MovedSinceReview".equals(push.refuseApprove))) {
+            throw refusal(
+                    "MovedSinceReview",
+                    Map.of("name", push.name, "reviewed", commit, "now", push.commit));
+        }
+        final String branch = optional(parameters, "branch");
+        return Map.of(
+                "forwarded",
+                "nothing: the review stand-in forwards nothing, approves nothing and sends nothing",
+                "branch",
+                branch == null ? "" : branch);
+    }
+
+    private Map<String, Object> reject(Map<String, Object> parameters) {
+        gate(parameters);
+        final Push push = push(parameters);
+        // Nothing is dropped and no task is told: the stand-in has no task.
+        return Map.of("rejected", push.name, "told", Boolean.FALSE);
+    }
+
+    // ------------------------------------------------------------------------------- helpers
+
+    private void refresh(boolean force) {
+        if (github != null && !pullRequests.isEmpty()) {
+            github.refresh(pushes, pullRequests, force);
+        }
+    }
+
+    private static void overlayLocalState(Push push, ObjectNode result) {
+        final ObjectNode properties = result.with("properties");
+        final String thread = properties.path("porelo/threadId").asText(null);
+        if (thread != null) {
+            final String state = push.localThreadState.get(thread);
+            if (state != null) {
+                properties.put("porelo/threadState", state);
+            }
+        }
+    }
+
+    private static String cursor(Push push, Push.Run run, int offset) {
+        final String raw = push.name + "\n" + run.id + "\n" + run.round + "\n" + offset;
+        return Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static int offset(String cursor, Push push, Push.Run run) {
+        try {
+            final String[] parts =
+                    new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8)
+                            .split("\n", -1);
+            if (parts.length == 4
+                    && parts[0].equals(push.name)
+                    && parts[1].equals(run.id)
+                    && parts[2].equals(Integer.toString(run.round))) {
+                final int offset = Integer.parseInt(parts[3]);
+                if (offset > 0) {
+                    return offset;
+                }
+            }
+        } catch (IllegalArgumentException ex) {
+            // Not one of ours: refused below.
+        }
+        throw refusal("CursorRefused", Map.of("cursor", cursor));
+    }
+
+    private void gate(Map<String, Object> parameters) {
+        final String project = required(parameters, "project");
+        if (!PROJECT.equals(project)) {
+            throw refusal("NoSuchProject", Map.of("project", project));
+        }
+        final String repository = optional(parameters, "repository");
+        if (repository != null && !REPOSITORY.equals(repository)) {
+            throw failed("The stand-in's project has one repository, " + REPOSITORY);
+        }
+    }
+
+    private Push push(Map<String, Object> parameters) {
+        final String name = required(parameters, "name");
+        final Push push = pushes.get(name);
+        if (push == null) {
+            throw refusal("NoSuchPush", Map.of("name", name));
+        }
+        return push;
+    }
+
+    private String waiting(String at) {
+        try {
+            final Duration waited = Duration.between(Instant.parse(at), clock.instant());
+            final long minutes = Math.max(0, waited.toMinutes());
+            return minutes < 120 ? minutes + " minutes" : waited.toHours() + " hours";
+        } catch (java.time.DateTimeException ex) {
+            return "";
+        }
+    }
+
+    private static String required(Map<String, Object> parameters, String name) {
+        final Object value = parameters.get(name);
+        if (!(value instanceof String text)) {
+            throw new VarlinkException(
+                    "org.varlink.service.InvalidParameter", Map.of("parameter", name));
+        }
+        return text;
+    }
+
+    private static @Nullable String optional(Map<String, Object> parameters, String name) {
+        final Object value = parameters.get(name);
+        if (value == null) {
+            return null;
+        }
+        if (!(value instanceof String text)) {
+            throw new VarlinkException(
+                    "org.varlink.service.InvalidParameter", Map.of("parameter", name));
+        }
+        return text;
+    }
+
+    private static VarlinkException refused(ReviewRefusal ex) {
+        final String detail = String.valueOf(ex.getMessage());
+        return switch (ex.reason()) {
+            case PROFILE_VIOLATION ->
+                    refusal(
+                            "ProfileViolation",
+                            Map.of("detail", detail, "rule", detail, "path", ex.path()));
+            case TOO_LARGE ->
+                    refusal(
+                            "TooLarge",
+                            Map.of("detail", detail, "limit", detail, "path", ex.path()));
+            case FORBIDDEN_FIELD, UNSAFE_TEXT, FIX_OUTSIDE_ANCHOR, OLD_SIDE_FIX ->
+                    refusal(ex.reason().error(), Map.of("detail", detail, "path", ex.path()));
+            case NOT_SUPPORTED ->
+                    refusal("AdapterRefused", Map.of("error", "NotSupported", "detail", detail));
+        };
+    }
+
+    static VarlinkException refusal(String error, Map<String, Object> parameters) {
+        return new VarlinkException(INTERFACE + "." + error, parameters);
+    }
+
+    static VarlinkException failed(String message) {
+        return refusal("Failed", Map.of("message", message));
+    }
+
+    private static String json(Map<String, Object> answer) {
+        try {
+            return JSON.writeValueAsString(answer);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            throw new IllegalStateException("An answer could not be written", ex);
+        }
+    }
+
+    private static String idl() {
+        try (InputStream in = StandIn.class.getResourceAsStream("org.fuin.porelo.Tasks1.varlink")) {
+            return new String(
+                    Objects.requireNonNull(in, "the interface copy").readAllBytes(),
+                    StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+}

@@ -1,0 +1,326 @@
+[
+  {
+    "name": "fixture-threads",
+    "subject": "Review approval threads and a suggested constant",
+    "shows": "Compare an open file thread, a resolved line thread with two replies, an open suggestion, two review summaries, a general forge comment, and a local comment.",
+    "base": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals > 0;\n    }\n\n    String label() {\n        return \"Pending\";\n    }\n}\n"
+    },
+    "head": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals >= 1;\n    }\n\n    String label() {\n        return \"Ready for review\";\n    }\n}\n"
+    },
+    "sourceLevel": "E1",
+    "riskClass": "C1",
+    "fileClasses": {
+      "src/Gate.java": "C1"
+    },
+    "approvalsNeeded": 1,
+    "refuse": {
+      "approve": null,
+      "toForge": null,
+      "anchor": false
+    },
+    "runs": [
+      {
+        "name": "github.com",
+        "kind": "forge",
+        "round": 2,
+        "document": "fixture-threads/github-r2.json"
+      },
+      {
+        "name": "local-person",
+        "kind": "person",
+        "round": 2,
+        "document": "fixture-threads/person-r2.json"
+      }
+    ]
+  },
+  {
+    "name": "fixture-rounds",
+    "subject": "Keep historical review anchors visible across rounds",
+    "shows": "Compare two rounds from the same producer and inspect outdated threads with and without a current location.",
+    "base": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals > 0;\n    }\n\n    String label() {\n        return \"Pending\";\n    }\n}\n"
+    },
+    "head": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals >= 1;\n    }\n\n    String label() {\n        return \"Ready for review\";\n    }\n}\n"
+    },
+    "sourceLevel": "E1",
+    "riskClass": "C1",
+    "fileClasses": {
+      "src/Gate.java": "C1"
+    },
+    "approvalsNeeded": 1,
+    "refuse": {
+      "approve": null,
+      "toForge": null,
+      "anchor": false
+    },
+    "runs": [
+      {
+        "name": "github.com",
+        "kind": "forge",
+        "round": 1,
+        "document": "fixture-rounds/github-r1.json"
+      },
+      {
+        "name": "github.com",
+        "kind": "forge",
+        "round": 2,
+        "document": "fixture-rounds/github-r2.json"
+      }
+    ]
+  },
+  {
+    "name": "fixture-old-side",
+    "subject": "Remove the legacy approval bypass",
+    "shows": "Inspect a removed base-side line and its suggestion fence, which remains comment text with no actionable fix.",
+    "base": {
+      "src/LegacyGate.java": "final class LegacyGate {\n    boolean ready(int approvals) {\n        boolean bypass = true;\n        return bypass || approvals > 0;\n    }\n}\n"
+    },
+    "head": {
+      "src/LegacyGate.java": "final class LegacyGate {\n    boolean ready(int approvals) {\n        return approvals > 0;\n    }\n}\n"
+    },
+    "sourceLevel": "E1",
+    "riskClass": "C1",
+    "fileClasses": {
+      "src/LegacyGate.java": "C1"
+    },
+    "approvalsNeeded": 1,
+    "refuse": {
+      "approve": null,
+      "toForge": null,
+      "anchor": false
+    },
+    "runs": [
+      {
+        "name": "github.com",
+        "kind": "forge",
+        "round": 2,
+        "document": "fixture-old-side/github-r2.json"
+      }
+    ]
+  },
+  {
+    "name": "fixture-hostile",
+    "subject": "Exercise unsafe review content handling",
+    "shows": "These inputs break the profile on purpose: bidi and zero-width text, an active viewer URI, a traversal path, and a suggestion outside its anchor must be handled safely.",
+    "base": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals > 0;\n    }\n\n    String label() {\n        return \"Pending\";\n    }\n}\n"
+    },
+    "head": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals >= 1;\n    }\n\n    String label() {\n        return \"Ready for review\";\n    }\n}\n"
+    },
+    "sourceLevel": "E1",
+    "riskClass": "C1",
+    "fileClasses": {
+      "src/Gate.java": "C1"
+    },
+    "approvalsNeeded": 1,
+    "refuse": {
+      "approve": null,
+      "toForge": null,
+      "anchor": false
+    },
+    "runs": [
+      {
+        "name": "github.com",
+        "kind": "forge",
+        "round": 2,
+        "document": "fixture-hostile/github-r2.json"
+      }
+    ]
+  },
+  {
+    "name": "fixture-completeness",
+    "subject": "Show incomplete producer results without implying success",
+    "shows": "Compare partial, failed, and unknown runs from three producers with zero, one, and two results respectively.",
+    "base": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals > 0;\n    }\n\n    String label() {\n        return \"Pending\";\n    }\n}\n"
+    },
+    "head": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals >= 1;\n    }\n\n    String label() {\n        return \"Ready for review\";\n    }\n}\n"
+    },
+    "sourceLevel": "E1",
+    "riskClass": "C1",
+    "fileClasses": {
+      "src/Gate.java": "C1"
+    },
+    "approvalsNeeded": 1,
+    "refuse": {
+      "approve": null,
+      "toForge": null,
+      "anchor": false
+    },
+    "runs": [
+      {
+        "name": "github.com",
+        "kind": "forge",
+        "round": 2,
+        "document": "fixture-completeness/github-partial-r2.json"
+      },
+      {
+        "name": "fixture-scanner",
+        "kind": "scanner",
+        "round": 2,
+        "document": "fixture-completeness/scanner-failed-r2.json"
+      },
+      {
+        "name": "fixture-reviewer",
+        "kind": "task",
+        "round": 2,
+        "document": "fixture-completeness/task-unknown-r2.json"
+      }
+    ]
+  },
+  {
+    "name": "fixture-paging",
+    "subject": "Page through 230 scanner findings",
+    "shows": "Load 230 scanner findings over three pages of 100, 100, and 30 results, anchored one per head-file line.",
+    "base": {
+      "src/Many.java": "final class Many {\n}\n"
+    },
+    "head": {
+      "src/Many.java": "final class Many {\n    static final int VALUE_001 = 1;\n    static final int VALUE_002 = 2;\n    static final int VALUE_003 = 3;\n    static final int VALUE_004 = 4;\n    static final int VALUE_005 = 5;\n    static final int VALUE_006 = 6;\n    static final int VALUE_007 = 7;\n    static final int VALUE_008 = 8;\n    static final int VALUE_009 = 9;\n    static final int VALUE_010 = 10;\n    static final int VALUE_011 = 11;\n    static final int VALUE_012 = 12;\n    static final int VALUE_013 = 13;\n    static final int VALUE_014 = 14;\n    static final int VALUE_015 = 15;\n    static final int VALUE_016 = 16;\n    static final int VALUE_017 = 17;\n    static final int VALUE_018 = 18;\n    static final int VALUE_019 = 19;\n    static final int VALUE_020 = 20;\n    static final int VALUE_021 = 21;\n    static final int VALUE_022 = 22;\n    static final int VALUE_023 = 23;\n    static final int VALUE_024 = 24;\n    static final int VALUE_025 = 25;\n    static final int VALUE_026 = 26;\n    static final int VALUE_027 = 27;\n    static final int VALUE_028 = 28;\n    static final int VALUE_029 = 29;\n    static final int VALUE_030 = 30;\n    static final int VALUE_031 = 31;\n    static final int VALUE_032 = 32;\n    static final int VALUE_033 = 33;\n    static final int VALUE_034 = 34;\n    static final int VALUE_035 = 35;\n    static final int VALUE_036 = 36;\n    static final int VALUE_037 = 37;\n    static final int VALUE_038 = 38;\n    static final int VALUE_039 = 39;\n    static final int VALUE_040 = 40;\n    static final int VALUE_041 = 41;\n    static final int VALUE_042 = 42;\n    static final int VALUE_043 = 43;\n    static final int VALUE_044 = 44;\n    static final int VALUE_045 = 45;\n    static final int VALUE_046 = 46;\n    static final int VALUE_047 = 47;\n    static final int VALUE_048 = 48;\n    static final int VALUE_049 = 49;\n    static final int VALUE_050 = 50;\n    static final int VALUE_051 = 51;\n    static final int VALUE_052 = 52;\n    static final int VALUE_053 = 53;\n    static final int VALUE_054 = 54;\n    static final int VALUE_055 = 55;\n    static final int VALUE_056 = 56;\n    static final int VALUE_057 = 57;\n    static final int VALUE_058 = 58;\n    static final int VALUE_059 = 59;\n    static final int VALUE_060 = 60;\n    static final int VALUE_061 = 61;\n    static final int VALUE_062 = 62;\n    static final int VALUE_063 = 63;\n    static final int VALUE_064 = 64;\n    static final int VALUE_065 = 65;\n    static final int VALUE_066 = 66;\n    static final int VALUE_067 = 67;\n    static final int VALUE_068 = 68;\n    static final int VALUE_069 = 69;\n    static final int VALUE_070 = 70;\n    static final int VALUE_071 = 71;\n    static final int VALUE_072 = 72;\n    static final int VALUE_073 = 73;\n    static final int VALUE_074 = 74;\n    static final int VALUE_075 = 75;\n    static final int VALUE_076 = 76;\n    static final int VALUE_077 = 77;\n    static final int VALUE_078 = 78;\n    static final int VALUE_079 = 79;\n    static final int VALUE_080 = 80;\n    static final int VALUE_081 = 81;\n    static final int VALUE_082 = 82;\n    static final int VALUE_083 = 83;\n    static final int VALUE_084 = 84;\n    static final int VALUE_085 = 85;\n    static final int VALUE_086 = 86;\n    static final int VALUE_087 = 87;\n    static final int VALUE_088 = 88;\n    static final int VALUE_089 = 89;\n    static final int VALUE_090 = 90;\n    static final int VALUE_091 = 91;\n    static final int VALUE_092 = 92;\n    static final int VALUE_093 = 93;\n    static final int VALUE_094 = 94;\n    static final int VALUE_095 = 95;\n    static final int VALUE_096 = 96;\n    static final int VALUE_097 = 97;\n    static final int VALUE_098 = 98;\n    static final int VALUE_099 = 99;\n    static final int VALUE_100 = 100;\n    static final int VALUE_101 = 101;\n    static final int VALUE_102 = 102;\n    static final int VALUE_103 = 103;\n    static final int VALUE_104 = 104;\n    static final int VALUE_105 = 105;\n    static final int VALUE_106 = 106;\n    static final int VALUE_107 = 107;\n    static final int VALUE_108 = 108;\n    static final int VALUE_109 = 109;\n    static final int VALUE_110 = 110;\n    static final int VALUE_111 = 111;\n    static final int VALUE_112 = 112;\n    static final int VALUE_113 = 113;\n    static final int VALUE_114 = 114;\n    static final int VALUE_115 = 115;\n    static final int VALUE_116 = 116;\n    static final int VALUE_117 = 117;\n    static final int VALUE_118 = 118;\n    static final int VALUE_119 = 119;\n    static final int VALUE_120 = 120;\n    static final int VALUE_121 = 121;\n    static final int VALUE_122 = 122;\n    static final int VALUE_123 = 123;\n    static final int VALUE_124 = 124;\n    static final int VALUE_125 = 125;\n    static final int VALUE_126 = 126;\n    static final int VALUE_127 = 127;\n    static final int VALUE_128 = 128;\n    static final int VALUE_129 = 129;\n    static final int VALUE_130 = 130;\n    static final int VALUE_131 = 131;\n    static final int VALUE_132 = 132;\n    static final int VALUE_133 = 133;\n    static final int VALUE_134 = 134;\n    static final int VALUE_135 = 135;\n    static final int VALUE_136 = 136;\n    static final int VALUE_137 = 137;\n    static final int VALUE_138 = 138;\n    static final int VALUE_139 = 139;\n    static final int VALUE_140 = 140;\n    static final int VALUE_141 = 141;\n    static final int VALUE_142 = 142;\n    static final int VALUE_143 = 143;\n    static final int VALUE_144 = 144;\n    static final int VALUE_145 = 145;\n    static final int VALUE_146 = 146;\n    static final int VALUE_147 = 147;\n    static final int VALUE_148 = 148;\n    static final int VALUE_149 = 149;\n    static final int VALUE_150 = 150;\n    static final int VALUE_151 = 151;\n    static final int VALUE_152 = 152;\n    static final int VALUE_153 = 153;\n    static final int VALUE_154 = 154;\n    static final int VALUE_155 = 155;\n    static final int VALUE_156 = 156;\n    static final int VALUE_157 = 157;\n    static final int VALUE_158 = 158;\n    static final int VALUE_159 = 159;\n    static final int VALUE_160 = 160;\n    static final int VALUE_161 = 161;\n    static final int VALUE_162 = 162;\n    static final int VALUE_163 = 163;\n    static final int VALUE_164 = 164;\n    static final int VALUE_165 = 165;\n    static final int VALUE_166 = 166;\n    static final int VALUE_167 = 167;\n    static final int VALUE_168 = 168;\n    static final int VALUE_169 = 169;\n    static final int VALUE_170 = 170;\n    static final int VALUE_171 = 171;\n    static final int VALUE_172 = 172;\n    static final int VALUE_173 = 173;\n    static final int VALUE_174 = 174;\n    static final int VALUE_175 = 175;\n    static final int VALUE_176 = 176;\n    static final int VALUE_177 = 177;\n    static final int VALUE_178 = 178;\n    static final int VALUE_179 = 179;\n    static final int VALUE_180 = 180;\n    static final int VALUE_181 = 181;\n    static final int VALUE_182 = 182;\n    static final int VALUE_183 = 183;\n    static final int VALUE_184 = 184;\n    static final int VALUE_185 = 185;\n    static final int VALUE_186 = 186;\n    static final int VALUE_187 = 187;\n    static final int VALUE_188 = 188;\n    static final int VALUE_189 = 189;\n    static final int VALUE_190 = 190;\n    static final int VALUE_191 = 191;\n    static final int VALUE_192 = 192;\n    static final int VALUE_193 = 193;\n    static final int VALUE_194 = 194;\n    static final int VALUE_195 = 195;\n    static final int VALUE_196 = 196;\n    static final int VALUE_197 = 197;\n    static final int VALUE_198 = 198;\n    static final int VALUE_199 = 199;\n    static final int VALUE_200 = 200;\n    static final int VALUE_201 = 201;\n    static final int VALUE_202 = 202;\n    static final int VALUE_203 = 203;\n    static final int VALUE_204 = 204;\n    static final int VALUE_205 = 205;\n    static final int VALUE_206 = 206;\n    static final int VALUE_207 = 207;\n    static final int VALUE_208 = 208;\n    static final int VALUE_209 = 209;\n    static final int VALUE_210 = 210;\n    static final int VALUE_211 = 211;\n    static final int VALUE_212 = 212;\n    static final int VALUE_213 = 213;\n    static final int VALUE_214 = 214;\n    static final int VALUE_215 = 215;\n    static final int VALUE_216 = 216;\n    static final int VALUE_217 = 217;\n    static final int VALUE_218 = 218;\n    static final int VALUE_219 = 219;\n    static final int VALUE_220 = 220;\n    static final int VALUE_221 = 221;\n    static final int VALUE_222 = 222;\n    static final int VALUE_223 = 223;\n    static final int VALUE_224 = 224;\n    static final int VALUE_225 = 225;\n    static final int VALUE_226 = 226;\n    static final int VALUE_227 = 227;\n    static final int VALUE_228 = 228;\n}\n"
+    },
+    "sourceLevel": "E1",
+    "riskClass": "C1",
+    "fileClasses": {
+      "src/Many.java": "C1"
+    },
+    "approvalsNeeded": 1,
+    "refuse": {
+      "approve": null,
+      "toForge": null,
+      "anchor": false
+    },
+    "runs": [
+      {
+        "name": "fixture-scanner",
+        "kind": "scanner",
+        "round": 2,
+        "generate": 230
+      }
+    ]
+  },
+  {
+    "name": "fixture-e0",
+    "subject": "Review an untrusted external contribution",
+    "shows": "Inspect an E0 push that requires two approvals and a forge author whose NONE association leaves membership unknown.",
+    "base": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals > 0;\n    }\n\n    String label() {\n        return \"Pending\";\n    }\n}\n"
+    },
+    "head": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals >= 1;\n    }\n\n    String label() {\n        return \"Ready for review\";\n    }\n}\n"
+    },
+    "sourceLevel": "E0",
+    "riskClass": "C1",
+    "fileClasses": {
+      "src/Gate.java": "C1"
+    },
+    "approvalsNeeded": 2,
+    "refuse": {
+      "approve": null,
+      "toForge": null,
+      "anchor": false
+    },
+    "runs": [
+      {
+        "name": "github.com",
+        "kind": "forge",
+        "round": 2,
+        "document": "fixture-e0/github-r2.json"
+      }
+    ]
+  },
+  {
+    "name": "fixture-c3",
+    "subject": "Review a workflow change requiring two approvals",
+    "shows": "Inspect a C3 workflow change waiting for a second approval, with two approvals required and no approving forge review result.",
+    "base": {
+      ".github/workflows/build.yml": "name: Build\non: [push, pull_request]\npermissions:\n  contents: read\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo \"Check approval policy\"\n"
+    },
+    "head": {
+      ".github/workflows/build.yml": "name: Build\non: [push, pull_request]\npermissions:\n  contents: read\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo \"Check approval policy and review status\"\n"
+    },
+    "sourceLevel": "E1",
+    "riskClass": "C3",
+    "fileClasses": {
+      ".github/workflows/build.yml": "C3"
+    },
+    "approvalsNeeded": 2,
+    "refuse": {
+      "approve": null,
+      "toForge": null,
+      "anchor": false
+    },
+    "runs": [
+      {
+        "name": "github.com",
+        "kind": "forge",
+        "round": 2,
+        "document": "fixture-c3/github-r2.json"
+      }
+    ]
+  },
+  {
+    "name": "fixture-moved",
+    "subject": "Refuse stale approval and forge publication",
+    "shows": "Try Approve with the reviewed commit and Comment with toForge to see MovedSinceReview and PullRequestMoved respectively.",
+    "base": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals > 0;\n    }\n\n    String label() {\n        return \"Pending\";\n    }\n}\n"
+    },
+    "head": {
+      "src/Gate.java": "final class Gate {\n    static final int MIN_APPROVALS = 1;\n\n    boolean ready(int approvals) {\n        return approvals >= 1;\n    }\n\n    String label() {\n        return \"Ready for review\";\n    }\n}\n"
+    },
+    "sourceLevel": "E1",
+    "riskClass": "C1",
+    "fileClasses": {
+      "src/Gate.java": "C1"
+    },
+    "approvalsNeeded": 1,
+    "refuse": {
+      "approve": "MovedSinceReview",
+      "toForge": "PullRequestMoved",
+      "anchor": false
+    },
+    "runs": [
+      {
+        "name": "github.com",
+        "kind": "forge",
+        "round": 2,
+        "document": "fixture-moved/github-r2.json"
+      }
+    ]
+  },
+  {
+    "name": "fixture-anchor",
+    "subject": "Refuse a line anchor beyond the head blob",
+    "shows": "Try adding a new-side comment on line 6 or later of src/Small.java; its head file has exactly five lines, so the anchor must be refused.",
+    "base": {
+      "src/Small.java": "final class Small {\n    boolean ready() {\n        return false;\n    }\n}\n"
+    },
+    "head": {
+      "src/Small.java": "final class Small {\n    boolean ready() {\n        return true;\n    }\n}\n"
+    },
+    "sourceLevel": "E1",
+    "riskClass": "C1",
+    "fileClasses": {
+      "src/Small.java": "C1"
+    },
+    "approvalsNeeded": 1,
+    "refuse": {
+      "approve": null,
+      "toForge": null,
+      "anchor": true
+    },
+    "runs": [
+      {
+        "name": "local-person",
+        "kind": "person",
+        "round": 2,
+        "document": "fixture-anchor/person-r2.json"
+      }
+    ]
+  }
+]

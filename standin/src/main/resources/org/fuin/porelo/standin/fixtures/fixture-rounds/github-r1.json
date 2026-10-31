@@ -1,0 +1,80 @@
+{
+  "version": "2.1.0",
+  "properties": {
+    "porelo/profileVersion": "1"
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "github"
+        }
+      },
+      "conversion": {
+        "tool": {
+          "driver": {
+            "name": "porelo-adapter-github",
+            "version": "0.5.1-SNAPSHOT"
+          }
+        }
+      },
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "${repositoryUri}",
+          "revisionId": "${head}"
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "porelo/baseRevisionId": "${base}",
+        "porelo/completeness": "complete",
+        "porelo/forgeInstanceId": "github.com",
+        "porelo/pullRequestId": "17",
+        "porelo/nativeRepositoryId": "88127341",
+        "porelo/fromFork": "false"
+      },
+      "results": [
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "The earlier round used a literal approval count."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Gate.java"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 5
+                }
+              }
+            }
+          ],
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#discussion_r9000000021",
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000022",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0022",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000021",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0021",
+            "porelo/nativeThreadId": "PRRT_fixture0023",
+            "porelo/threadState": "open",
+            "porelo/outdated": false,
+            "porelo/draft": false
+          }
+        }
+      ]
+    }
+  ]
+}

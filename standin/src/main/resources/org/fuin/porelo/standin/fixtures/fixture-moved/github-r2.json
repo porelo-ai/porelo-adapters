@@ -1,0 +1,63 @@
+{
+  "version": "2.1.0",
+  "properties": {
+    "porelo/profileVersion": "1"
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "github"
+        }
+      },
+      "conversion": {
+        "tool": {
+          "driver": {
+            "name": "porelo-adapter-github",
+            "version": "0.5.1-SNAPSHOT"
+          }
+        }
+      },
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "${repositoryUri}",
+          "revisionId": "${head}"
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "porelo/baseRevisionId": "${base}",
+        "porelo/completeness": "complete",
+        "porelo/forgeInstanceId": "github.com",
+        "porelo/pullRequestId": "17",
+        "porelo/nativeRepositoryId": "88127341",
+        "porelo/fromFork": "false"
+      },
+      "results": [
+        {
+          "kind": "review",
+          "level": "none",
+          "message": {
+            "text": "The push has moved since this review was loaded."
+          },
+          "hostedViewerUri": "https://github.com/example-org/review-demo/pull/17#issuecomment-9000000053",
+          "properties": {
+            "porelo/anchorKind": "general",
+            "porelo/sourceKind": "forge",
+            "porelo/forgeInstanceId": "github.com",
+            "porelo/authorId": "9000000054",
+            "porelo/authorDisplayName": "fixture-reviewer",
+            "porelo/authorNodeId": "U_fixture0054",
+            "porelo/authorType": "user",
+            "porelo/authorAssociation": "MEMBER",
+            "porelo/authorMember": "true",
+            "porelo/nativeCommentId": "9000000053",
+            "porelo/nativeCommentKind": "issue",
+            "porelo/nativeCommentNodeId": "IC_fixture0053",
+            "porelo/draft": false
+          }
+        }
+      ]
+    }
+  ]
+}

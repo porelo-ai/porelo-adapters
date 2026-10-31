@@ -1,0 +1,60 @@
+{
+  "version": "2.1.0",
+  "properties": {
+    "porelo/profileVersion": "1"
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "fixture-scanner"
+        }
+      },
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "${repositoryUri}",
+          "revisionId": "${head}"
+        }
+      ],
+      "columnKind": "unicodeCodePoints",
+      "properties": {
+        "porelo/baseRevisionId": "${base}",
+        "porelo/completeness": "failed",
+        "porelo/forgeInstanceId": "github.com",
+        "porelo/pullRequestId": "17",
+        "porelo/nativeRepositoryId": "88127341"
+      },
+      "results": [
+        {
+          "kind": "fail",
+          "level": "warning",
+          "ruleId": "review.minimum-approvals",
+          "message": {
+            "text": "The approval policy needs an explicit minimum."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Gate.java"
+                },
+                "region": {
+                  "startLine": 5,
+                  "endLine": 5
+                }
+              }
+            }
+          ],
+          "properties": {
+            "porelo/anchorKind": "line",
+            "porelo/diffSide": "new",
+            "porelo/sourceKind": "scanner",
+            "porelo/nativeCommentId": "9000000056",
+            "porelo/nativeCommentKind": "review",
+            "porelo/nativeCommentNodeId": "PRRC_fixture0056"
+          }
+        }
+      ]
+    }
+  ]
+}

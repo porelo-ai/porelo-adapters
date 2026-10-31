@@ -1,0 +1,186 @@
+# THE REVIEW STAND-IN'S COPY, NOT PORELO'S CONTRACT.
+#
+# Copied from the daemon's interface at porelo commit 0848e12b664a1d9208edce89dcd3d14e06e2703a
+# (daemon/src/main/resources/varlink/org.fuin.porelo.Tasks1/): only the methods the stand-in serves and their
+# types. The gate's are as the daemon has them there; the review additions - the fields and types marked DRAFT,
+# Comment, Comments and ResolveThread - are as Porelo's review calls are drafted, not yet in the daemon. Fields
+# marked STAND-IN exist only here: they say which values are the stand-in's fixed ones and what it did instead of
+# the daemon. Every other method of the daemon's interface answers Failed naming the stand-in. Deleted with the
+# stand-in once the daemon serves these calls.
+
+interface org.fuin.porelo.Tasks1
+
+# DRAFT: the checks and comments on a push.
+type ReviewSummary (
+  round: int,
+  openFindings: int,
+  openThreads: int,
+  heldInbound: int,
+  waitingOutbound: int,
+  runs: []ReviewRun
+)
+
+# DRAFT: one producer's run on a push.
+type ReviewRun (
+  # The run's id, as Comments takes it.
+  run: string,
+  # The producer as a person reads it.
+  name: string,
+  # person, task, forge or scanner.
+  kind: string,
+  # complete, partial, failed, unknown, running or not-run.
+  state: string,
+  findings: int,
+  openFindings: int
+)
+
+# A push waiting at the gate for a decision.
+type PendingPush (
+  name: string,
+  commit: string,
+  subject: string,
+  waiting: string,
+  at: string,
+  # The git fetch that brings this push into a person's own clone.
+  fetch: string,
+  alreadyUpstream: ?bool,
+  # DRAFT: E0, E1, I1, A or unknown.
+  sourceLevel: ?string,
+  # DRAFT: who it is from, in words.
+  sourceWords: ?string,
+  # DRAFT: C0, C1, C2 or C3.
+  riskClass: ?string,
+  # DRAFT: 1, or 2 for E0, unknown or C3.
+  approvalsNeeded: ?int,
+  task: ?string,
+  # DRAFT
+  review: ?ReviewSummary,
+  # STAND-IN: which of this push's values are the stand-in's fixed ones, in words.
+  standIn: ?string
+)
+
+# One file a pending push changes.
+type ReviewFile (
+  path: string,
+  status: string,
+  added: int,
+  removed: int,
+  rank: string,
+  reason: string,
+  # DRAFT: C0, C1, C2 or C3; absent shows "-".
+  riskClass: ?string
+)
+
+# STAND-IN: a comment the stand-in sent to GitHub at once, without the release step the daemon will have.
+type SentToForge (
+  # The comment's REST ID and kind, review or issue.
+  commentId: string,
+  commentKind: string,
+  words: string
+)
+
+# STAND-IN: a native item the read left out, and why.
+type HeldItem (
+  kind: string,
+  id: string,
+  reason: string
+)
+
+method Pending(project: string, upstream: ?string, repository: ?string) -> (
+  mirror: string,
+  mode: string,
+  seededFrom: string,
+  pending: []PendingPush
+)
+
+method Review(project: string, upstream: ?string, repository: ?string, name: string, against: ?string) -> (
+  diff: string,
+  log: string,
+  files: []ReviewFile,
+  asked: ?string,
+  # DRAFT: the full commit the diff is against.
+  base: ?string,
+  # STAND-IN
+  standIn: ?string
+)
+
+# DRAFT: one page of one run, as one document of Porelo's review profile.
+method Comments(
+  project: string,
+  upstream: ?string,
+  repository: ?string,
+  name: string,
+  run: string,
+  round: ?int,
+  cursor: ?string
+) -> (
+  sarif: string,
+  cursor: ?string,
+  # STAND-IN: what the read of GitHub left out on this run.
+  held: ?[]HeldItem
+)
+
+# DRAFT: a person's comment, or a reply, on a waiting push.
+method Comment(
+  project: string,
+  upstream: ?string,
+  repository: ?string,
+  name: string,
+  sarif: string,
+  replyTo: ?string,
+  toForge: ?bool,
+  id: ?string
+) -> (
+  guid: string,
+  thread: string,
+  sarif: string,
+  # STAND-IN: in place of the daemon's outgoing item.
+  sentToForge: ?SentToForge,
+  # STAND-IN
+  standIn: ?string
+)
+
+# DRAFT: resolve or reopen a thread here; nothing goes to the forge.
+method ResolveThread(
+  project: string,
+  upstream: ?string,
+  repository: ?string,
+  name: string,
+  thread: string,
+  reopen: ?bool
+) -> (thread: string, state: string)
+
+# The stand-in forwards nothing: its answer says so.
+method Approve(
+  project: string,
+  upstream: ?string,
+  repository: ?string,
+  name: string,
+  branch: ?string,
+  signed: ?bool,
+  commit: ?string
+) -> (forwarded: string, branch: string)
+
+# The stand-in drops nothing and tells no task: its answer says so.
+method Reject(project: string, upstream: ?string, repository: ?string, name: string, reason: ?string, force: ?bool)
+    -> (rejected: string, told: bool)
+
+error Failed(message: string)
+error NoSuchProject(project: string)
+error MovedSinceReview(name: string, reviewed: string, now: string)
+error NoSuchPush(name: string)
+error ProfileViolation(detail: string, rule: string, path: string)
+error ForbiddenField(detail: string, path: string)
+error TooLarge(detail: string, limit: string, path: string)
+error UnsafeText(detail: string, path: string)
+error AnchorOutsideBlob(path: string, startLine: int, endLine: int)
+error FixOutsideAnchor(detail: string, path: string)
+error OldSideFix(detail: string, path: string)
+error NoSuchResult(guid: string)
+error NoPullRequest(name: string)
+error NoSuchThread(thread: string)
+error CursorRefused(cursor: string)
+error IdReused(id: string)
+error PullRequestMoved(pullRequest: int, written: string, now: string)
+error PullRequestBaseMoved(pullRequest: int, written: string, now: string)
+error AdapterRefused(error: string, detail: string, retryAfter: ?int)

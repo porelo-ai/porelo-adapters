@@ -10,6 +10,29 @@
 
 interface org.fuin.porelo.Tasks1
 
+# STAND-IN: the daemon's Project and Repository carry many more fields; the stand-in answers only those a
+# review display reads, for its one project and repository.
+type Project (
+  name: string,
+  mirror: string,
+  pending: int,
+  repositories: []Repository
+)
+
+# STAND-IN: as Project.
+type Repository (
+  name: string,
+  own: bool,
+  upstream: string,
+  mirror: string,
+  pending: int
+)
+
+method Projects() -> (projects: []Project)
+
+# With "more": the list again whenever its pending counts change.
+method WatchProjects() -> (projects: []Project)
+
 # DRAFT: the checks and comments on a push.
 type ReviewSummary (
   round: int,

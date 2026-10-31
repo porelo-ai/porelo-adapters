@@ -40,10 +40,12 @@ final class FixtureSource {
                 throw new IllegalStateException("A fixture's name is fixture-<a-z0-9->: " + name);
             }
             final String base =
-                    git.commitTree(files(fixture.path("base")), null, "Base of " + name);
+                    git.commitTree(files(fixture.path("base")), List.of(), "Base of " + name);
             final String head =
                     git.commitTree(
-                            files(fixture.path("head")), base, fixture.path("subject").asText());
+                            files(fixture.path("head")),
+                            List.of(base),
+                            fixture.path("subject").asText());
             git.updateRef("refs/porelo/incoming/" + name, head);
             final Push push =
                     new Push(

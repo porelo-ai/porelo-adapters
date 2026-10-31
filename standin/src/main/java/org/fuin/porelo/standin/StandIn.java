@@ -40,12 +40,21 @@ final class StandIn {
 
     static final String INTERFACE = "org.fuin.porelo.Tasks1";
 
+    private static final String DEFAULT_BRANCH = "refs/heads/main";
+
+    private static final long WATCH_INTERVAL_MILLIS = 5_000;
+
+    /** The bases the default branch was last made of. */
+    private List<String> defaultBranchBases = List.of();
+
     private static final String FIXED =
             "the stand-in's fixed values: sourceLevel, riskClass, approvalsNeeded and the counts of held"
                     + " and outgoing forge comments; the daemon decides these";
 
     private static final Set<String> SERVED =
             Set.of(
+                    "Projects",
+                    "WatchProjects",
                     "Pending",
                     "Review",
                     "Comments",
@@ -78,8 +87,6 @@ final class StandIn {
                     "HandIns",
                     "HostKeys",
                     "TrustHostKey",
-                    "Projects",
-                    "WatchProjects",
                     "SyncUpstream",
                     "Backups",
                     "RestoreBackup",
@@ -199,6 +206,8 @@ final class StandIn {
      */
     VarlinkServer register(VarlinkServer server) {
         server.describedBy(idl()).reporting("review stand-in " + ReviewDocument.version());
+        server.method("Projects", guarded("Projects", parameters -> projects()));
+        server.method("WatchProjects", this::watchProjects);
         server.method("Pending", guarded("Pending", this::pending));
         server.method("Review", guarded("Review", this::review));
         server.method("Comments", guarded("Comments", this::comments));
@@ -275,6 +284,47 @@ final class StandIn {
     }
 
     // ------------------------------------------------------------------------------- the calls
+
+    private Map<String, Object> projects() {
+        refresh(false);
+        final int pending = pushes.all().size();
+        final Map<String, Object> repository = new LinkedHashMap<>();
+        repository.put("name", REPOSITORY);
+        repository.put("own", true);
+        repository.put("upstream", github == null ? "" : github.repositoryUri());
+        repository.put("mirror", git.dir().toString());
+        repository.put("pending", pending);
+        final Map<String, Object> project = new LinkedHashMap<>();
+        project.put("name", PROJECT);
+        project.put("mirror", git.dir().toString());
+        project.put("pending", pending);
+        project.put("repositories", List.of(repository));
+        return Map.of("projects", List.of(project));
+    }
+
+    /** Projects once, or with "more" again whenever it changes, until the client is gone. */
+    private void watchProjects(Map<String, Object> parameters, VarlinkServer.Replies replies)
+            throws java.io.IOException {
+        Map<String, Object> last = projects();
+        if (!replies.streaming()) {
+            replies.last(last);
+            return;
+        }
+        replies.more(last);
+        while (replies.open()) {
+            try {
+                Thread.sleep(WATCH_INTERVAL_MILLIS);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            final Map<String, Object> now = projects();
+            if (!now.equals(last)) {
+                replies.more(now);
+                last = now;
+            }
+        }
+    }
 
     private Map<String, Object> pending(Map<String, Object> parameters) {
         gate(parameters);
@@ -702,6 +752,22 @@ final class StandIn {
         if (github != null && !pullRequests.isEmpty()) {
             github.refresh(pushes, pullRequests, force);
         }
+        defaultBranch();
+    }
+
+    /**
+     * Points the mirror's HEAD at a branch whose merge base with every push is that push's base, as
+     * a review display computes it: one commit with every base as a parent.
+     */
+    private synchronized void defaultBranch() {
+        final List<String> bases =
+                pushes.all().stream().map(p -> p.base).distinct().sorted().toList();
+        if (bases.equals(defaultBranchBases) || bases.isEmpty()) {
+            return;
+        }
+        git.updateRef(DEFAULT_BRANCH, git.commitTree(Map.of(), bases, "The stand-in's bases"));
+        git.read("symbolic-ref", "HEAD", DEFAULT_BRANCH);
+        defaultBranchBases = bases;
     }
 
     private static void overlayLocalState(Push push, ObjectNode result) {

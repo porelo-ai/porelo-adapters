@@ -114,15 +114,15 @@ final class Git {
     }
 
     /**
-     * Makes a commit of the given files on a parent, with a fixed author and time, so the same
-     * files always give the same commit.
+     * Makes a commit of the given files on any number of parents, with a fixed author and time, so
+     * the same files and parents always give the same commit.
      *
      * @param files Path to content, the whole tree.
-     * @param parent The parent, or {@code null} for a root commit.
+     * @param parents The parents, none for a root commit.
      * @param message The message.
      * @return The commit.
      */
-    String commitTree(Map<String, String> files, @Nullable String parent, String message) {
+    String commitTree(Map<String, String> files, List<String> parents, String message) {
         final StringBuilder index = new StringBuilder();
         for (final Map.Entry<String, String> file : new java.util.TreeMap<>(files).entrySet()) {
             final String blob = run(null, file.getValue(), "hash-object", "-w", "--stdin").strip();
@@ -135,9 +135,13 @@ final class Git {
             Files.deleteIfExists(indexFile);
             runIndexed(indexFile, index.toString(), "update-index", "--index-info");
             final String tree = runIndexed(indexFile, null, "write-tree").strip();
-            return parent == null
-                    ? run(null, message, "commit-tree", tree).strip()
-                    : run(null, message, "commit-tree", "-p", parent, tree).strip();
+            final List<String> args = new ArrayList<>(List.of("commit-tree"));
+            for (final String parent : parents) {
+                args.add("-p");
+                args.add(parent);
+            }
+            args.add(tree);
+            return run(null, message, args.toArray(String[]::new)).strip();
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         } finally {

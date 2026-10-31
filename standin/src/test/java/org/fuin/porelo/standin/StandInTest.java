@@ -373,7 +373,7 @@ class StandInTest {
 
     @Test
     void aMethodTheStandInDoesNotServeFailsNamingTheStandIn() {
-        assertThatThrownBy(() -> call("Projects", Map.of()))
+        assertThatThrownBy(() -> call("Start", Map.of()))
                 .isInstanceOfSatisfying(
                         VarlinkException.class,
                         ex -> {
@@ -387,7 +387,7 @@ class StandInTest {
     void anAnswerThatWouldCarryTheTokenIsNotSentAndNotLogged() throws Exception {
         final Pushes pushes = new Pushes();
         final Git git = Git.open(tmp.resolve("leak.git"));
-        final String commit = git.commitTree(Map.of("a", "a\n"), null, "a");
+        final String commit = git.commitTree(Map.of("a", "a\n"), List.of(), "a");
         pushes.add(
                 new Push(
                         "leaky",
@@ -620,5 +620,63 @@ class StandInTest {
         assertThat(run.results.get(0).path("guid").asText())
                 .as("GitHub numbers the two kinds apart")
                 .isNotEqualTo(run.results.get(1).path("guid").asText());
+    }
+
+    private static String git(String mirror, String... args) throws Exception {
+        final List<String> command =
+                new java.util.ArrayList<>(List.of("git", "--git-dir=" + mirror));
+        command.addAll(List.of(args));
+        final ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+        builder.environment().put("GIT_CONFIG_GLOBAL", "/dev/null");
+        builder.environment().put("GIT_CONFIG_NOSYSTEM", "1");
+        final Process process = builder.start();
+        final String out =
+                new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertThat(process.waitFor()).as("git " + String.join(" ", args) + ": " + out).isZero();
+        return out.strip();
+    }
+
+    // Harm: the review display takes the base as the merge base with the mirror's HEAD; a wrong
+    // or missing one shows a person another diff than the one they approve.
+    @Test
+    @SuppressWarnings("unchecked")
+    void theMirrorsHeadGivesEveryPushItsOwnBase() throws Exception {
+        final Map<String, Object> answer = call("Pending", Map.of());
+        final String mirror = (String) answer.get("mirror");
+
+        assertThat(git(mirror, "symbolic-ref", "HEAD"))
+                .as("HEAD names the default branch")
+                .startsWith("refs/heads/");
+        for (final Map<String, Object> push : (List<Map<String, Object>>) answer.get("pending")) {
+            final String name = (String) push.get("name");
+            assertThat(git(mirror, "merge-base", "HEAD", "refs/porelo/incoming/" + name))
+                    .as("the merge base of " + name)
+                    .isEqualTo(call("Review", Map.of("name", name)).get("base"));
+        }
+    }
+
+    // Harm: without Projects the review display finds no project and shows no push at all.
+    @Test
+    @SuppressWarnings("unchecked")
+    void projectsNamesTheStandInsProjectWithItsRepositoryAndPendingCount() {
+        final int pending = ((List<Object>) call("Pending", Map.of()).get("pending")).size();
+
+        final Map<String, Object> project =
+                ((List<Map<String, Object>>)
+                                client.call(StandIn.INTERFACE + ".Projects", Map.of())
+                                        .get("projects"))
+                        .get(0);
+
+        assertThat(project.get("name")).as("the project").isEqualTo(StandIn.PROJECT);
+        assertThat(((Number) project.get("pending")).intValue())
+                .as("its pushes")
+                .isEqualTo(pending);
+        final Map<String, Object> repository =
+                ((List<Map<String, Object>>) project.get("repositories")).get(0);
+        assertThat(repository.get("name")).as("its repository").isEqualTo(StandIn.REPOSITORY);
+        assertThat(repository.get("own")).as("its own").isEqualTo(true);
+        assertThat(((Number) repository.get("pending")).intValue())
+                .as("the same pushes")
+                .isEqualTo(pending);
     }
 }

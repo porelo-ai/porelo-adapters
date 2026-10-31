@@ -1,6 +1,6 @@
 # [GH12](README.md#gh12) — A Stand-In For The Daemon's Review Calls
 
-**Status:** Backlog (Estimated and Backlog by the operator).
+**Status:** Implementing.
 **Size:** L - a varlink server of seven calls, a bare clone the review fetch reads, fixture pushes, and the GitHub to
 SARIF conversion in both directions it takes from [GH02](README.md#gh02); several days, and it builds against two other
 repositories' unpublished work.

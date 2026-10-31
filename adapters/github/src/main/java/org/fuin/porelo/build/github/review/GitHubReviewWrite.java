@@ -200,36 +200,50 @@ public final class GitHubReviewWrite {
                             new IssuesUpdateCommentRequest(rendered.body()));
             return new Written(comment.id(), comment.nodeId(), "issue", null);
         }
-        final boolean file = rendered.anchor() == Anchor.FILE;
-        final Integer line = rendered.line();
+        final PullRequestReviewComment comment =
+                client.createReviewComment(
+                        token, owner, repo, pullRequest, reviewCommentRequest(rendered, commit));
+        return new Written(comment.id(), comment.nodeId(), "review", comment.pullRequestReviewId());
+    }
+
+    /**
+     * The request for a file or line comment, in the form GitHub accepts: a line comment names its
+     * line and side and no subject type, a file comment its subject type and no line.
+     */
+    static PullsCreateReviewCommentRequest reviewCommentRequest(Rendered rendered, String commit) {
+        final String path = java.util.Objects.requireNonNull(rendered.path());
+        if (rendered.anchor() == Anchor.FILE) {
+            return new PullsCreateReviewCommentRequest(
+                    rendered.body(),
+                    commit,
+                    path,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    PullsCreateReviewCommentRequest.SubjectTypeEnum.FILE);
+        }
+        final Integer line = java.util.Objects.requireNonNull(rendered.line());
         final Integer start = rendered.startLine();
-        final boolean multiLine = !file && start != null && line != null && start < line;
+        final boolean multiLine = start != null && start < line;
         final PullsCreateReviewCommentRequest.SideEnum side =
                 PullsCreateReviewCommentRequest.SideEnum.valueOf(
                         java.util.Objects.requireNonNull(rendered.side()));
-        final PullRequestReviewComment comment =
-                client.createReviewComment(
-                        token,
-                        owner,
-                        repo,
-                        pullRequest,
-                        new PullsCreateReviewCommentRequest(
-                                rendered.body(),
-                                commit,
-                                java.util.Objects.requireNonNull(rendered.path()),
-                                null,
-                                side,
-                                file ? null : line,
-                                multiLine ? start : null,
-                                multiLine
-                                        ? PullsCreateReviewCommentRequest.StartSideEnum.valueOf(
-                                                side.name())
-                                        : null,
-                                null,
-                                file
-                                        ? PullsCreateReviewCommentRequest.SubjectTypeEnum.FILE
-                                        : PullsCreateReviewCommentRequest.SubjectTypeEnum.LINE));
-        return new Written(comment.id(), comment.nodeId(), "review", comment.pullRequestReviewId());
+        return new PullsCreateReviewCommentRequest(
+                rendered.body(),
+                commit,
+                path,
+                null,
+                side,
+                line,
+                multiLine ? start : null,
+                multiLine
+                        ? PullsCreateReviewCommentRequest.StartSideEnum.valueOf(side.name())
+                        : null,
+                null,
+                null);
     }
 
     private static Rendered general(

@@ -155,4 +155,53 @@ class GitHubReviewWriteTest {
                 .as("dot components")
                 .isInstanceOf(ReviewRefusal.class);
     }
+
+    // Harm: GitHub refuses a line comment that names a subject type, so it never reaches the PR.
+    @Test
+    void aLineCommentSendsItsLinesAndSideAndNoSubjectType() {
+        final GitHubReviewWrite.Rendered rendered =
+                GitHubReviewWrite.render(line("x", "", fix(12, 13, "src/Gate.java")));
+
+        final com.fasterxml.jackson.databind.JsonNode sent =
+                wire(GitHubReviewWrite.reviewCommentRequest(rendered, "a".repeat(40)));
+
+        assertThat(fieldNames(sent))
+                .as("the fields GitHub accepts for a line comment")
+                .containsExactlyInAnyOrder(
+                        "body", "commit_id", "path", "side", "line", "start_line", "start_side");
+        assertThat(sent.path("start_line").asInt()).as("first line").isEqualTo(12);
+        assertThat(sent.path("line").asInt()).as("last line").isEqualTo(13);
+    }
+
+    @Test
+    void aFileCommentSendsItsSubjectTypeAndNoLine() {
+        final ObjectNode result = line("x", "", "");
+        ((ObjectNode) result.get("properties")).put("porelo/anchorKind", "file");
+        ((ObjectNode) result.at("/locations/0/physicalLocation")).remove("region");
+
+        final com.fasterxml.jackson.databind.JsonNode sent =
+                wire(
+                        GitHubReviewWrite.reviewCommentRequest(
+                                GitHubReviewWrite.render(result), "a".repeat(40)));
+
+        assertThat(fieldNames(sent))
+                .as("the fields GitHub accepts for a file comment")
+                .containsExactlyInAnyOrder("body", "commit_id", "path", "subject_type");
+        assertThat(sent.path("subject_type").asText()).as("file level").isEqualTo("file");
+    }
+
+    /** The request as the client sends it: fields without a value are left out. */
+    private static com.fasterxml.jackson.databind.JsonNode wire(Object request) {
+        return GitHubAnswers.JSON
+                .copy()
+                .setSerializationInclusion(
+                        com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+                .valueToTree(request);
+    }
+
+    private static java.util.List<String> fieldNames(com.fasterxml.jackson.databind.JsonNode node) {
+        final java.util.List<String> names = new java.util.ArrayList<>();
+        node.fieldNames().forEachRemaining(names::add);
+        return names;
+    }
 }

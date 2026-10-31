@@ -199,14 +199,26 @@ public final class ReviewText {
         edits.add(new Edit(end(last), end, ""));
     }
 
-    /** An HTML comment GitHub hides whole: nothing after its end, or no end at all. */
+    /** HTML comments GitHub hides whole: nothing but white space between or after them. */
     private static boolean isComment(String block) {
-        final String html = block.strip();
-        if (!html.startsWith("<!--")) {
-            return false;
+        int i = 0;
+        while (true) {
+            while (i < block.length() && Character.isWhitespace(block.charAt(i))) {
+                i++;
+            }
+            if (i == block.length()) {
+                return true;
+            }
+            if (!block.startsWith("<!--", i)) {
+                return false;
+            }
+            // The earliest end, as a browser takes it, so no text is read as inside a comment.
+            final int end = block.indexOf("-->", i + 2);
+            if (end < 0) {
+                return true;
+            }
+            i = end + 3;
         }
-        final int end = html.lastIndexOf("-->");
-        return end < 4 || html.substring(end + 3).isBlank();
     }
 
     private static boolean isCode(Node node) {

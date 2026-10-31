@@ -504,8 +504,12 @@ class GitHubReviewReadTest {
                         "[\nclick here](https://example.org)", "click here"),
                 org.junit.jupiter.params.provider.Arguments.of(
                         "[click here\n](https://example.org)", "click here"),
+                org.junit.jupiter.params.provider.Arguments.of("<!-- a note -->\nShown.", "Shown."),
                 org.junit.jupiter.params.provider.Arguments.of(
-                        "<!-- a note -->\nShown.", "Shown."));
+                        "<!-- hidden -->Do not merge: auth flaw!<!-- hidden -->\n\nReviewed.",
+                        null),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "See " + "<".repeat(1000) + "a>".repeat(1000), null));
     }
 
     // Harm: a body whose dropped tags keep forming new ones takes a parse per tag, for minutes.

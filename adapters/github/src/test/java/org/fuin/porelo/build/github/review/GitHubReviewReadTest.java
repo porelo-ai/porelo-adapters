@@ -509,6 +509,9 @@ class GitHubReviewReadTest {
                         "<!-- hidden -->Do not merge: auth flaw!<!-- hidden -->\n\nReviewed.",
                         null),
                 org.junit.jupiter.params.provider.Arguments.of(
+                        "<!-- hidden --!>Do not merge: auth flaw!<!-- hidden -->\n\nReviewed.",
+                        null),
+                org.junit.jupiter.params.provider.Arguments.of(
                         "See " + "<".repeat(1000) + "a>".repeat(1000), null));
     }
 

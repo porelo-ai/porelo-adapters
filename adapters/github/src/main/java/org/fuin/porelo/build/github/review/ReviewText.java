@@ -214,10 +214,11 @@ public final class ReviewText {
             }
             // The earliest end, as a browser takes it, so no text is read as inside a comment.
             final int end = block.indexOf("-->", i + 2);
-            if (end < 0) {
+            final int bang = block.indexOf("--!>", i + 2);
+            if (end < 0 && bang < 0) {
                 return true;
             }
-            i = end + 3;
+            i = bang >= 0 && (end < 0 || bang < end) ? bang + 4 : end + 3;
         }
     }
 

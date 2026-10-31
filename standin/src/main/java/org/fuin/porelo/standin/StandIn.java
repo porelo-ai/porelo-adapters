@@ -337,8 +337,9 @@ final class StandIn {
     }
 
     private Map<String, Object> pending(Map<String, Object> parameters) {
-        gate(parameters);
+        // GitHub first: a check of what was read before would refuse what GitHub has changed.
         refresh(false);
+        gate(parameters);
         final List<Object> pending = new ArrayList<>();
         for (final Push push : pushes.all()) {
             pending.add(pendingPush(push));

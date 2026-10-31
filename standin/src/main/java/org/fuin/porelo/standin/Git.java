@@ -29,8 +29,24 @@ final class Git {
 
     private final Path dir;
 
-    private Git(Path dir) {
+    /** A remote's URL prefix and what a fetch reaches instead; for a test, never configured. */
+    private final @Nullable List<String> insteadOf;
+
+    private Git(Path dir, @Nullable List<String> insteadOf) {
         this.dir = dir;
+        this.insteadOf = insteadOf;
+    }
+
+    /**
+     * Returns this clone fetching from another place: a test's local repository stands in for
+     * GitHub, so the fetch is still made to an https URL and checked as one.
+     *
+     * @param prefix The https URL prefix to replace.
+     * @param with What a fetch reaches instead.
+     * @return The same clone, fetching elsewhere.
+     */
+    Git fetchingInsteadOf(String prefix, String with) {
+        return new Git(dir, List.of(prefix, with));
     }
 
     /**
@@ -40,7 +56,7 @@ final class Git {
      * @return The clone.
      */
     static Git open(Path dir) {
-        final Git git = new Git(dir);
+        final Git git = new Git(dir, null);
         try {
             // A private repository's objects: its owner alone reads them, whatever the umask.
             Files.createDirectories(
@@ -226,15 +242,27 @@ final class Git {
         env.put("GIT_COMMITTER_EMAIL", "standin@example.org");
         env.put("GIT_COMMITTER_DATE", "2026-01-01T00:00:00Z");
         env.putAll(extra);
+        final List<String> config = new ArrayList<>();
         if (token != null) {
             // The credential goes in the environment, never on the command line or into a file.
             final String basic =
                     Base64.getEncoder()
                             .encodeToString(
                                     ("x-access-token:" + token).getBytes(StandardCharsets.UTF_8));
-            env.put("GIT_CONFIG_COUNT", "1");
-            env.put("GIT_CONFIG_KEY_0", "http.https://github.com/.extraheader");
-            env.put("GIT_CONFIG_VALUE_0", "Authorization: Basic " + basic);
+            config.addAll(
+                    List.of(
+                            "http.https://github.com/.extraheader",
+                            "Authorization: Basic " + basic));
+        }
+        if (insteadOf != null) {
+            config.addAll(List.of("url." + insteadOf.get(1) + ".insteadOf", insteadOf.get(0)));
+        }
+        if (!config.isEmpty()) {
+            env.put("GIT_CONFIG_COUNT", Integer.toString(config.size() / 2));
+            for (int i = 0; i < config.size() / 2; i++) {
+                env.put("GIT_CONFIG_KEY_" + i, config.get(2 * i));
+                env.put("GIT_CONFIG_VALUE_" + i, config.get(2 * i + 1));
+            }
         }
         builder.redirectErrorStream(false);
         try {

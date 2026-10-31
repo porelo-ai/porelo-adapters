@@ -55,6 +55,14 @@
         <!-- test -->
 
         <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-forge-client-github</artifactId>
+            <version>${porelo.forge-clients.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>

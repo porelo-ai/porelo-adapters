@@ -51,6 +51,9 @@ origin and conversion limits, and holds unsupported writes without changing thei
   editing an issue comment reaches a review comment; its exceptions carry no retry delay, and a list does not say
   whether another page follows. All are planned there, the reply and edit questions answered by a recording; confirm
   each against the published client before building on it.
+- Measured on Forgejo 17.0.1: `PATCH .../issues/comments/{id}` edits a review comment, but `DELETE` on that path
+  answers 204 for a review comment and keeps it; only the review comment's own path deletes it. A 204 there is
+  therefore not proof that the comment is gone, and a delete of a review comment goes through the review path.
 - Confirm stable PR/comment/resolver identities, membership and fork evidence, exact read/write scopes, unknown
   evidence representation and least privilege. Verify suggestion fences, mention behavior and native retry behavior.
 - Confirm the upstream review discovery, authorization and retry contracts, client origin/size/cut-off guarantees and

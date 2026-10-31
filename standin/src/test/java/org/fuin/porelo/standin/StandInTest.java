@@ -507,4 +507,24 @@ class StandInTest {
         final ObjectNode any = (ObjectNode) JSON.readTree("{}");
         throw new AssertionError("no changed file in " + push + any);
     }
+
+    // Harm: a suggestion sent as a reply lands on the parent's lines, which "Commit suggestion"
+    // would overwrite instead of the lines the person chose.
+    @Test
+    void aSuggestionIsNeverSentAsAReplyAndAPlainAnswerToAReviewCommentIs() throws Exception {
+        final ObjectNode parent =
+                (ObjectNode)
+                        JSON.readTree(
+                                """
+                                {"properties":{"porelo/nativeCommentKind":"review",
+                                  "porelo/nativeCommentId":"42","porelo/nativeReplyTo":"41"}}
+                                """);
+
+        assertThat(StandIn.forgeParent(parent, true))
+                .as("a suggestion goes as a new comment at its own anchor")
+                .isNull();
+        assertThat(StandIn.forgeParent(parent, false))
+                .as("a plain answer joins the thread's root")
+                .isEqualTo(41L);
+    }
 }

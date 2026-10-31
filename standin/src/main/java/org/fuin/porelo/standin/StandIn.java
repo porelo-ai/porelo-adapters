@@ -582,7 +582,7 @@ final class StandIn {
                                 mergeBase));
             }
         }
-        final Long replyTo = forgeParent(parent);
+        final Long replyTo = forgeParent(parent, submission.result.has("fixes"));
         final GitHubReviewWrite.Written written;
         try {
             written =
@@ -616,11 +616,11 @@ final class StandIn {
     }
 
     /**
-     * A reply on GitHub goes to the root of a review comment's thread; other parents get a new
-     * comment.
+     * A reply on GitHub goes to the root of a review comment's thread; a suggestion, and an answer
+     * to any other parent, is a new comment at its own anchor, since a reply takes its parent's.
      */
-    private static @Nullable Long forgeParent(@Nullable ObjectNode parent) {
-        if (parent == null) {
+    static @Nullable Long forgeParent(@Nullable ObjectNode parent, boolean suggestion) {
+        if (parent == null || suggestion) {
             return null;
         }
         final JsonNode properties = parent.path("properties");

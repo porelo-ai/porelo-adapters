@@ -1,6 +1,6 @@
 # [GH12](README.md#gh12) — A Stand-In For The Daemon's Review Calls
 
-**Status:** Analyzed.
+**Status:** Backlog (Estimated and Backlog by the operator).
 **Size:** L - a varlink server of seven calls, a bare clone the review fetch reads, fixture pushes, and the GitHub to
 SARIF conversion in both directions it takes from [GH02](README.md#gh02); several days, and it builds against two other
 repositories' unpublished work.
@@ -54,6 +54,11 @@ work needs anyway.
 - **Module:** `standin/` beside `contract` and `adapters`, a plain jar run with `exec:java`, never packaged, published
   or deployed (`maven.deploy.skip`, no `dist` profile), its README saying what it is and that it goes when the daemon
   serves the calls.
+- **What reaches GitHub:** as the drafted daemon contract has it, a comment without `toForge` and every resolve stay
+  local; a comment with `toForge` is sent at once, without the release step the daemon will have, and its answer says
+  so. The stand-in's own replies (`A`) are served only locally (operator).
+- **Where:** the forge clients' test repository `porelo-ai-test/forge-clients-live`, with a fine-grained token of its
+  test user limited to that repository, which the operator makes (operator).
 - **The token** reaches the stand-in through its environment and goes to the client per call; it is in no answer, log
   line, file or command line, and the socket's directory is the caller's own, mode 0700.
 - **Red first:** `StandInTest` connects to the stand-in's socket with `porelo-wire`'s client, the GitHub client given a
@@ -67,18 +72,6 @@ work needs anyway.
   reply that appear on GitHub, and resolves a thread; each fixture push shows what it was made for.
 - A read never writes; `Approve` and `Reject` send nothing anywhere; the token appears in no answer, log or file. Each
   guard is seen to fail first.
-
-## Open questions
-
-- **Which writes reach GitHub.** The drafted daemon contract keeps a comment without `toForge` local, makes one with
-  `toForge` an outgoing item that is sent only after a person releases its rendered body by digest, and resolves a
-  thread only locally. Proposal: the stand-in follows that contract, keeps a comment without `toForge` and every
-  resolve local, and sends a `toForge` comment at once, without the release step, marked as such in its answer;
-  the release calls are left to the daemon. The alternative is to also serve the release calls, which adds about a
-  day.
-- **Which GitHub account and repository** the stand-in tests against, and whose token: proposal, the forge clients'
-  test organization and test repository, with a fine-grained token of its test user limited to that repository.
-- **Whether its own replies (`A`)** are written to GitHub as the test user, or only served locally.
 
 ## To be checked
 

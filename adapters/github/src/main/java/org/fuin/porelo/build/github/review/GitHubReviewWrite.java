@@ -135,7 +135,9 @@ public final class GitHubReviewWrite {
             throw refusal("a comment is kind review and level none", "kind");
         }
         // The canonical text goes, never the Markdown form beside it, so what is checked is sent.
-        body.append(ReviewText.toForge(text(result.path("message"), "text")));
+        final JsonNode message =
+                object(result.path("message"), Set.of("text", "markdown"), "message");
+        body.append(ReviewText.toForge(text(message, "text")));
         if (result.has("relatedLocations")) {
             losses.merge("related-locations-dropped", 1, Integer::sum);
         }
@@ -260,8 +262,20 @@ public final class GitHubReviewWrite {
         if (!locations.isArray() || locations.size() != 1) {
             throw refusal("an anchored comment has exactly one location", "locations");
         }
-        final JsonNode physical = locations.get(0).path("physicalLocation");
-        final String uri = text(physical.path("artifactLocation"), "uri");
+        final JsonNode location =
+                object(locations.get(0), Set.of("physicalLocation"), "locations[0]");
+        final JsonNode physical =
+                object(
+                        location.path("physicalLocation"),
+                        Set.of("artifactLocation", "region"),
+                        "locations[0].physicalLocation");
+        final String uri =
+                text(
+                        object(
+                                physical.path("artifactLocation"),
+                                Set.of("uri"),
+                                "locations[0].physicalLocation.artifactLocation"),
+                        "uri");
         final String path = path(uri, "locations[0].physicalLocation.artifactLocation.uri");
         final JsonNode diffSide = properties.path("porelo/diffSide");
         final String side;
@@ -310,31 +324,52 @@ public final class GitHubReviewWrite {
 
     /** The one replacement of the anchor's lines, as a fence GitHub shows as a suggestion. */
     private static String fence(JsonNode fixes, String uri, int start, int end) {
-        if (fixes.size() != 1
-                || fixes.get(0).path("artifactChanges").size() != 1
-                || fixes.get(0).path("artifactChanges").get(0).path("replacements").size() != 1) {
+        if (!oneElement(fixes)
+                || !oneElement(fixes.get(0).path("artifactChanges"))
+                || !oneElement(fixes.get(0).path("artifactChanges").get(0).path("replacements"))) {
             throw outside("exactly one fix with one change and one replacement");
         }
-        final JsonNode change = fixes.get(0).path("artifactChanges").get(0);
-        if (!uri.equals(change.path("artifactLocation").path("uri").asText())) {
+        object(fixes.get(0), Set.of("artifactChanges"), "fixes[0]");
+        final JsonNode change =
+                object(
+                        fixes.get(0).path("artifactChanges").get(0),
+                        Set.of("artifactLocation", "replacements"),
+                        "fixes[0].artifactChanges[0]");
+        final JsonNode changed =
+                object(
+                        change.path("artifactLocation"),
+                        Set.of("uri"),
+                        "fixes[0].artifactChanges[0].artifactLocation");
+        if (!uri.equals(text(changed, "uri"))) {
             throw outside("the fix is in another file");
         }
-        final JsonNode replacement = change.path("replacements").get(0);
-        final JsonNode deleted = replacement.path("deletedRegion");
+        final JsonNode replacement =
+                object(
+                        change.path("replacements").get(0),
+                        Set.of("deletedRegion", "insertedContent"),
+                        "fixes[0].artifactChanges[0].replacements[0]");
+        final JsonNode deleted =
+                object(
+                        replacement.path("deletedRegion"),
+                        Set.of("startLine", "endLine", "startColumn", "endColumn"),
+                        "deletedRegion");
         if (deleted.has("startColumn") || deleted.has("endColumn")) {
             throw new ReviewRefusal(
                     ReviewRefusal.Reason.NOT_SUPPORTED,
                     "GitHub replaces whole lines; a fix with columns",
                     "fixes");
         }
-        final int fixEnd = deleted.has("endLine") ? deleted.path("endLine").asInt() : -1;
-        if (deleted.path("startLine").asInt() != start || fixEnd != end) {
+        final int fixStart = line(deleted, "startLine");
+        final int fixEnd = deleted.has("endLine") ? line(deleted, "endLine") : -1;
+        if (fixStart != start || fixEnd != end) {
             throw outside("the replaced lines are not the anchor's");
         }
-        final String inserted = replacement.path("insertedContent").path("text").asText(null);
-        if (inserted == null) {
+        final JsonNode insertedContent =
+                object(replacement.path("insertedContent"), Set.of("text"), "insertedContent");
+        if (!insertedContent.path("text").isTextual()) {
             throw outside("the replacement inserts no text");
         }
+        final String inserted = insertedContent.path("text").asText();
         checkInserted(inserted, end - start + 1);
         final String marks = "`".repeat(Math.max(3, longestRun(inserted, '`') + 1));
         return marks + "suggestion\n" + inserted + "\n" + marks;
@@ -360,6 +395,19 @@ public final class GitHubReviewWrite {
                         "fixes");
             }
         }
+    }
+
+    /** An object holding only the named fields, each refused by name otherwise. */
+    private static JsonNode object(JsonNode node, Set<String> allowed, String where) {
+        if (!(node instanceof ObjectNode object)) {
+            throw refusal(where + " is an object", where);
+        }
+        onlyFields(object, allowed, where);
+        return object;
+    }
+
+    private static boolean oneElement(JsonNode node) {
+        return node.isArray() && node.size() == 1;
     }
 
     private static int longestRun(String text, char c) {

@@ -248,4 +248,56 @@ class GitHubReviewWriteTest {
                         ReviewRefusal.class,
                         r -> assertThat(r.reason()).isEqualTo(ReviewRefusal.Reason.UNSAFE_TEXT));
     }
+
+    // Harm: a malformed fix crashes the call with Java's own words instead of naming the field.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {
+                "\"fixes\":{\"a\":1},",
+                "\"fixes\":[{\"artifactChanges\":{\"a\":1}}],",
+                "\"fixes\":[{\"artifactChanges\":[{\"artifactLocation\":{\"uri\":\"src/Gate.java\"},\"replacements\":{\"a\":1}}]}],"
+            })
+    void aFixThatIsNoArrayIsRefused(String fixes) {
+        assertThatThrownBy(() -> GitHubReviewWrite.render(line("x", "", fixes)))
+                .as("a refusal naming the fix, not a crash")
+                .isInstanceOf(ReviewRefusal.class);
+    }
+
+    // Harm: a field the profile forbids rides along unchecked inside an allowed object.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {
+                "/locations/0/physicalLocation/artifactLocation:uriBaseId",
+                "/locations/0/physicalLocation:contextRegion",
+                "/locations/0:message",
+                "/message:id",
+                "/fixes/0:description",
+                "/fixes/0/artifactChanges/0/replacements/0/insertedContent:binary",
+                "/fixes/0/artifactChanges/0/replacements/0/deletedRegion:charOffset"
+            })
+    void aNestedFieldOutsideTheProjectionIsRefused(String where) {
+        final ObjectNode result = line("x", "", fix(12, 13, "src/Gate.java"));
+        final String[] at = where.split(":");
+        ((ObjectNode) result.at(at[0])).put(at[1], "1");
+
+        assertThatThrownBy(() -> GitHubReviewWrite.render(result))
+                .as("refused, naming the field")
+                .isInstanceOf(ReviewRefusal.class);
+    }
+
+    // Harm: a line given as text or a fraction is read as another line than the one meant.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"\"12\"", "12.9"})
+    void aFixLineThatIsNoIntegerIsRefused(String startLine) {
+        final ObjectNode result =
+                line(
+                        "x",
+                        "",
+                        fix(12, 13, "src/Gate.java")
+                                .replace("\"startLine\":12", "\"startLine\":" + startLine));
+
+        assertThatThrownBy(() -> GitHubReviewWrite.render(result))
+                .as("refused, never coerced")
+                .isInstanceOf(ReviewRefusal.class);
+    }
 }

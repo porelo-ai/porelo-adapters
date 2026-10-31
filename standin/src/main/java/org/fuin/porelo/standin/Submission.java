@@ -61,7 +61,18 @@ final class Submission {
                     "porelo/forgeInstanceId",
                     "porelo/pullRequestId",
                     "porelo/nativeRepositoryId",
-                    "porelo/outdatedReason");
+                    "porelo/outdatedReason",
+                    "porelo/outdated",
+                    "porelo/authorDisplayName",
+                    "porelo/originalRevisionId",
+                    "porelo/originalPath",
+                    "porelo/originalStartLine",
+                    "porelo/originalEndLine",
+                    "porelo/originalStartColumn",
+                    "porelo/originalEndColumn",
+                    "porelo/originalDiffSide",
+                    "ruleId",
+                    "relatedLocations");
 
     private static final ObjectMapper JSON =
             JsonMapper.builder()
@@ -134,7 +145,8 @@ final class Submission {
                 (ObjectNode) object(document, "properties", "$"),
                 Set.of("porelo/profileVersion"),
                 "$.properties");
-        if (!"1".equals(document.path("properties").path("porelo/profileVersion").asText())) {
+        final JsonNode profileVersion = document.path("properties").path("porelo/profileVersion");
+        if (!profileVersion.isTextual() || !"1".equals(profileVersion.asText())) {
             throw violation("porelo/profileVersion is \"1\"", "$.properties");
         }
         final JsonNode runs = document.path("runs");
@@ -175,6 +187,11 @@ final class Submission {
                 (ObjectNode) object(result, "message", "$.runs[0].results[0]"),
                 Set.of("text", "markdown"),
                 "message");
+        // A person's column: every other key of a result is the daemon's or an adapter's.
+        only(
+                (ObjectNode) object(result, "properties", "$.runs[0].results[0]"),
+                Set.of("porelo/anchorKind", "porelo/diffSide"),
+                "$.runs[0].results[0].properties");
         if (!"review".equals(result.path("kind").asText())
                 || !"none".equals(result.path("level").asText())) {
             throw violation(

@@ -527,4 +527,32 @@ class StandInTest {
                 .as("a plain answer joins the thread's root")
                 .isEqualTo(41L);
     }
+
+    // Harm: a client's comment claims a field only the daemon or an adapter writes.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {
+                ",\"porelo/authorDisplayName\":\"Alice\"",
+                ",\"porelo/outdated\":true",
+                ",\"porelo/outdatedReason\":\"fileGone\"",
+                ",\"porelo/originalPath\":\"src/Notes.java\""
+            })
+    void aCommentClaimingAnotherColumnsFieldIsRefusedAsForbidden(String property) {
+        final String sarif = submission("fixture-anchor", "src/Notes.java", 1, property);
+
+        assertThat(errorOf("Comment", Map.of("name", "fixture-anchor", "sarif", sarif)))
+                .as("a field whose column names no person")
+                .endsWith(".ForbiddenField");
+    }
+
+    @Test
+    void aProfileVersionThatIsNoStringIsRefused() {
+        final String sarif =
+                submission("fixture-anchor", "src/Notes.java", 1, "")
+                        .replace("\"porelo/profileVersion\":\"1\"", "\"porelo/profileVersion\":1");
+
+        assertThat(errorOf("Comment", Map.of("name", "fixture-anchor", "sarif", sarif)))
+                .as("never coerced")
+                .endsWith(".ProfileViolation");
+    }
 }

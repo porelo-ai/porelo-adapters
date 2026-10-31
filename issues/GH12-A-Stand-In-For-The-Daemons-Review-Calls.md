@@ -84,6 +84,14 @@ work needs anyway.
   for in answers, since git never prints that header; reading a push's runs while a comment is stored is not under
   one lock, since the stand-in is a test tool and a collision answers `Failed`, loud; a pull request from a deleted
   fork or a review with a null body fails the whole read in the forge client, which the forge clients change.
+- **The second reading's findings not fixed, and why:** an indented or tilde `suggestion` fence stays text, never a
+  fix, which loses nothing that could be applied wrongly; an email autolink stays as text; `Approve`'s `signed` and
+  `Reject`'s `force` and `reason` are not type-checked, since the stand-in reads none of them; a `Review` against an
+  option was not reproduced, as git refuses it itself; a client gone from a `WatchProjects` stream is seen, since
+  `open()` reads the socket; the head a read is given is the stand-in's own, from git.
+- **Waiting for a test, found by reading:** a toForge `Comment` holds the push's lock while it refreshes from GitHub,
+  which `Pending`, `Projects` and `WatchProjects` lock in the other order, so the two can deadlock. Its test needs the
+  GitHub source, so the replaying client.
 - **What it builds against:** `porelo-forge-client-github` 0.1.0-SNAPSHOT, installed locally and not yet on Sonatype,
   so the change is pushed only after the forge clients publish that snapshot; and `porelo-wire` 0.5.1-SNAPSHOT.
 

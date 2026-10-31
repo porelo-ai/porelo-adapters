@@ -9,13 +9,8 @@ left out.
 
 | # | Size | Blocked by | What it covers | Open questions |
 |---|---|---|---|---|
+| <a id="gh05"></a>[GH05](GH05-Publish-Without-A-Downloaded-Client.md) | S | - | `Publish` speaks to Artifactory with inline `curl`, the token on standard input, downloading no client beside the token | 0 |
 | <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials | 0 |
-
-## Accepted
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
-| <a id="gh05"></a>[GH05](GH05-Publish-Without-A-Downloaded-Client.md) | - | - | `Publish` speaks to Artifactory with `curl` through porelo's `artifactory.sh`, downloading no client beside the token. |
 
 ## Idea
 

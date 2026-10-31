@@ -322,5 +322,25 @@
         "document": "fixture-anchor/person-r2.json"
       }
     ]
+  },
+  {
+    "name": "fixture-unicode-path",
+    "subject": "A file whose name is not ASCII",
+    "shows": "A changed file named with a non-ASCII letter, as a path in Review and as an anchor.",
+    "base": {
+      "docs/Über.md": "Gate\n"
+    },
+    "head": {
+      "docs/Über.md": "Gate\nReady\n"
+    },
+    "sourceLevel": "E1",
+    "riskClass": "C1",
+    "fileClasses": {},
+    "approvalsNeeded": 1,
+    "refuse": {
+      "approve": null,
+      "toForge": null
+    },
+    "runs": []
   }
 ]

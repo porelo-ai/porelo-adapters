@@ -455,7 +455,12 @@ final class StandIn {
             throw failed("No run " + runId + " on " + push.name);
         }
         final Object roundParameter = parameters.get("round");
-        final int round = roundParameter instanceof Number n ? n.intValue() : push.round();
+        if (roundParameter != null
+                && !(roundParameter instanceof Integer || roundParameter instanceof Long)) {
+            throw invalid("round");
+        }
+        final int round =
+                roundParameter instanceof Number n ? Math.toIntExact(n.longValue()) : push.round();
         if (round != run.round) {
             throw failed("Run " + runId + " is of round " + run.round + ", not " + round);
         }
@@ -495,6 +500,13 @@ final class StandIn {
     private Map<String, Object> comment(Map<String, Object> parameters) {
         gate(parameters);
         final Push push = push(parameters);
+        // One comment of a push at a time, so one id never makes two comments or two writes.
+        synchronized (push) {
+            return comment(parameters, push);
+        }
+    }
+
+    private Map<String, Object> comment(Map<String, Object> parameters, Push push) {
         final String sarif = required(parameters, "sarif");
         final String id = optional(parameters, "id");
         if (id != null) {
@@ -523,7 +535,7 @@ final class StandIn {
         if (replyTo != null && parent == null) {
             throw refusal("NoSuchResult", Map.of("guid", replyTo));
         }
-        final boolean toForge = Boolean.TRUE.equals(parameters.get("toForge"));
+        final boolean toForge = flag(parameters, "toForge");
         final Map<String, Object> sent = toForge ? send(push, submission, parent) : null;
         final Map<String, Object> answer = store(push, submission, parent);
         if (sent != null) {
@@ -574,6 +586,7 @@ final class StandIn {
         final int round = push.round();
         final ObjectNode shell = document.deepCopy();
         ((ObjectNode) shell.at("/runs/0")).remove("results");
+        final ObjectNode stored;
         synchronized (push) {
             Push.Run local = null;
             for (final Push.Run existing : push.runs.values()) {
@@ -587,11 +600,14 @@ final class StandIn {
             synchronized (local.results) {
                 local.results.add(result);
             }
+            // The run as the daemon stamped it, around this one result.
+            stored = local.shell.deepCopy();
+            ((ObjectNode) stored.at("/runs/0")).putArray("results").add(result.deepCopy());
         }
         final Map<String, Object> answer = new LinkedHashMap<>();
         answer.put("guid", guid);
         answer.put("thread", thread);
-        answer.put("sarif", ReviewDocument.text(document));
+        answer.put("sarif", ReviewDocument.text(stored));
         answer.put(
                 "standIn",
                 "porelo/sourceLevel I1 is the stand-in's fixed value for a comment here");
@@ -716,7 +732,7 @@ final class StandIn {
         if (!push.hasThread(thread)) {
             throw refusal("NoSuchThread", Map.of("thread", thread));
         }
-        final String state = Boolean.TRUE.equals(parameters.get("reopen")) ? "open" : "resolved";
+        final String state = flag(parameters, "reopen") ? "open" : "resolved";
         push.localThreadState.put(thread, state);
         return Map.of("thread", thread, "state", state);
     }
@@ -881,6 +897,23 @@ final class StandIn {
 
     static VarlinkException refusal(String error, Map<String, Object> parameters) {
         return new VarlinkException(INTERFACE + "." + error, parameters);
+    }
+
+    /** An optional bool: absent is false, anything but a bool is refused. */
+    private static boolean flag(Map<String, Object> parameters, String name) {
+        final Object value = parameters.get(name);
+        if (value == null) {
+            return false;
+        }
+        if (!(value instanceof Boolean flag)) {
+            throw invalid(name);
+        }
+        return flag;
+    }
+
+    private static VarlinkException invalid(String parameter) {
+        return new VarlinkException(
+                "org.varlink.service.InvalidParameter", Map.of("parameter", parameter));
     }
 
     static VarlinkException failed(String message) {

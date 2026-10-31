@@ -203,7 +203,9 @@ final class Git {
             @Nullable String token,
             @Nullable String input,
             String... args) {
-        final List<String> command = new ArrayList<>(List.of("git", "--git-dir=" + dir));
+        // Unquoted paths: a quoted one names no file of the push.
+        final List<String> command =
+                new ArrayList<>(List.of("git", "-c", "core.quotePath=false", "--git-dir=" + dir));
         command.addAll(List.of(args));
         final ProcessBuilder builder = new ProcessBuilder(command);
         final Map<String, String> env = builder.environment();

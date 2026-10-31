@@ -679,4 +679,101 @@ class StandInTest {
                 .as("the same pushes")
                 .isEqualTo(pending);
     }
+
+    // Harm: one id sent twice at once makes two comments, and with toForge two forge writes.
+    @Test
+    void oneIdCalledAtOnceFromSeveralConnectionsMakesOneComment() throws Exception {
+        final String sarif = submission("fixture-anchor", headFile("fixture-anchor"), 1, "");
+        final Map<String, Object> parameters =
+                Map.of(
+                        "project",
+                        StandIn.PROJECT,
+                        "name",
+                        "fixture-anchor",
+                        "sarif",
+                        sarif,
+                        "id",
+                        "once");
+        final List<java.util.concurrent.Future<Object>> answers = new java.util.ArrayList<>();
+        try (var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
+            final java.util.concurrent.CountDownLatch start =
+                    new java.util.concurrent.CountDownLatch(1);
+            for (int i = 0; i < 8; i++) {
+                answers.add(
+                        executor.submit(
+                                () -> {
+                                    try (VarlinkClient own =
+                                            new VarlinkClient(server.socketPath())) {
+                                        start.await();
+                                        return own.call(StandIn.INTERFACE + ".Comment", parameters)
+                                                .get("guid");
+                                    }
+                                }));
+            }
+            start.countDown();
+        }
+        final java.util.Set<Object> guids = new java.util.HashSet<>();
+        for (final var answer : answers) {
+            guids.add(answer.get());
+        }
+
+        assertThat(guids).as("every call answers the one comment").hasSize(1);
+    }
+
+    // Harm: a flag of the wrong type is read as false, so a comment meant for the pull request
+    // silently stays here, or a reopen resolves.
+    @Test
+    void aParameterOfTheWrongTypeIsRefusedNotReadAsAbsent() throws Exception {
+        final String sarif = submission("fixture-anchor", headFile("fixture-anchor"), 1, "");
+
+        assertThat(
+                        errorOf(
+                                "Comment",
+                                Map.of(
+                                        "name",
+                                        "fixture-anchor",
+                                        "sarif",
+                                        sarif,
+                                        "toForge",
+                                        "true")))
+                .as("toForge as a string")
+                .isEqualTo("org.varlink.service.InvalidParameter");
+        assertThat(
+                        errorOf(
+                                "Comments",
+                                Map.of(
+                                        "name",
+                                        "fixture-threads",
+                                        "run",
+                                        run("fixture-threads", "github.com"),
+                                        "round",
+                                        "1")))
+                .as("round as a string")
+                .isEqualTo("org.varlink.service.InvalidParameter");
+    }
+
+    // Harm: a path git quotes is no path of the push, so a comment on it can never be anchored.
+    @Test
+    void aNonAsciiPathIsAnsweredAsItIs() throws Exception {
+        assertThat(headFile("fixture-unicode-path")).as("unquoted").isEqualTo("docs/Über.md");
+    }
+
+    // Harm: a client checking the stored comment against the profile refuses it.
+    @Test
+    void aStoredCommentCarriesTheRunsStamps() throws Exception {
+        final String sarif = submission("fixture-anchor", headFile("fixture-anchor"), 1, "");
+
+        final JsonNode stored =
+                JSON.readTree(
+                        (String)
+                                call("Comment", Map.of("name", "fixture-anchor", "sarif", sarif))
+                                        .get("sarif"));
+
+        assertThat(stored.at("/runs/0/automationDetails/guid").asText())
+                .as("the run's guid")
+                .isNotEmpty();
+        assertThat(stored.at("/runs/0/properties/porelo~1reviewRound").asText())
+                .as("the round")
+                .isNotEmpty();
+    }
 }

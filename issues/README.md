@@ -17,6 +17,12 @@ left out.
 |---|---|---|---|---|
 | <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials | 0 |
 
+## Accepted
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh12"></a>[GH12](GH12-A-Stand-In-For-The-Daemons-Review-Calls.md) | - | - | A test-only stand-in serves the daemon's `Tasks1` review calls on a unix socket from a real GitHub pull request, through the forge clients and the GitHub-SARIF conversion, with the daemon's decisions as marked fixed values |
+
 ## Idea
 
 | # | Size | Blocked by | What it covers |

@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 import org.fuin.porelo.forge.github.GitHubGraphQl;
@@ -225,6 +226,7 @@ public final class GitHubReviewRead {
                         ? Suggestion.of(comment.body())
                         : Suggestion.none(comment.body());
         result.putObject("message").put("text", text(suggestion.text(), losses));
+        suggestion.lost().forEach(loss -> losses.merge(loss, 1, Integer::sum));
         final boolean file = comment.subjectType() == PullRequestReviewComment.SubjectTypeEnum.FILE;
         final Integer line = comment.line();
         final int start =
@@ -575,10 +577,10 @@ public final class GitHubReviewRead {
     }
 
     /** What a comment's body says: its text, and the one suggestion it makes, if any. */
-    private record Suggestion(String text, @Nullable String fix) {
+    private record Suggestion(String text, @Nullable String fix, Set<String> lost) {
 
         static Suggestion none(String body) {
-            return new Suggestion(body, null);
+            return new Suggestion(body, null, Set.of());
         }
 
         /** Only a fence standing in prose is a suggestion; one quoted in a longer fence is code. */
@@ -601,9 +603,11 @@ public final class GitHubReviewRead {
             }
             final String rest = (lines.substring(0, found[0]) + lines.substring(found[1])).strip();
             // A suggestion with nothing to read beside it, an image say, still says what it is.
-            final boolean nothingElse =
-                    rest.isEmpty() || "an empty body".equals(ReviewText.fromForge(rest).held());
-            return new Suggestion(nothingElse ? "Suggested change." : rest, fix);
+            final ReviewText.Read beside = ReviewText.fromForge(rest);
+            final boolean nothingElse = rest.isEmpty() || "an empty body".equals(beside.held());
+            return nothingElse
+                    ? new Suggestion("Suggested change.", fix, beside.losses())
+                    : new Suggestion(rest, fix, Set.of());
         }
 
         /** A fence's lines when it is a closed suggestion fence, else {@code null}. */

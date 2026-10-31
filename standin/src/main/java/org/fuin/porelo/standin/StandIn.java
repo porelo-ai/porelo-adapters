@@ -337,7 +337,8 @@ final class StandIn {
     }
 
     private Map<String, Object> pending(Map<String, Object> parameters) {
-        // GitHub first: a check of what was read before would refuse what GitHub has changed.
+        project(parameters);
+        // GitHub before the pushes' check: one of what was read before refuses what GitHub changed.
         refresh(false);
         gate(parameters);
         final List<Object> pending = new ArrayList<>();
@@ -872,6 +873,12 @@ final class StandIn {
     }
 
     private void gate(Map<String, Object> parameters) {
+        project(parameters);
+        // Every call on the project, so no push is served with a base its mirror cannot give.
+        defaultBranch();
+    }
+
+    private static void project(Map<String, Object> parameters) {
         final String project = required(parameters, "project");
         if (!PROJECT.equals(project)) {
             throw refusal("NoSuchProject", Map.of("project", project));
@@ -880,8 +887,6 @@ final class StandIn {
         if (repository != null && !REPOSITORY.equals(repository)) {
             throw failed("The stand-in's project has one repository, " + REPOSITORY);
         }
-        // Every call on the project, so no push is served with a base its mirror cannot give.
-        defaultBranch();
     }
 
     private Push push(Map<String, Object> parameters) {

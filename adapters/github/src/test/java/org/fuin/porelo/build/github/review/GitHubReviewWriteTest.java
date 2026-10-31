@@ -379,7 +379,11 @@ class GitHubReviewWriteTest {
                 "<a title=\"`\"> @octocat `</a>",
                 "see <https://example.org/x.png>",
                 "mail <user@example.org>",
-                "```suggestion\nSystem.exit(1);\n```"
+                "```suggestion\nSystem.exit(1);\n```",
+                "![](https://example.org/track.png)",
+                "[hover](https://example.org \"safe &#x202E;gnp.exe\")",
+                "[a][x]\n\n[x]: https://example.org \"&#x202E;\"",
+                "```java&#x202E;\nx\n```"
             })
     void markupInProseIsRefused(String text) {
         assertThatThrownBy(() -> ReviewText.toForge(text))
@@ -399,6 +403,27 @@ class GitHubReviewWriteTest {
         assertThat(ReviewText.toForge("\\` @octocat `"))
                 .as("the escaped backtick is prose, the mention a code span")
                 .isEqualTo("\\` ``@octocat`` `");
+    }
+
+    // Harm: a mention in a footnote GitHub renders notifies.
+    @Test
+    void aMentionInAFootnoteIsEscaped() {
+        assertThat(ReviewText.toForge("See[^1]\n\n[^1]: @octocat"))
+                .as("the footnote's mention is a code span")
+                .isEqualTo("See[^1]\n\n[^1]: `@octocat`");
+    }
+
+    // Harm: escaping mentions grows a body past GitHub's limit after the limit was checked.
+    @Test
+    void aBodyOverTheLimitOnceItsMentionsAreEscapedIsRefused() {
+        assertThatThrownBy(() -> ReviewText.toForge("x " + "`".repeat(2000) + " @a @b"))
+                .as("the body sent counts")
+                .isInstanceOfSatisfying(
+                        ReviewRefusal.class,
+                        r ->
+                                assertThat(r.reason())
+                                        .as("too large")
+                                        .isEqualTo(ReviewRefusal.Reason.TOO_LARGE));
     }
 
     // Harm: markup inside code is code; refusing it would refuse every review of HTML.

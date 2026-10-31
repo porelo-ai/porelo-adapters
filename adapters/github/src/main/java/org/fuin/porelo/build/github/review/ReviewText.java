@@ -8,7 +8,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.commonmark.ext.footnotes.FootnotesExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.node.Block;
 import org.commonmark.node.Code;
 import org.commonmark.node.Document;
 import org.commonmark.node.FencedCodeBlock;
@@ -19,6 +21,7 @@ import org.commonmark.node.IndentedCodeBlock;
 import org.commonmark.node.Link;
 import org.commonmark.node.LinkReferenceDefinition;
 import org.commonmark.node.Node;
+import org.commonmark.node.SoftLineBreak;
 import org.commonmark.node.SourceSpan;
 import org.commonmark.node.Text;
 import org.commonmark.parser.IncludeSourceSpans;
@@ -47,6 +50,13 @@ public final class ReviewText {
     private static final Pattern CHARACTER_REFERENCE =
             Pattern.compile("&(?:#[0-9]{1,7}|#[xX][0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});");
 
+    /** GitHub's comments render tables and footnotes beside CommonMark; the parser is immutable. */
+    private static final Parser PARSER =
+            Parser.builder()
+                    .extensions(List.of(TablesExtension.create(), FootnotesExtension.create()))
+                    .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
+                    .build();
+
     private ReviewText() {}
 
     /** What a forge's text became: the profile's text and what was lost, or why it is held. */
@@ -71,7 +81,8 @@ public final class ReviewText {
      * Converts a forge's Markdown to the profile's message text: line ends become {@code \n}, HTML
      * and link reference definitions are dropped, a link or image becomes its text, an emoji's
      * U+FE0F in text is dropped, every brace is doubled. Code is never touched. Nothing else is
-     * shortened or rewritten: a refused character, also one a character reference stands for, or a
+     * shortened or rewritten: a refused character, also one a character reference stands for, an
+     * HTML block other than a comment, a body that reads otherwise once its markup is dropped, or a
      * body over the limit holds the item.
      *
      * @param body The forge's text.
@@ -80,19 +91,16 @@ public final class ReviewText {
     public static Read fromForge(String body) {
         final Set<String> losses = new TreeSet<>();
         final String lines = body.replace("\r\n", "\n").replace('\r', '\n');
-        String text = lines;
-        // Until nothing changes: dropping one tag can join the pieces of another.
-        while (true) {
-            final List<Edit> edits = new ArrayList<>();
-            final String held = reduce(parse(text), text, edits, losses);
-            if (held != null) {
-                return new Read(null, losses, held);
-            }
-            final String reduced = apply(text, edits);
-            if (reduced.equals(text)) {
-                break;
-            }
-            text = reduced;
+        final Document parsed = parse(lines);
+        final List<Edit> edits = new ArrayList<>();
+        final String held = reduce(parsed, lines, edits, losses);
+        if (held != null) {
+            return new Read(null, losses, held);
+        }
+        final String text = apply(lines, edits);
+        // Dropping a tag can join the pieces of another, or turn text into code: read it again.
+        if (!shown(parse(text), false).equals(shown(parsed, true))) {
+            return new Read(null, losses, "markup that reads otherwise once its HTML is dropped");
         }
         final String refused = refusedCharacter(text);
         if (refused != null) {
@@ -112,6 +120,15 @@ public final class ReviewText {
     /** Collects what a read drops, or says why the body is held. */
     private static @Nullable String reduce(
             Node node, String text, List<Edit> edits, Set<String> losses) {
+        if (node instanceof HtmlBlock block && !isComment(block.getLiteral())) {
+            return "an HTML block, whose text GitHub shows";
+        }
+        if (node instanceof FencedCodeBlock fence) {
+            final String refused = refusedCharacter(String.valueOf(fence.getInfo()));
+            if (refused != null) {
+                return refused + " in a fence's info";
+            }
+        }
         if (node instanceof HtmlBlock
                 || node instanceof HtmlInline
                 || node instanceof LinkReferenceDefinition) {
@@ -142,8 +159,14 @@ public final class ReviewText {
             if (refused != null) {
                 return refused;
             }
+            int written = 0;
             for (final SourceSpan span : spans(node)) {
+                written += count(text.substring(span.getInputIndex(), end(span)));
                 dropEmojiVariationSelectors(text, span, edits, losses);
+            }
+            if (count(plain.getLiteral()) > written) {
+                // Only a written U+FE0F is dropped; a character reference to one would stay.
+                return "a character reference to U+FE0F";
             }
         }
         for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
@@ -159,14 +182,86 @@ public final class ReviewText {
     private static void keepOnlyChildren(Node node, List<Edit> edits) {
         final int start = start(node);
         final int end = end(node);
-        final Node first = node.getFirstChild();
-        final Node last = node.getLastChild();
+        // A line break the parser made between lines has no place in the text.
+        Node first = node.getFirstChild();
+        while (first != null && first.getSourceSpans().isEmpty()) {
+            first = first.getNext();
+        }
+        Node last = node.getLastChild();
+        while (last != null && last.getSourceSpans().isEmpty()) {
+            last = last.getPrevious();
+        }
         if (first == null || last == null) {
             edits.add(new Edit(start, end, ""));
             return;
         }
         edits.add(new Edit(start, start(first), ""));
         edits.add(new Edit(end(last), end, ""));
+    }
+
+    /** An HTML comment GitHub hides whole: nothing after its end, or no end at all. */
+    private static boolean isComment(String block) {
+        final String html = block.strip();
+        if (!html.startsWith("<!--")) {
+            return false;
+        }
+        final int end = html.lastIndexOf("-->");
+        return end < 4 || html.substring(end + 3).isBlank();
+    }
+
+    private static boolean isCode(Node node) {
+        return node instanceof FencedCodeBlock || node instanceof IndentedCodeBlock;
+    }
+
+    private static int count(String text) {
+        return (int) text.codePoints().filter(cp -> cp == VARIATION_SELECTOR_16).count();
+    }
+
+    /**
+     * What a reader sees of a parse: its blocks, code and text, with HTML, link reference
+     * definitions and the wrappers of links left out, and spaces, which dropping a tag moves, too.
+     */
+    private static String shown(Node node, boolean dropped) {
+        final StringBuilder out = new StringBuilder();
+        shown(node, dropped, out);
+        return out.toString();
+    }
+
+    /** With {@code dropped}, the HTML is what the read drops; without, HTML left is new. */
+    private static void shown(Node node, boolean dropped, StringBuilder out) {
+        if (node instanceof HtmlBlock || node instanceof HtmlInline) {
+            if (!dropped) {
+                out.append("\u0001html\u0001");
+            }
+            return;
+        }
+        if (node instanceof LinkReferenceDefinition || node instanceof SoftLineBreak) {
+            return;
+        }
+        if (node instanceof Text plain) {
+            out.append(withoutEmojiSelectors(plain.getLiteral()).replaceAll("[ \t]", ""));
+            return;
+        }
+        final StringBuilder inner = new StringBuilder();
+        if (node instanceof Code code) {
+            inner.append(code.getLiteral());
+        } else if (node instanceof FencedCodeBlock fence) {
+            inner.append(fence.getInfo()).append('\u0003').append(fence.getLiteral());
+        } else if (node instanceof IndentedCodeBlock code) {
+            inner.append(code.getLiteral());
+        }
+        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
+            shown(child, dropped, inner);
+        }
+        // A block left empty, a paragraph that held only an image say, is gone from the text.
+        final boolean gone = node instanceof Block && !isCode(node) && inner.isEmpty();
+        if (node instanceof Link || node instanceof Image || gone) {
+            out.append(inner);
+            return;
+        }
+        out.append('\u0002').append(node.getClass().getSimpleName()).append('\u0002');
+        out.append(inner);
+        out.append('\u0004');
     }
 
     private static String withoutEmojiSelectors(String text) {
@@ -233,6 +328,12 @@ public final class ReviewText {
             escapeMentions(body, range[0], range[1], marks, edits);
         }
         final String out = apply(body, edits);
+        if (out.getBytes(StandardCharsets.UTF_8).length > BODY_LIMIT) {
+            throw new ReviewRefusal(
+                    ReviewRefusal.Reason.TOO_LARGE,
+                    "over " + BODY_LIMIT + " bytes once its mentions are code spans",
+                    "message.text");
+        }
         if (leftMention(parse(out))) {
             throw violation("a mention that a code span cannot hold");
         }
@@ -249,6 +350,19 @@ public final class ReviewText {
         }
         if (node instanceof Link && body.charAt(start(node)) == '<') {
             throw violation("an autolink; code goes in a code span");
+        }
+        if (node instanceof Image) {
+            throw violation("an image, which GitHub fetches from its address");
+        }
+        // GitHub decodes character references in these, which are no text nodes.
+        if (node instanceof Link link) {
+            refuseDecoded(link.getDestination(), link.getTitle());
+        }
+        if (node instanceof LinkReferenceDefinition definition) {
+            refuseDecoded(definition.getDestination(), definition.getTitle());
+        }
+        if (node instanceof FencedCodeBlock fence) {
+            refuseDecoded(fence.getInfo(), null);
         }
         if (node instanceof Code
                 || node instanceof FencedCodeBlock
@@ -268,6 +382,15 @@ public final class ReviewText {
         }
         for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
             refuseMarkup(child, body, text);
+        }
+    }
+
+    private static void refuseDecoded(@Nullable String first, @Nullable String second) {
+        for (final String value : new String[] {first, second}) {
+            final String refused = value == null ? null : refusedCharacter(value);
+            if (refused != null) {
+                throw violation("a character reference to " + refused);
+            }
         }
     }
 
@@ -410,12 +533,7 @@ public final class ReviewText {
     // ------------------------------------------------------------------------- the parse
 
     private static Document parse(String text) {
-        return (Document)
-                Parser.builder()
-                        .extensions(List.of(TablesExtension.create()))
-                        .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
-                        .build()
-                        .parse(text);
+        return (Document) PARSER.parse(text);
     }
 
     /** A node's place in the text; a node the parser cannot place is refused, never guessed. */

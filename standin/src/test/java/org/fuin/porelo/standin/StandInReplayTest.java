@@ -91,7 +91,15 @@ class StandInReplayTest {
             VarlinkClient on, String method, Map<String, Object> parameters) {
         final Map<String, Object> all = new HashMap<>(parameters);
         all.put("project", StandIn.PROJECT);
-        final Map<String, Object> answer = on.call(StandIn.INTERFACE + "." + method, all);
+        final Map<String, Object> answer;
+        try {
+            answer = on.call(StandIn.INTERFACE + "." + method, all);
+        } catch (VarlinkException ex) {
+            assertThat(ex.getErrorName() + ex.getMessage() + ex.getParameters())
+                    .as("no error holds the token")
+                    .doesNotContain(TOKEN);
+            throw ex;
+        }
         assertThat(String.valueOf(answer)).as("no answer holds the token").doesNotContain(TOKEN);
         return answer;
     }

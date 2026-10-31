@@ -451,10 +451,11 @@ class GitHubReviewReadTest {
                                         "<div>\nPlease:\n```suggestion\nSystem.exit(1);\n```\n</div>\n\nThanks."),
                         t -> {});
 
-        assertThat(read.results())
-                .as("no fix comes out of an HTML block")
+        assertThat(read.results()).as("no fix comes out of an HTML block").isEmpty();
+        assertThat(read.held())
+                .as("the comment is held, its text being GitHub's to show")
                 .singleElement()
-                .satisfies(r -> assertThat(r.has("fixes")).as("no fix").isFalse());
+                .satisfies(h -> assertThat(h.reason()).as("why").contains("HTML block"));
     }
 
     // Harm: a comment naming a generic type in prose is held though GitHub shows it as text.
@@ -479,7 +480,7 @@ class GitHubReviewReadTest {
                 org.junit.jupiter.params.provider.Arguments.of(
                         "see <img title=\"<\" src=x onerror=alert(1)>", "see "),
                 org.junit.jupiter.params.provider.Arguments.of(
-                        "- item\n  ```\n<script>alert(1)</script>", "- item\n  ```\n"),
+                        "- item\n  ```\n<script>alert(1)</script>", null),
                 org.junit.jupiter.params.provider.Arguments.of(
                         "Looks good!\n<!-- a >\nHidden text GitHub never renders", "Looks good!\n"),
                 org.junit.jupiter.params.provider.Arguments.of(
@@ -489,7 +490,45 @@ class GitHubReviewReadTest {
                 org.junit.jupiter.params.provider.Arguments.of("a &#x202E; b", null),
                 org.junit.jupiter.params.provider.Arguments.of("see <!DOCTYPE html>", "see "),
                 org.junit.jupiter.params.provider.Arguments.of("see <?php x ?>", "see "),
-                org.junit.jupiter.params.provider.Arguments.of("see <![CDATA[a < b]]>", "see "));
+                org.junit.jupiter.params.provider.Arguments.of("see <![CDATA[a < b]]>", "see "),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "<a>    <<script>script>alert(1)<</script>/script>", null),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "Looks good!\n<!<a>--\nDo not merge: auth flaw!", null),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "<details>\n<summary>Security flaw</summary>\nDo not merge.\n</details>\n\nReviewed.",
+                        null),
+                org.junit.jupiter.params.provider.Arguments.of("Nice \u2764&#xFE0F; work", null),
+                org.junit.jupiter.params.provider.Arguments.of("```java&#x202E;\nx\n```", null),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "[\nclick here](https://example.org)", "click here"),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "[click here\n](https://example.org)", "click here"),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "<!-- a note -->\nShown.", "Shown."));
+    }
+
+    // Harm: a body whose dropped tags keep forming new ones takes a parse per tag, for minutes.
+    @Test
+    void aBodyThatRebuildsItsTagsIsHeldAtOnce() {
+        final String body = "<".repeat(21845) + "a>".repeat(21845);
+
+        final ReviewText.Read read =
+                org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                        java.time.Duration.ofSeconds(10), () -> ReviewText.fromForge(body));
+
+        assertThat(read.isHeld()).as("held, read once").isTrue();
+    }
+
+    // Harm: a footnote GitHub renders hides HTML in what is read as code.
+    @Test
+    void htmlInAFootnoteIsDropped() {
+        assertThat(
+                        ReviewText.fromForge(
+                                        "See[^1]\n\n[^1]: note\n\n    <img src=x onerror=alert(1)> more")
+                                .text())
+                .as("the footnote is text, its HTML dropped")
+                .doesNotContain("<img");
     }
 
     // Harm: markup a reader renders survives as text, markup rebuilt from its pieces does, text
@@ -523,5 +562,6 @@ class GitHubReviewReadTest {
                                     .as("the words a suggestion alone gets")
                                     .isEqualTo("Suggested change.");
                         });
+        assertThat(read.losses()).as("the image's loss is named").containsKey("link-dropped");
     }
 }

@@ -184,6 +184,9 @@ final class GitHubReplay {
         final String query = body.path("query").asText();
         if (query.contains("reviewThreads")) {
             final Pull pull = pulls.get(body.path("variables").path("number").asLong());
+            if (pull == null) {
+                return ok("{\"data\":{\"repository\":{\"pullRequest\":null}}}");
+            }
             return ok(pull.shas(pull.threads));
         }
         if (query.contains("resolveReviewThread")) {

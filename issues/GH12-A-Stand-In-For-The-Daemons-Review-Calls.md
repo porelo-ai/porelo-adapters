@@ -107,8 +107,15 @@ work needs anyway.
   from GitHub, which `Pending`, `Projects` and `WatchProjects` lock in the other order, so the two could deadlock;
   the refresh now runs after the lock is released.
 - **Review text is parsed, not modeled:** what is code, HTML or text in a comment is the CommonMark parser's answer
-  (`commonmark-java` with GitHub's tables), after five readings each found a case a hand-built model read otherwise
-  than GitHub renders it.
+  (`commonmark-java` with GitHub's tables and footnotes), after five readings each found a case a hand-built model read otherwise
+  than GitHub renders it. A read drops HTML once and parses the result again: when what a reader sees differs, a tag
+  rebuilt from pieces or text turned into code, the comment is held, so a read costs two parses. An HTML block other
+  than a comment is held rather than dropped, since GitHub shows its text. A write refuses an image and a character
+  reference in a link's destination or title or a fence's info, which GitHub decodes.
+- **The sixth reading's findings not fixed, and why:** an indented, tilde or uppercase `suggestion` fence and a token
+  encoded in git's header stay as the earlier readings left them; a test that a sent result is bound before a reader
+  can see it is not written, since no seam lets a test stop between the two without one built for it, and a reader
+  there sees the result without GitHub's IDs for one call or answers `Failed`.
 - **What it builds against:** `porelo-forge-client-github` 0.1.0-SNAPSHOT, installed locally and not yet on Sonatype,
   so the change is pushed only after the forge clients publish that snapshot; and `porelo-wire` 0.5.1-SNAPSHOT.
 

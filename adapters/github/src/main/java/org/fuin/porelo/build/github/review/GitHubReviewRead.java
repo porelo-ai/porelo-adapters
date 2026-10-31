@@ -47,6 +47,9 @@ public final class GitHubReviewRead {
 
     private final String forgeInstance;
 
+    /** The reviews nobody has submitted yet; their comments are drafts. */
+    private java.util.Set<Long> pendingReviews = java.util.Set.of();
+
     private GitHubReviewRead(String forgeInstance) {
         this.forgeInstance = forgeInstance;
     }
@@ -142,6 +145,11 @@ public final class GitHubReviewRead {
         final Map<String, Integer> losses = new TreeMap<>();
         final List<Held> held = new ArrayList<>();
         final List<ObjectNode> results = new ArrayList<>();
+        pendingReviews =
+                answers.reviews().stream()
+                        .filter(r -> "PENDING".equals(r.state()))
+                        .map(PullRequestReview::id)
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet());
         for (final PullRequestReview review : answers.reviews()) {
             item("review", review.id(), () -> review(review, losses), results, held);
         }
@@ -251,7 +259,10 @@ public final class GitHubReviewRead {
         properties.put("porelo/threadState", thread.thread().isResolved() ? "resolved" : "open");
         resolver(properties, thread.thread());
         properties.put("porelo/outdated", outdated);
-        properties.put("porelo/draft", false);
+        properties.put(
+                "porelo/draft",
+                comment.pullRequestReviewId() != null
+                        && pendingReviews.contains(comment.pullRequestReviewId()));
         if (outdated) {
             original(properties, comment, side, file);
         }

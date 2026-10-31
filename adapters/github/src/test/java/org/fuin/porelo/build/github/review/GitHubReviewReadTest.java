@@ -365,4 +365,28 @@ class GitHubReviewReadTest {
                 .as("the change request stands")
                 .isEqualTo("changesRequested");
     }
+
+    // Harm: a draft nobody submitted reads as a published comment.
+    @Test
+    void aCommentOfAPendingReviewIsADraft() {
+        final GitHubReviewRead.Read read =
+                read(
+                        List.of(GitHubAnswers.review(r -> r.put("state", "PENDING"))),
+                        List.of(GitHubAnswers.comment(c -> {})),
+                        List.of(),
+                        List.of(GitHubAnswers.thread(t -> {})));
+
+        assertThat(
+                        read.results().stream()
+                                .filter(
+                                        r ->
+                                                r.at("/properties/porelo~1nativeCommentId")
+                                                        .isTextual())
+                                .findFirst()
+                                .orElseThrow()
+                                .at("/properties/porelo~1draft")
+                                .asBoolean())
+                .as("its review is pending")
+                .isTrue();
+    }
 }

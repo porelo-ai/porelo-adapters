@@ -43,8 +43,7 @@ public final class GitHubReviewRead {
 
     private static final Pattern COMMIT = Pattern.compile("[0-9a-f]{40}|[0-9a-f]{64}");
 
-    private static final Pattern SUGGESTION =
-            Pattern.compile("(?m)^(`{3,})suggestion[ \\t]*\\n((?:.*\\n)*?)\\1[ \\t]*$");
+    private static final Pattern SUGGESTION_OPENING = Pattern.compile("(`{3,})suggestion[ \\t]*");
 
     private final String forgeInstance;
 
@@ -344,6 +343,17 @@ public final class GitHubReviewRead {
         if (refused != null) {
             throw new HeldItem("the suggestion holds " + refused);
         }
+        final String[] lines = inserted.split("\n", -1);
+        if (lines.length > end - start + 1 + GitHubReviewWrite.FIX_EXTRA_LINES
+                || inserted.getBytes(java.nio.charset.StandardCharsets.UTF_8).length
+                        > ReviewText.BODY_LIMIT
+                || java.util.Arrays.stream(lines)
+                        .anyMatch(
+                                l ->
+                                        l.codePointCount(0, l.length())
+                                                > GitHubReviewWrite.FIX_LINE_LIMIT)) {
+            throw new HeldItem("a suggestion over the profile's limits");
+        }
         final ObjectNode change =
                 result.putArray("fixes").addObject().putArray("artifactChanges").addObject();
         change.putObject("artifactLocation").put("uri", pathUri(path));
@@ -554,24 +564,46 @@ public final class GitHubReviewRead {
             return new Suggestion(body, null);
         }
 
+        /** Only a fence standing in prose is a suggestion; one quoted in a longer fence is code. */
         static Suggestion of(String body) {
             final String lines = body.replace("\r\n", "\n").replace('\r', '\n');
-            final var matcher = SUGGESTION.matcher(lines);
-            if (!matcher.find()) {
+            int[] found = null;
+            String fix = null;
+            for (final int[] fence : ReviewText.fences(lines)) {
+                final String inner = suggestion(lines.substring(fence[0], fence[1]));
+                if (inner != null) {
+                    if (found != null) {
+                        throw new HeldItem("more than one suggestion in one comment");
+                    }
+                    found = fence;
+                    fix = inner;
+                }
+            }
+            if (found == null || fix == null) {
                 return none(body);
             }
-            final String inserted = matcher.group(2);
-            final int start = matcher.start();
-            final int end = matcher.end();
-            if (matcher.find()) {
-                throw new HeldItem("more than one suggestion in one comment");
-            }
-            final String rest = (lines.substring(0, start) + lines.substring(end)).strip();
-            final String fix =
-                    inserted.endsWith("\n")
-                            ? inserted.substring(0, inserted.length() - 1)
-                            : inserted;
+            final String rest = (lines.substring(0, found[0]) + lines.substring(found[1])).strip();
             return new Suggestion(rest.isEmpty() ? "Suggested change." : rest, fix);
+        }
+
+        /** A fence's lines when it is a closed suggestion fence, else {@code null}. */
+        private static @Nullable String suggestion(String fence) {
+            final String[] lines = fence.split("\n", -1);
+            final var opening = SUGGESTION_OPENING.matcher(lines[0]);
+            if (!opening.matches()) {
+                return null;
+            }
+            final String last = lines[lines.length - 1].strip();
+            if (lines.length < 2
+                    || last.length() < opening.group(1).length()
+                    || !last.chars().allMatch(c -> c == '`')) {
+                throw new HeldItem("a suggestion fence that is not closed");
+            }
+            if (lines.length == 2) {
+                // GitHub deletes the lines; a whole-line fix of the profile cannot say that.
+                throw new HeldItem("a suggestion that deletes its lines");
+            }
+            return String.join("\n", java.util.Arrays.asList(lines).subList(1, lines.length - 1));
         }
     }
 

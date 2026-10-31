@@ -29,7 +29,8 @@ public final class ReviewText {
     private static final Pattern IMAGE_OR_LINK =
             Pattern.compile("!?\\[([^\\]\\n]*)\\]\\([^)\\n]*\\)");
 
-    private static final Pattern AUTOLINK = Pattern.compile("<((?:https?|mailto|ftp):[^<>\\s]*)>");
+    private static final Pattern AUTOLINK =
+            Pattern.compile("<((?:https?|mailto|ftp):[^<>\\s]*)>", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern MENTION =
             Pattern.compile(
@@ -79,10 +80,12 @@ public final class ReviewText {
         if (text.isBlank()) {
             return new Read(null, losses, "an empty body");
         }
-        if (text.getBytes(StandardCharsets.UTF_8).length > BODY_LIMIT) {
+        final String doubled = text.replace("{", "{{").replace("}", "}}");
+        // The limit is the message's, which holds the doubled braces.
+        if (doubled.getBytes(StandardCharsets.UTF_8).length > BODY_LIMIT) {
             return new Read(null, losses, "a body over " + BODY_LIMIT + " bytes");
         }
-        return new Read(text.replace("{", "{{").replace("}", "}}"), losses, null);
+        return new Read(doubled, losses, null);
     }
 
     /**
@@ -158,9 +161,15 @@ public final class ReviewText {
 
     private static String prose(String text, Set<String> losses) {
         String out = dropEmojiVariationSelectors(text, losses);
-        out = replace(HTML, out, m -> "", losses, "markup-dropped");
-        out = replace(IMAGE_OR_LINK, out, m -> m.group(1), losses, "link-dropped");
-        return replace(AUTOLINK, out, m -> m.group(1), losses, "link-dropped");
+        // Until nothing changes: dropping one tag can join the pieces of another.
+        String before;
+        do {
+            before = out;
+            out = replace(HTML, out, m -> "", losses, "markup-dropped");
+            out = replace(IMAGE_OR_LINK, out, m -> m.group(1), losses, "link-dropped");
+            out = replace(AUTOLINK, out, m -> m.group(1), losses, "link-dropped");
+        } while (!out.equals(before));
+        return out;
     }
 
     private static String dropEmojiVariationSelectors(String text, Set<String> losses) {
@@ -214,7 +223,25 @@ public final class ReviewText {
     }
 
     /** A run of text that is code (a fence or a code span) or prose. */
-    private record Segment(String text, boolean code) {}
+    private record Segment(String text, boolean code, boolean fence) {}
+
+    /**
+     * Finds the fenced code blocks that stand in prose, not inside another block.
+     *
+     * @param text Markdown, line ends {@code \n}.
+     * @return Each block's start and end in the text, from its opening line to its closing one.
+     */
+    static List<int[]> fences(String text) {
+        final List<int[]> out = new ArrayList<>();
+        int at = 0;
+        for (final Segment segment : segments(text)) {
+            if (segment.fence()) {
+                out.add(new int[] {at, at + segment.text().length()});
+            }
+            at += segment.text().length();
+        }
+        return out;
+    }
 
     /** Splits Markdown into code and prose, so rules for prose never touch code. */
     private static List<Segment> segments(String text) {
@@ -225,7 +252,7 @@ public final class ReviewText {
             final int fenceEnd = fenceAt(text, i);
             if (fenceEnd > i) {
                 flush(prose, out);
-                out.add(new Segment(text.substring(i, fenceEnd), true));
+                out.add(new Segment(text.substring(i, fenceEnd), true, true));
                 i = fenceEnd;
                 continue;
             }
@@ -234,7 +261,7 @@ public final class ReviewText {
                 final int close = closingRun(text, i + run, run);
                 if (close >= 0) {
                     flush(prose, out);
-                    out.add(new Segment(text.substring(i, close + run), true));
+                    out.add(new Segment(text.substring(i, close + run), true, false));
                     i = close + run;
                     continue;
                 }
@@ -333,7 +360,7 @@ public final class ReviewText {
 
     private static void flush(StringBuilder prose, List<Segment> out) {
         if (!prose.isEmpty()) {
-            out.add(new Segment(prose.toString(), false));
+            out.add(new Segment(prose.toString(), false, false));
             prose.setLength(0);
         }
     }

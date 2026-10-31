@@ -248,4 +248,82 @@ class GitHubReviewReadTest {
                 .as("a literal brace is doubled")
                 .isEqualTo("use {{x}}");
     }
+
+    // Harm: an example quoted in a longer fence becomes a fix someone may apply.
+    @Test
+    void aSuggestionQuotedInALongerFenceIsNoFix() {
+        final GitHubReviewRead.Read read =
+                oneComment(
+                        c ->
+                                c.put(
+                                        "body",
+                                        "Example:\n````md\n```suggestion\nSystem.exit(1);\n```\n````"),
+                        t -> {});
+
+        assertThat(read.results().get(0).has("fixes"))
+                .as("GitHub shows the quoted fence as code, not as a suggestion")
+                .isFalse();
+    }
+
+    // Harm: a suggestion that deletes its lines would be applied as one blank line instead.
+    @Test
+    void aSuggestionThatDeletesItsLinesIsHeld() {
+        final GitHubReviewRead.Read read =
+                oneComment(c -> c.put("body", "```suggestion\n```"), t -> {});
+
+        assertThat(read.results()).as("nothing the profile cannot say is delivered").isEmpty();
+        assertThat(read.held()).as("the comment is held").hasSize(1);
+    }
+
+    @Test
+    void aSuggestionOfOneEmptyLineIsAnEmptyReplacement() {
+        final GitHubReviewRead.Read read =
+                oneComment(c -> c.put("body", "```suggestion\n\n```"), t -> {});
+
+        assertThat(
+                        read.results()
+                                .get(0)
+                                .at("/fixes/0/artifactChanges/0/replacements/0/insertedContent")
+                                .path("text")
+                                .asText("absent"))
+                .as("one empty line replaces the anchor")
+                .isEqualTo("");
+    }
+
+    // Harm: an oversized suggestion becomes a fix no write may carry back, or floods a reader.
+    @Test
+    void aSuggestionOverItsLimitsIsHeld() {
+        final GitHubReviewRead.Read read =
+                oneComment(
+                        c -> c.put("body", "```suggestion\n" + "x\n".repeat(50) + "```"), t -> {});
+
+        assertThat(read.results()).as("over the anchor plus ten lines").isEmpty();
+        assertThat(read.held()).as("the comment is held").hasSize(1);
+    }
+
+    // Harm: a message over the profile's limit is refused by every reader of the document.
+    @Test
+    void aBodyOverTheLimitOnceItsBracesAreDoubledIsHeld() {
+        final GitHubReviewRead.Read read =
+                read(
+                        List.of(),
+                        List.of(),
+                        List.of(GitHubAnswers.issueComment(c -> c.put("body", "{".repeat(5000)))),
+                        List.of());
+
+        assertThat(read.held()).as("10000 bytes once doubled").hasSize(1);
+    }
+
+    // Harm: markup rebuilt from its pieces reaches a reader that renders it.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {"<<script>script>alert(1)<</script>/script>", "see <HTTPS://example.org/x>"})
+    void markupRebuiltFromItsPiecesIsDroppedToo(String body) {
+        final String text = ReviewText.fromForge(body).text();
+
+        assertThat(text)
+                .as("no tag and no autolink is left")
+                .doesNotContain("<")
+                .doesNotContain(">");
+    }
 }

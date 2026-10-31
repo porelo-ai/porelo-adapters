@@ -33,7 +33,7 @@ public final class ReviewText {
 
     private static final Pattern MENTION =
             Pattern.compile(
-                    "(?<![A-Za-z0-9_`@])@[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:/[A-Za-z0-9_.-]+)?");
+                    "(?<![A-Za-z0-9`@])@[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:/[A-Za-z0-9_.-]+)?");
 
     private ReviewText() {}
 
@@ -263,7 +263,7 @@ public final class ReviewText {
         }
         final char mark = text.charAt(start);
         final int run = runOf(text, start, mark);
-        if (run < 3) {
+        if (run < 3 || (mark == '`' && infoHasBacktick(text, start + run))) {
             return -1;
         }
         int line = text.indexOf('\n', start);
@@ -285,6 +285,12 @@ public final class ReviewText {
         return text.length();
     }
 
+    /** A backtick fence's info line holds no backtick; with one, the line is a code span. */
+    private static boolean infoHasBacktick(String text, int from) {
+        final int end = text.indexOf('\n', from);
+        return text.substring(from, end < 0 ? text.length() : end).indexOf('`') >= 0;
+    }
+
     private static int runOf(String text, int i, char c) {
         int n = 0;
         while (i + n < text.length() && text.charAt(i + n) == c) {
@@ -296,6 +302,10 @@ public final class ReviewText {
     private static int closingRun(String text, int from, int run) {
         int i = from;
         while (i < text.length()) {
+            if (blankLineAt(text, i)) {
+                // A code span never crosses a paragraph's end.
+                return -1;
+            }
             if (text.charAt(i) == '`') {
                 final int n = runOf(text, i, '`');
                 if (n == run) {
@@ -307,6 +317,18 @@ public final class ReviewText {
             }
         }
         return -1;
+    }
+
+    /** At a line end followed by a line of only spaces and tabs. */
+    private static boolean blankLineAt(String text, int i) {
+        if (text.charAt(i) != '\n') {
+            return false;
+        }
+        int at = i + 1;
+        while (at < text.length() && (text.charAt(at) == ' ' || text.charAt(at) == '\t')) {
+            at++;
+        }
+        return at < text.length() && text.charAt(at) == '\n';
     }
 
     private static void flush(StringBuilder prose, List<Segment> out) {

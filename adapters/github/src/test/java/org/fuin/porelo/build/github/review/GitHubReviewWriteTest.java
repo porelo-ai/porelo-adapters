@@ -204,4 +204,19 @@ class GitHubReviewWriteTest {
         node.fieldNames().forEachRemaining(names::add);
         return names;
     }
+
+    // Harm: a mention GitHub renders as prose notifies that person or team.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {
+                "```x``` @octocat",
+                "one ` mark\n\n@octocat and ` another",
+                "ask _@octocat_ now",
+                "ask __@octocat__ now"
+            })
+    void aMentionGitHubWouldRenderAsProseBecomesACodeSpan(String text) {
+        assertThat(ReviewText.toForge(text))
+                .as("the mention is a code span, so it notifies no one")
+                .contains("`@octocat`");
+    }
 }

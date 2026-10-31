@@ -73,9 +73,10 @@ work needs anyway.
 - **Built so far:** the conversion in `adapters/github` (`GitHubReviewRead`, `GitHubReviewWrite`, `ReviewText`,
   `RepositoryPath`, `ReviewDocument`), the stand-in in `standin/` with its own interface copy, eleven fixture pushes,
   and `StandInTest`; every guard seen red once. The live run against the test repository passed: a line comment and
-  a reply with `toForge` reached GitHub and read back in one thread, and a resolve showed. **Still to do:** the
-  replaying cases above, and one defect they reproduce: after a `toForge` comment the stand-in keeps a local copy
-  beside the forge's, so the push counts the thread twice (seen live).
+  a reply with `toForge` reached GitHub and read back in one thread, and a resolve showed. The replaying cases run in
+  `StandInReplayTest` over the forge clients' recordings, a local repository standing in for GitHub's git. **Still
+  open:** after a `toForge` comment the stand-in keeps its local copy beside the forge's, so the push counts the
+  thread twice (seen live); whether the daemon shows both or lets the local copy give way is for the daemon's comment contract to say, asked.
 - **The first reading's findings not fixed, and why:** a `porelo/resolverType` of `user` stays, since GitHub's
   GraphQL types a thread's `resolvedBy` as `User`; a thread's `startDiffSide` is not compared, since a comment whose
   `start_side` differs from its `side` is already held; REST IDs are not checked to be positive, since GitHub numbers
@@ -99,10 +100,12 @@ work needs anyway.
   that may open an HTML block is treated the same way. A push's base and commit are both read without one lock, so a
   check may see a torn pair; it then refuses loud, and the next call checks again, since the pair is what is
   remembered.
-- **Fixed without a test seen red first, the test still owed:** a toForge `Comment` held the push's lock while it
-  refreshed from GitHub, which `Pending`, `Projects` and `WatchProjects` lock in the other order, so the two could
-  deadlock; the refresh now runs after the lock is released. Its test needs the GitHub source, so the replaying
-  client.
+- **Fixed before its test, the test since seen red:** a toForge `Comment` held the push's lock while it refreshed
+  from GitHub, which `Pending`, `Projects` and `WatchProjects` lock in the other order, so the two could deadlock;
+  the refresh now runs after the lock is released.
+- **Review text is parsed, not modeled:** what is code, HTML or text in a comment is the CommonMark parser's answer
+  (`commonmark-java` with GitHub's tables), after five readings each found a case a hand-built model read otherwise
+  than GitHub renders it.
 - **What it builds against:** `porelo-forge-client-github` 0.1.0-SNAPSHOT, installed locally and not yet on Sonatype,
   so the change is pushed only after the forge clients publish that snapshot; and `porelo-wire` 0.5.1-SNAPSHOT.
 

@@ -62,9 +62,18 @@ work needs anyway.
 - **The token** reaches the stand-in through its environment and goes to the client per call; it is in no answer, log
   line, file or command line, and the socket's directory is the caller's own, mode 0700.
 - **Red first:** `StandInTest` connects to the stand-in's socket with `porelo-wire`'s client, the GitHub client given a
-  replaying `HttpClient`: a `Comments` page whose recorded review comment has its `side` or `line` changed must fail
-  naming that field; then a `Comment` with a forged `replyTo` must answer `NoSuchResult` with no write call made; then
-  no answer and no log line may carry the token.
+  replaying `HttpClient`: a `Comments` page whose recorded review comment has its `side` or `line` changed must leave
+  that comment out, name the field in the answer's `held` list and answer the run `partial`; then a `Comment` with a
+  forged `replyTo` must answer `NoSuchResult` with no write call made; then no answer and no log line may carry the
+  token. The conversion's own tests hold the same guards on GitHub-shaped answers, and the fixture pushes hold the
+  rest over the socket; the replaying cases wait for the forge clients' published recordings and replaying
+  `HttpClient`, which their next snapshot attaches as a `tests` jar.
+- **Built so far:** the conversion in `adapters/github` (`GitHubReviewRead`, `GitHubReviewWrite`, `ReviewText`,
+  `RepositoryPath`, `ReviewDocument`), the stand-in in `standin/` with its own interface copy, the ten fixture pushes,
+  and `StandInTest`; every guard seen red once. **Still to do:** the replaying cases above, and the live run against
+  the test repository with the operator's token.
+- **What it builds against:** `porelo-forge-client-github` 0.1.0-SNAPSHOT, installed locally and not yet on Sonatype,
+  so the change is pushed only after the forge clients publish that snapshot; and `porelo-wire` 0.5.1-SNAPSHOT.
 
 ## Acceptance
 
@@ -75,10 +84,5 @@ work needs anyway.
 
 ## To be checked
 
-- Which calls the review display makes before these (a project list, a describe), and how its fetch reaches the bare
-  clone (a local path first) - from the plugin's agent.
-- Building against the forge clients' local snapshot under another agent's installed area (`maven.repo.local.tail`),
-  and whether their recordings are published for a replaying `HttpClient` or must be recorded here.
-- What the `github` client offers at 4275da2 for reviews, review comments, replies, threads and resolve, and what
-  waits for its next additions (issue comments, one thread by its ID, the merge base); the first round takes general
-  comments and the merge base from git where the client has no call yet.
+- Which calls the review display makes before these (a project list, a describe), and whether its fetch takes the
+  local path `PendingPush.fetch` now names - asked of the plugin's agent.

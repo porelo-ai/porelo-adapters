@@ -1,0 +1,2 @@
+title: The GitHub adapter carries the conversion of GitHub's reviews, comments and threads to and from Porelo's SARIF review profile, through the forge clients, not yet served to Porelo.
+type: added

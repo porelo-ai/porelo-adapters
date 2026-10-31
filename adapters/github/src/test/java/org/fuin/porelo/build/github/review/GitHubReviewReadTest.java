@@ -416,7 +416,11 @@ class GitHubReviewReadTest {
     // Harm: markup a reader renders survives as text.
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(
-            strings = {"<svg/onload=alert(1)>", "<javascript:alert(1)>"})
+            strings = {
+                "<svg/onload=alert(1)>",
+                "<javascript:alert(1)>",
+                "<!--\n~~~\n-->\n<script>alert(1)</script>"
+            })
     void markupOfOtherShapesIsDroppedToo(String body) {
         assertThat(ReviewText.fromForge("see " + body).text())
                 .as("no tag and no autolink is left")
@@ -434,18 +438,26 @@ class GitHubReviewReadTest {
                                         "Looks good!\n<!--\n```suggestion\nSystem.exit(1);\n```\n-->"),
                         t -> {});
 
-        assertThat(read.results()).as("no fix comes out of hidden text").isEmpty();
-        assertThat(read.held()).as("the comment is held").hasSize(1);
+        assertThat(read.results())
+                .as("no fix comes out of hidden text, and the text GitHub hides is dropped")
+                .singleElement()
+                .satisfies(
+                        r -> {
+                            assertThat(r.has("fixes")).as("no fix").isFalse();
+                            assertThat(r.at("/message/text").asText())
+                                    .as("only what GitHub shows")
+                                    .isEqualTo("Looks good!\n");
+                        });
     }
 
     // Harm: markup a reader renders survives as text, or text GitHub hides is shown.
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(
             strings = {
-                "<!--\n~~~\n-->\n<script>alert(1)</script>",
                 "see <img title=\"<\" src=x onerror=alert(1)>",
-                "see <?xml a=\"<\" ?>",
-                "see <![CDATA[a < b]]>",
+                "- item\n  ```\n<script>alert(1)</script>",
+                "Looks good!\n<!-- a >\nHidden text GitHub never renders",
+                "<!-- a > ` --> <script>alert(1)</script> &#x202E; <!-- ` -->",
                 "contact <user@example.org>",
                 "a &#x202E; b"
             })
@@ -457,10 +469,50 @@ class GitHubReviewReadTest {
 
     // Harm: a tag of a shape the reduction misses survives as markup.
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(strings = {"<!DOCTYPE html>", "<?php x ?>"})
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {"<!DOCTYPE html>", "<?php x ?>", "<?xml a=\"<\" ?>", "<![CDATA[a < b]]>"})
     void declarationsAndInstructionsAreDropped(String body) {
         assertThat(ReviewText.fromForge("see " + body).text())
                 .as("nothing of the markup is left")
                 .isEqualTo("see ");
+    }
+
+    // Harm: a suggestion with an image before it is held, so the reviewer's fix is lost.
+    @Test
+    void aSuggestionAfterAnImageIsAFix() {
+        final GitHubReviewRead.Read read =
+                oneComment(
+                        c ->
+                                c.put(
+                                        "body",
+                                        "![](https://github.com/user-attachments/assets/1)\n```suggestion\nreturn 1;\n```\nSee screenshot."),
+                        t -> {});
+
+        assertThat(read.results())
+                .as("the suggestion is read as a fix")
+                .singleElement()
+                .satisfies(r -> assertThat(r.has("fixes")).as("it has a fix").isTrue());
+    }
+
+    // Harm: a suggestion inside an HTML block GitHub shows as text becomes a fix.
+    @Test
+    void aSuggestionInsideAnHtmlBlockIsHeld() {
+        final GitHubReviewRead.Read read =
+                oneComment(
+                        c ->
+                                c.put(
+                                        "body",
+                                        "<div>\nPlease:\n```suggestion\nSystem.exit(1);\n```\n</div>\n\nThanks."),
+                        t -> {});
+
+        assertThat(read.results()).as("no fix comes out of an HTML block").isEmpty();
+    }
+
+    // Harm: a comment naming a generic type in prose is held though GitHub shows it as text.
+    @Test
+    void aLessThanSignThatOpensNoMarkupIsText() {
+        assertThat(ReviewText.fromForge("Prefer Map<String, Integer> here").text())
+                .as("carried as it is")
+                .isEqualTo("Prefer Map<String, Integer> here");
     }
 }

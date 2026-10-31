@@ -45,7 +45,7 @@ final class StandIn {
     private static final long WATCH_INTERVAL_MILLIS = 5_000;
 
     /** The bases the default branch was last made of. */
-    private List<String> defaultBranchBases = List.of();
+    private List<List<String>> defaultBranchChecked = List.of();
 
     private static final String FIXED =
             "the stand-in's fixed values: sourceLevel, riskClass, approvalsNeeded and the counts of held"
@@ -792,26 +792,31 @@ final class StandIn {
      * a review display computes it: one commit with every base as a parent.
      */
     private synchronized void defaultBranch() {
-        final List<String> bases =
-                pushes.all().stream().map(p -> p.base).distinct().sorted().toList();
-        if (bases.equals(defaultBranchBases) || bases.isEmpty()) {
+        // Each push's name, base and commit: a new commit can stack a push as a new base can.
+        final List<List<String>> checked =
+                pushes.all().stream()
+                        .map(p -> List.of(p.name, p.base, p.commit))
+                        .sorted(java.util.Comparator.comparing(Object::toString))
+                        .toList();
+        if (checked.equals(defaultBranchChecked) || checked.isEmpty()) {
             return;
         }
+        final List<String> bases = checked.stream().map(p -> p.get(1)).distinct().sorted().toList();
         final String branch = git.commitTree(Map.of(), bases, "The stand-in's bases");
-        for (final Push push : pushes.all()) {
+        for (final List<String> push : checked) {
             // One push's history holding another's base, as stacked pull requests do.
-            if (!git.mergeBase(branch, push.commit).equals(push.base)) {
+            if (!git.mergeBase(branch, push.get(2)).equals(push.get(1))) {
                 throw failed(
                         "No default branch gives push "
-                                + push.name
+                                + push.get(0)
                                 + " its base "
-                                + push.base
+                                + push.get(1)
                                 + "; the stand-in serves no pull requests stacked on one another");
             }
         }
         git.updateRef(DEFAULT_BRANCH, branch);
         git.read("symbolic-ref", "HEAD", DEFAULT_BRANCH);
-        defaultBranchBases = bases;
+        defaultBranchChecked = checked;
     }
 
     private static void overlayLocalState(Push push, ObjectNode result) {

@@ -25,7 +25,8 @@ public final class ReviewText {
 
     private static final Pattern HTML =
             Pattern.compile(
-                    "<!--.*?-->|<[!?][^<>]*>|</?[A-Za-z][A-Za-z0-9-]*(?:[\\s/][^<>]*)?>",
+                    "<!--.*?-->|<\\?.*?\\?>|<!\\[CDATA\\[.*?\\]\\]>|<![A-Za-z][^>]*>"
+                            + "|</?[A-Za-z][A-Za-z0-9-]*(?:[\\s/][^<>]*)?>",
                     Pattern.DOTALL);
 
     private static final Pattern IMAGE_OR_LINK =
@@ -38,10 +39,18 @@ public final class ReviewText {
             Pattern.compile(
                     "(?<![A-Za-z0-9@])@[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:/[A-Za-z0-9_.-]+)?");
 
-    /** What GitHub renders as markup in prose and the profile's text never holds. */
+    /**
+     * What may open markup GitHub renders in prose, which the profile's text never holds: a tag, a
+     * comment, an instruction or declaration, an autolink, a character reference.
+     */
     private static final Pattern MARKUP =
             Pattern.compile(
-                    "<[A-Za-z/!?]|&(?:#[0-9]{1,7}|#[xX][0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});");
+                    "<(?:[A-Za-z][A-Za-z0-9-]*(?=[\\s/>])|/[A-Za-z]|[!?]"
+                            + "|[A-Za-z][A-Za-z0-9+.-]{1,31}:|[^\\s<>@]+@)"
+                            + "|&(?:#[0-9]{1,7}|#[xX][0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});");
+
+    /** A line that may open an HTML block, in which GitHub sees no fence. */
+    private static final Pattern HTML_BLOCK_LINE = Pattern.compile(" {0,3}<[A-Za-z/!?].*");
 
     private ReviewText() {}
 
@@ -76,11 +85,18 @@ public final class ReviewText {
         final Set<String> losses = new TreeSet<>();
         final String lines = body.replace("\r\n", "\n").replace('\r', '\n');
         final StringBuilder out = new StringBuilder(lines.length());
+        int at = 0;
         for (final Segment segment : segments(lines)) {
             if (segment.code()) {
+                final String doubt = doubtfulFence(segment, lines, at);
+                if (doubt != null) {
+                    return new Read(null, losses, doubt);
+                }
                 out.append(segment.text());
+                at += segment.text().length();
                 continue;
             }
+            at += segment.text().length();
             final String prose = prose(segment.text(), losses);
             if (MARKUP.matcher(prose).find()) {
                 // Markup the reduction cannot take apart may hide what follows it on GitHub.
@@ -131,6 +147,13 @@ public final class ReviewText {
         int at = 0;
         for (final Segment segment : segments(body)) {
             if (segment.code()) {
+                final String doubt = doubtfulFence(segment, body, at);
+                if (doubt != null) {
+                    throw new ReviewRefusal(
+                            ReviewRefusal.Reason.PROFILE_VIOLATION,
+                            doubt + "; a fence starts at the line's start, after a blank line",
+                            "message.text");
+                }
                 out.append(segment.text());
             } else {
                 if (MARKUP.matcher(segment.text()).find()) {
@@ -283,6 +306,40 @@ public final class ReviewText {
     private record Segment(String text, boolean code, boolean fence) {}
 
     /**
+     * Why a fence may not be code where GitHub renders it: indented, it may sit in a list item that
+     * the next line ends; after a line opening an HTML block, it is part of that block.
+     */
+    private static @Nullable String doubtfulFence(Segment segment, String text, int at) {
+        if (!segment.fence()) {
+            return null;
+        }
+        if (segment.text().charAt(0) == ' ') {
+            return "an indented fence";
+        }
+        return afterHtmlBlockLine(text, at) ? "a fence after a line of HTML" : null;
+    }
+
+    /**
+     * Tells whether a line of the paragraph before a position may open an HTML block.
+     *
+     * @param text Markdown, line ends {@code \n}.
+     * @param at Where a fence starts.
+     * @return {@code true} if a line since the last blank one starts with markup.
+     */
+    static boolean afterHtmlBlockLine(String text, int at) {
+        final String[] before = text.substring(0, at).split("\n", -1);
+        for (int i = before.length - 1; i >= 0; i--) {
+            if (onlySpacesAndTabs(before[i]) && i < before.length - 1) {
+                return false;
+            }
+            if (HTML_BLOCK_LINE.matcher(before[i]).matches()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Finds the fenced code blocks that stand in prose, not inside another block.
      *
      * @param text Markdown, line ends {@code \n}.
@@ -312,6 +369,15 @@ public final class ReviewText {
                 out.add(new Segment(text.substring(i, fenceEnd), true, true));
                 i = fenceEnd;
                 continue;
+            }
+            if (text.charAt(i) == '<') {
+                // Code spans and raw HTML bind from the left: a backtick inside a tag is no span.
+                final Matcher html = HTML.matcher(text).region(i, text.length());
+                if (html.lookingAt()) {
+                    prose.append(text, i, html.end());
+                    i = html.end();
+                    continue;
+                }
             }
             if (text.charAt(i) == '`' && isEscaped(text, i)) {
                 prose.append('`');

@@ -866,6 +866,9 @@ class StandInTest {
                                     assertThat(String.valueOf(ex.getParameters()))
                                             .as("its error holds no token")
                                             .doesNotContain(TOKEN));
+            assertThat(log.toString(StandardCharsets.UTF_8))
+                    .as("no log line holds the token")
+                    .doesNotContain(TOKEN);
         }
     }
 
@@ -1067,5 +1070,69 @@ class StandInTest {
                                         true)))
                 .as("the forge write is part of the call")
                 .endsWith(".IdReused");
+    }
+
+    // Harm: a push stacked on another after the first check is served with a wrong base.
+    @Test
+    void aPushStackedAfterTheFirstCheckIsRefused() throws Exception {
+        final Pushes pushes = new Pushes();
+        final Git git = Git.open(tmp.resolve("later.git"));
+        final String b1 = git.commitTree(Map.of("a", "1\n"), List.of(), "b1");
+        final String c1 = git.commitTree(Map.of("a", "2\n"), List.of(b1), "c1");
+        final String b2 = git.commitTree(Map.of("a", "3\n"), List.of(b1), "b2");
+        final String c2 = git.commitTree(Map.of("a", "4\n"), List.of(b2), "c2");
+        git.updateRef("refs/porelo/incoming/one", c1);
+        git.updateRef("refs/porelo/incoming/two", c2);
+        git.updateRef("refs/porelo/incoming/three", c2);
+        pushes.add(standalone("one", c1, b1));
+        pushes.add(standalone("two", c2, b2));
+        final Path dir =
+                Files.createDirectory(
+                        tmp.resolve("later"),
+                        PosixFilePermissions.asFileAttribute(
+                                PosixFilePermissions.fromString("rwx------")));
+        final StandIn standIn =
+                new StandIn(
+                        pushes,
+                        git,
+                        null,
+                        List.of(),
+                        null,
+                        Clock.systemUTC(),
+                        new PrintStream(log, true, StandardCharsets.UTF_8));
+        try (VarlinkServer later =
+                        standIn.register(
+                                new VarlinkServer(dir.resolve("s.sock"), StandIn.INTERFACE));
+                VarlinkClient laterClient = new VarlinkClient(later.socketPath())) {
+            Thread.ofVirtual().start(later);
+            laterClient.call(StandIn.INTERFACE + ".Pending", Map.of("project", StandIn.PROJECT));
+            // Its base is already one of the bases; its commit holds the other push's base.
+            pushes.add(standalone("three", c2, b1));
+
+            assertThatThrownBy(
+                            () ->
+                                    laterClient.call(
+                                            StandIn.INTERFACE + ".Review",
+                                            Map.of("project", StandIn.PROJECT, "name", "three")))
+                    .as("refused, never served with the other push's base")
+                    .isInstanceOf(VarlinkException.class);
+        }
+    }
+
+    private static Push standalone(String name, String commit, String base) {
+        return new Push(
+                name,
+                "s",
+                "2026-01-01T00:00:00Z",
+                null,
+                "E1",
+                "C1",
+                Map.of(),
+                1,
+                null,
+                null,
+                "",
+                commit,
+                base);
     }
 }

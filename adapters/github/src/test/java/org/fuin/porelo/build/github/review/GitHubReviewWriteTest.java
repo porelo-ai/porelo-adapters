@@ -377,7 +377,8 @@ class GitHubReviewWriteTest {
                 "<!--\n~~~\n-->\n@octocat",
                 "<a title=\"`\"> @octocat `</a>",
                 "see <https://example.org/x.png>",
-                "mail <user@example.org>"
+                "mail <user@example.org>",
+                "- item\n  ```\n@octocat"
             })
     void markupInProseIsRefused(String text) {
         assertThatThrownBy(() -> ReviewText.toForge(text))
@@ -409,7 +410,7 @@ class GitHubReviewWriteTest {
 
     // Harm: a line number past 64 bits wraps to line 1 and anchors the comment there.
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(strings = {"18446744073709551617"})
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"18446744073709551617", "4294967297"})
     void aLineNumberPastTheRangeIsRefusedNotWrapped(String startLine) {
         final ObjectNode result = line("x", "", "").deepCopy();
         ((ObjectNode) result.at("/locations/0/physicalLocation/region"))
@@ -449,5 +450,13 @@ class GitHubReviewWriteTest {
         assertThatThrownBy(() -> GitHubReviewWrite.render(result))
                 .as("the end column comes before the start")
                 .isInstanceOf(ReviewRefusal.class);
+    }
+
+    // Harm: a comment naming a generic type in prose is refused though GitHub shows it as text.
+    @Test
+    void aLessThanSignThatOpensNoMarkupIsSent() {
+        assertThat(ReviewText.toForge("Prefer Map<String, Integer> when x <y"))
+                .as("sent as it is")
+                .isEqualTo("Prefer Map<String, Integer> when x <y");
     }
 }

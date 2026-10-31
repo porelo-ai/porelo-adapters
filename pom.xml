@@ -51,6 +51,8 @@
              it is developed; a release depends only on releases. Everything else it builds with - the Java release,
              nothing published, the plugin and tool versions - comes from porelo-parent. -->
         <porelo.version>0.5.1-SNAPSHOT</porelo.version>
+        <!-- The forge clients every forge call goes through. A snapshot while they are developed. -->
+        <porelo.forge-clients.version>0.1.0-SNAPSHOT</porelo.forge-clients.version>
         <!-- What makes one snapshot package newer than the last; CI passes the run number. -->
         <reader.snapshot.run>0</reader.snapshot.run>
         <!-- The C library and zlib the native reader needs, measured with readelf, which both packages declare by
@@ -66,6 +68,7 @@
     <modules>
         <module>contract</module>
         <module>adapters</module>
+        <module>standin</module>
     </modules>
 
     <dependencyManagement>

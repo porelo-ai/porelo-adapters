@@ -39,6 +39,19 @@
             <artifactId>jspecify</artifactId>
         </dependency>
 
+        <!-- The GitHub calls of reviews and their conversion to Porelo's review profile. -->
+
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-forge-client-github</artifactId>
+            <version>${porelo.forge-clients.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
         <!-- test -->
 
         <dependency>
@@ -294,5 +307,15 @@
             </build>
         </profile>
     </profiles>
+
+    <build>
+        <!-- The review conversion names the adapter's real build version, written here by the build. -->
+        <resources>
+            <resource>
+                <directory>src/main/resources-filtered</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 
 </project>

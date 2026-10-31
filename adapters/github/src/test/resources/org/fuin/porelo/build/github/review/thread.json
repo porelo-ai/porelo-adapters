@@ -1,0 +1,29 @@
+{
+  "id": "PRRT_kwDOVc0D886yQCnS",
+  "isResolved": false,
+  "isOutdated": false,
+  "path": "src/main/java/Gate.java",
+  "line": 12,
+  "diffSide": "RIGHT",
+  "startDiffSide": null,
+  "resolvedBy": null,
+  "comments": {
+    "nodes": [
+      {
+        "id": "PRRC_kwDOVc0D888AAAABCCHhIQ",
+        "databaseId": 4431405345,
+        "body": "Use the constant here.",
+        "createdAt": "2026-10-30T09:14:02Z",
+        "author": {
+          "login": "example-reviewer",
+          "id": "MDQ6VXNlcjU4MzIzMQ==",
+          "databaseId": 583231
+        }
+      }
+    ],
+    "pageInfo": {
+      "hasNextPage": false,
+      "endCursor": "Y3Vyc29yOnYyOpK0MjAyNi0xMC0zMA=="
+    }
+  }
+}

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.fuin.porelo</groupId>
+        <artifactId>porelo-adapters</artifactId>
+        <version>0.5.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>porelo-review-standin</artifactId>
+    <name>Porelo Review Stand-In</name>
+    <description>Porelo - A test-only stand-in for the daemon's review calls, served from a GitHub pull request</description>
+
+    <properties>
+        <!-- A test tool: never packaged for a machine, published or deployed. -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <maven.install.skip>true</maven.install.skip>
+        <!-- What 'exec:java' passes to the stand-in. -->
+        <standin.args></standin.args>
+    </properties>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-adapter-github</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-wire</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-forge-client-github</artifactId>
+            <version>${porelo.forge-clients.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
+
+        <!-- test -->
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- 'exec:java -Dstandin.args="..."' runs it; see README.md. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec-maven-plugin.version}</version>
+                <configuration>
+                    <mainClass>org.fuin.porelo.standin.Main</mainClass>
+                    <commandlineArgs>${standin.args}</commandlineArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

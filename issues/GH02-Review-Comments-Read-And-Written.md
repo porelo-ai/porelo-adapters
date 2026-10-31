@@ -83,6 +83,8 @@ token supplied for that call; every forge interaction, including builds, goes th
   strict types and no polymorphism. Jackson 2.11 dependencies are overridden by a maintained compatible Jackson
   set. `$schema`, external references, `uriBaseId`, source snippets, artifact contents, invocation details, reactions
   and unlisted property bags do not survive normalization. No report URI triggers a file read or network fetch.
+- On every read, a U+FE0F variation selector that directly follows an emoji in prose is dropped and named as the loss
+  `variation-selector-dropped`; any other variation selector still holds the item (operator).
 - Canonical prose uses one safe Markdown representation; bidi and zero-width characters are refused. Outgoing user
   and team mentions cannot notify through prose; suggestion code is preserved exactly or held. The native content
   passed to the client remains bound to release and disclosure checks; the client must preserve that content.

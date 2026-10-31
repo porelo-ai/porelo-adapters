@@ -130,19 +130,12 @@ public final class GitHubReviewWrite {
             if (!Set.of("note", "warning", "error").contains(level)) {
                 throw refusal("a finding's level is note, warning or error", "level");
             }
-            body.append('[')
-                    .append(level)
-                    .append("] `")
-                    .append(text(result, "ruleId"))
-                    .append("`\n\n");
+            body.append('[').append(level).append("] `").append(ruleId(result)).append("`\n\n");
         } else if (!"review".equals(kind) || !"none".equals(level)) {
             throw refusal("a comment is kind review and level none", "kind");
         }
-        final JsonNode message = result.path("message");
-        final JsonNode markdown = message.path("markdown");
-        body.append(
-                ReviewText.toForge(
-                        markdown.isTextual() ? markdown.asText() : text(message, "text")));
+        // The canonical text goes, never the Markdown form beside it, so what is checked is sent.
+        body.append(ReviewText.toForge(text(result.path("message"), "text")));
         if (result.has("relatedLocations")) {
             losses.merge("related-locations-dropped", 1, Integer::sum);
         }
@@ -425,6 +418,19 @@ public final class GitHubReviewWrite {
             throw refusal(field + " is a non-empty string", field);
         }
         return value.asText();
+    }
+
+    /** A rule ID shown in a code span: no backtick or line end may close it. */
+    private static String ruleId(JsonNode result) {
+        final String ruleId = text(result, "ruleId");
+        final String refused = ReviewText.refusedCharacter(ruleId);
+        if (refused != null) {
+            throw new ReviewRefusal(ReviewRefusal.Reason.UNSAFE_TEXT, refused, "ruleId");
+        }
+        if (ruleId.indexOf('`') >= 0 || ruleId.indexOf('\n') >= 0 || ruleId.indexOf('\t') >= 0) {
+            throw refusal("a rule ID holds no backtick, tab or line end", "ruleId");
+        }
+        return ruleId;
     }
 
     private static ReviewRefusal refusal(String detail, String path) {

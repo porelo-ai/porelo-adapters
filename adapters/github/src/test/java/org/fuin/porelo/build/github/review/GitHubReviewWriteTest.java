@@ -219,4 +219,33 @@ class GitHubReviewWriteTest {
                 .as("the mention is a code span, so it notifies no one")
                 .contains("`@octocat`");
     }
+
+    private static ObjectNode finding(String ruleId) {
+        final ObjectNode result = line("x", "", "");
+        result.put("kind", "fail").put("level", "error").put("ruleId", ruleId);
+        return result;
+    }
+
+    // Harm: a rule ID closing its code span lets a mention or a bidi override reach GitHub.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {"R1` @octocat `", "R1\u202E", "R1\nR2"})
+    void aRuleIdThatCouldLeaveItsCodeSpanIsRefused(String ruleId) {
+        assertThatThrownBy(() -> GitHubReviewWrite.render(finding(ruleId)))
+                .as("refused before anything is sent")
+                .isInstanceOf(ReviewRefusal.class);
+    }
+
+    // Harm: a bidi override in the message's text reaches GitHub behind a Markdown form.
+    @Test
+    void theTextIsCheckedAndSentWhateverTheMarkdownSays() {
+        final ObjectNode result = line("evil \u202E", "", "");
+        ((ObjectNode) result.get("message")).put("markdown", "");
+
+        assertThatThrownBy(() -> GitHubReviewWrite.render(result))
+                .as("the text is what goes, so it is what is checked")
+                .isInstanceOfSatisfying(
+                        ReviewRefusal.class,
+                        r -> assertThat(r.reason()).isEqualTo(ReviewRefusal.Reason.UNSAFE_TEXT));
+    }
 }

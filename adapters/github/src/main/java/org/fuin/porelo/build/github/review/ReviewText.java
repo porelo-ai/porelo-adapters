@@ -2,16 +2,33 @@ package org.fuin.porelo.build.github.review;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.node.Code;
+import org.commonmark.node.Document;
+import org.commonmark.node.FencedCodeBlock;
+import org.commonmark.node.HtmlBlock;
+import org.commonmark.node.HtmlInline;
+import org.commonmark.node.Image;
+import org.commonmark.node.IndentedCodeBlock;
+import org.commonmark.node.Link;
+import org.commonmark.node.LinkReferenceDefinition;
+import org.commonmark.node.Node;
+import org.commonmark.node.SourceSpan;
+import org.commonmark.node.Text;
+import org.commonmark.parser.IncludeSourceSpans;
+import org.commonmark.parser.Parser;
 import org.jspecify.annotations.Nullable;
 
 /**
  * The text rules of Porelo's review profile: what a forge's text becomes on a read, what a message
- * becomes on a write, and which characters no string of a document may hold.
+ * becomes on a write, and which characters no string of a document may hold. What is code, HTML or
+ * text is the CommonMark parser's answer, with GitHub's tables, never a guess of this class.
  */
 public final class ReviewText {
 
@@ -23,34 +40,12 @@ public final class ReviewText {
 
     private static final int VARIATION_SELECTOR_16 = 0xFE0F;
 
-    private static final Pattern HTML =
-            Pattern.compile(
-                    "<!--.*?-->|<\\?.*?\\?>|<!\\[CDATA\\[.*?\\]\\]>|<![A-Za-z][^>]*>"
-                            + "|</?[A-Za-z][A-Za-z0-9-]*(?:[\\s/][^<>]*)?>",
-                    Pattern.DOTALL);
-
-    private static final Pattern IMAGE_OR_LINK =
-            Pattern.compile("!?\\[([^\\]\\n]*)\\]\\([^)\\n]*\\)");
-
-    private static final Pattern AUTOLINK =
-            Pattern.compile("<([A-Za-z][A-Za-z0-9+.-]{1,31}:[^<>\\s]*)>");
-
     private static final Pattern MENTION =
             Pattern.compile(
                     "(?<![A-Za-z0-9@])@[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:/[A-Za-z0-9_.-]+)?");
 
-    /**
-     * What may open markup GitHub renders in prose, which the profile's text never holds: a tag, a
-     * comment, an instruction or declaration, an autolink, a character reference.
-     */
-    private static final Pattern MARKUP =
-            Pattern.compile(
-                    "<(?:[A-Za-z][A-Za-z0-9-]*(?=[\\s/>])|/[A-Za-z]|[!?]"
-                            + "|[A-Za-z][A-Za-z0-9+.-]{1,31}:|[^\\s<>@]+@)"
-                            + "|&(?:#[0-9]{1,7}|#[xX][0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});");
-
-    /** A line that may open an HTML block, in which GitHub sees no fence. */
-    private static final Pattern HTML_BLOCK_LINE = Pattern.compile(" {0,3}<[A-Za-z/!?].*");
+    private static final Pattern CHARACTER_REFERENCE =
+            Pattern.compile("&(?:#[0-9]{1,7}|#[xX][0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});");
 
     private ReviewText() {}
 
@@ -73,10 +68,11 @@ public final class ReviewText {
     }
 
     /**
-     * Converts a forge's prose to the profile's message text: line ends become {@code \n}, HTML and
-     * links outside code become their text, an emoji's U+FE0F in prose is dropped, every brace is
-     * doubled. Nothing else is shortened or rewritten: a refused character or a body over the limit
-     * holds the item.
+     * Converts a forge's Markdown to the profile's message text: line ends become {@code \n}, HTML
+     * and link reference definitions are dropped, a link or image becomes its text, an emoji's
+     * U+FE0F in text is dropped, every brace is doubled. Code is never touched. Nothing else is
+     * shortened or rewritten: a refused character, also one a character reference stands for, or a
+     * body over the limit holds the item.
      *
      * @param body The forge's text.
      * @return The text, its losses, or why it is held.
@@ -84,27 +80,20 @@ public final class ReviewText {
     public static Read fromForge(String body) {
         final Set<String> losses = new TreeSet<>();
         final String lines = body.replace("\r\n", "\n").replace('\r', '\n');
-        final StringBuilder out = new StringBuilder(lines.length());
-        int at = 0;
-        for (final Segment segment : segments(lines)) {
-            if (segment.code()) {
-                final String doubt = doubtfulFence(segment, lines, at);
-                if (doubt != null) {
-                    return new Read(null, losses, doubt);
-                }
-                out.append(segment.text());
-                at += segment.text().length();
-                continue;
+        String text = lines;
+        // Until nothing changes: dropping one tag can join the pieces of another.
+        while (true) {
+            final List<Edit> edits = new ArrayList<>();
+            final String held = reduce(parse(text), text, edits, losses);
+            if (held != null) {
+                return new Read(null, losses, held);
             }
-            at += segment.text().length();
-            final String prose = prose(segment.text(), losses);
-            if (MARKUP.matcher(prose).find()) {
-                // Markup the reduction cannot take apart may hide what follows it on GitHub.
-                return new Read(null, losses, "markup the profile cannot carry");
+            final String reduced = apply(text, edits);
+            if (reduced.equals(text)) {
+                break;
             }
-            out.append(prose);
+            text = reduced;
         }
-        final String text = out.toString();
         final String refused = refusedCharacter(text);
         if (refused != null) {
             return new Read(null, losses, refused);
@@ -120,14 +109,108 @@ public final class ReviewText {
         return new Read(doubled, losses, null);
     }
 
+    /** Collects what a read drops, or says why the body is held. */
+    private static @Nullable String reduce(
+            Node node, String text, List<Edit> edits, Set<String> losses) {
+        if (node instanceof HtmlBlock
+                || node instanceof HtmlInline
+                || node instanceof LinkReferenceDefinition) {
+            losses.add(node instanceof LinkReferenceDefinition ? "link-dropped" : "markup-dropped");
+            for (final SourceSpan span : spans(node)) {
+                // A block's whole line goes, so a dropped block leaves no empty lines behind.
+                final boolean wholeLine =
+                        node instanceof HtmlBlock
+                                && span.getColumnIndex() == 0
+                                && end(span) < text.length()
+                                && text.charAt(end(span)) == '\n';
+                edits.add(new Edit(span.getInputIndex(), end(span) + (wholeLine ? 1 : 0), ""));
+            }
+            return null;
+        }
+        if (node instanceof Code
+                || node instanceof FencedCodeBlock
+                || node instanceof IndentedCodeBlock) {
+            return null;
+        }
+        if (node instanceof Link || node instanceof Image) {
+            losses.add("link-dropped");
+            keepOnlyChildren(node, edits);
+        }
+        if (node instanceof Text plain) {
+            // A character reference stands for its character, so the decoded text is checked.
+            final String refused = refusedCharacter(withoutEmojiSelectors(plain.getLiteral()));
+            if (refused != null) {
+                return refused;
+            }
+            for (final SourceSpan span : spans(node)) {
+                dropEmojiVariationSelectors(text, span, edits, losses);
+            }
+        }
+        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
+            final String held = reduce(child, text, edits, losses);
+            if (held != null) {
+                return held;
+            }
+        }
+        return null;
+    }
+
+    /** A link or an image: the brackets and the destination go, its text stays. */
+    private static void keepOnlyChildren(Node node, List<Edit> edits) {
+        final int start = start(node);
+        final int end = end(node);
+        final Node first = node.getFirstChild();
+        final Node last = node.getLastChild();
+        if (first == null || last == null) {
+            edits.add(new Edit(start, end, ""));
+            return;
+        }
+        edits.add(new Edit(start, start(first), ""));
+        edits.add(new Edit(end(last), end, ""));
+    }
+
+    private static String withoutEmojiSelectors(String text) {
+        final StringBuilder out = new StringBuilder(text.length());
+        int previous = -1;
+        for (int i = 0; i < text.length(); ) {
+            final int cp = text.codePointAt(i);
+            if (!(cp == VARIATION_SELECTOR_16
+                    && previous >= 0
+                    && Character.isExtendedPictographic(previous))) {
+                out.appendCodePoint(cp);
+            }
+            previous = cp;
+            i += Character.charCount(cp);
+        }
+        return out.toString();
+    }
+
+    private static void dropEmojiVariationSelectors(
+            String text, SourceSpan span, List<Edit> edits, Set<String> losses) {
+        int previous = -1;
+        for (int i = span.getInputIndex(); i < end(span); ) {
+            final int cp = text.codePointAt(i);
+            if (cp == VARIATION_SELECTOR_16
+                    && previous >= 0
+                    && Character.isExtendedPictographic(previous)) {
+                losses.add("variation-selector-dropped");
+                edits.add(new Edit(i, i + 1, ""));
+            }
+            previous = cp;
+            i += Character.charCount(cp);
+        }
+    }
+
     /**
      * Turns a message's text back into the body a forge receives: doubled braces are undone and a
-     * mention in prose becomes a code span, so it notifies no one.
+     * mention in text becomes a code span, so it notifies no one. HTML, an autolink, a character
+     * reference in text and a {@code suggestion} fence are refused, and the body is parsed once
+     * more to see that no mention is left.
      *
      * @param message The message text, braces doubled.
      * @return The body.
      * @throws ReviewRefusal {@code UnsafeText} for a refused character, {@code ProfileViolation}
-     *     for a single brace, {@code TooLarge} over the body limit.
+     *     for a single brace or markup, {@code TooLarge} over the body limit.
      */
     public static String toForge(String message) {
         final String refused = refusedCharacter(message);
@@ -141,53 +224,91 @@ public final class ReviewText {
                     "message.text");
         }
         final String body = undoubleBraces(message);
+        final List<int[]> text = new ArrayList<>();
+        refuseMarkup(parse(body), body, text);
         // Longer than every backtick run of the body, so no stray backtick pairs with it.
         final String marks = "`".repeat(longestBacktickRun(body) + 1);
-        final StringBuilder out = new StringBuilder(body.length());
-        int at = 0;
-        for (final Segment segment : segments(body)) {
-            if (segment.code()) {
-                final String doubt = doubtfulFence(segment, body, at);
-                if (doubt != null) {
-                    throw new ReviewRefusal(
-                            ReviewRefusal.Reason.PROFILE_VIOLATION,
-                            doubt + "; a fence starts at the line's start, after a blank line",
-                            "message.text");
-                }
-                out.append(segment.text());
-            } else {
-                if (MARKUP.matcher(segment.text()).find()) {
-                    throw new ReviewRefusal(
-                            ReviewRefusal.Reason.PROFILE_VIOLATION,
-                            "HTML, an autolink or a character reference in prose; code goes in a"
-                                    + " code span",
-                            "message.text");
-                }
-                escapeMentions(body, at, at + segment.text().length(), marks, out);
-            }
-            at += segment.text().length();
+        final List<Edit> edits = new ArrayList<>();
+        for (final int[] range : merged(text)) {
+            escapeMentions(body, range[0], range[1], marks, edits);
         }
-        return out.toString();
+        final String out = apply(body, edits);
+        if (leftMention(parse(out))) {
+            throw violation("a mention that a code span cannot hold");
+        }
+        return out;
     }
 
-    /** Copies prose, each mention in it a code span that touches no backslash or backtick. */
-    private static void escapeMentions(
-            String body, int from, int to, String marks, StringBuilder out) {
-        final Matcher mention = MENTION.matcher(body).region(from, to);
-        int copied = from;
-        while (mention.find()) {
-            out.append(body, copied, mention.start());
-            final char before = mention.start() > 0 ? body.charAt(mention.start() - 1) : ' ';
-            if (before == '\\' || before == '`') {
-                out.append(' ');
-            }
-            out.append(marks).append(mention.group()).append(marks);
-            if (mention.end() < body.length() && body.charAt(mention.end()) == '`') {
-                out.append(' ');
-            }
-            copied = mention.end();
+    /** Refuses what GitHub would render as markup, and collects the text's ranges. */
+    private static void refuseMarkup(Node node, String body, List<int[]> text) {
+        if (node instanceof HtmlBlock || node instanceof HtmlInline) {
+            throw violation("HTML; code goes in a code span");
         }
-        out.append(body, copied, to);
+        if (node instanceof FencedCodeBlock fence && isSuggestion(fence.getInfo())) {
+            throw violation("a suggestion fence; a fix goes in fixes");
+        }
+        if (node instanceof Link && body.charAt(start(node)) == '<') {
+            throw violation("an autolink; code goes in a code span");
+        }
+        if (node instanceof Code
+                || node instanceof FencedCodeBlock
+                || node instanceof IndentedCodeBlock) {
+            return;
+        }
+        if (node instanceof Text) {
+            for (final SourceSpan span : spans(node)) {
+                if (CHARACTER_REFERENCE
+                        .matcher(body)
+                        .region(span.getInputIndex(), end(span))
+                        .find()) {
+                    throw violation("a character reference; code goes in a code span");
+                }
+                text.add(new int[] {span.getInputIndex(), end(span)});
+            }
+        }
+        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
+            refuseMarkup(child, body, text);
+        }
+    }
+
+    private static boolean isSuggestion(@Nullable String info) {
+        return info != null && info.strip().split("[ \t]", 2)[0].equalsIgnoreCase("suggestion");
+    }
+
+    /** Whether text GitHub renders still holds a mention, read across adjacent text nodes. */
+    private static boolean leftMention(Node node) {
+        final StringBuilder run = new StringBuilder();
+        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
+            if (child instanceof Text plain) {
+                run.append(plain.getLiteral());
+                continue;
+            }
+            if (MENTION.matcher(run).find()) {
+                return true;
+            }
+            run.setLength(0);
+            if (!(child instanceof Code
+                            || child instanceof FencedCodeBlock
+                            || child instanceof IndentedCodeBlock)
+                    && leftMention(child)) {
+                return true;
+            }
+        }
+        return MENTION.matcher(run).find();
+    }
+
+    /** Wraps each mention in a range in a code span that touches no backslash or backtick. */
+    private static void escapeMentions(
+            String body, int from, int to, String marks, List<Edit> edits) {
+        final Matcher mention = MENTION.matcher(body).region(from, to).useTransparentBounds(true);
+        while (mention.find()) {
+            final char before = mention.start() > 0 ? body.charAt(mention.start() - 1) : ' ';
+            final String opening = (before == '\\' || before == '`' ? " " : "") + marks;
+            final boolean backtickAfter =
+                    mention.end() < body.length() && body.charAt(mention.end()) == '`';
+            edits.add(new Edit(mention.start(), mention.start(), opening));
+            edits.add(new Edit(mention.end(), mention.end(), marks + (backtickAfter ? " " : "")));
+        }
     }
 
     private static int longestBacktickRun(String text) {
@@ -239,51 +360,6 @@ public final class ReviewText {
                 || (cp & 0xFFFE) == 0xFFFE;
     }
 
-    private static String prose(String text, Set<String> losses) {
-        String out = dropEmojiVariationSelectors(text, losses);
-        // Until nothing changes: dropping one tag can join the pieces of another.
-        String before;
-        do {
-            before = out;
-            out = replace(HTML, out, m -> "", losses, "markup-dropped");
-            out = replace(IMAGE_OR_LINK, out, m -> m.group(1), losses, "link-dropped");
-            out = replace(AUTOLINK, out, m -> m.group(1), losses, "link-dropped");
-        } while (!out.equals(before));
-        return out;
-    }
-
-    private static String dropEmojiVariationSelectors(String text, Set<String> losses) {
-        final StringBuilder out = new StringBuilder(text.length());
-        int previous = -1;
-        for (int i = 0; i < text.length(); ) {
-            final int cp = text.codePointAt(i);
-            if (cp == VARIATION_SELECTOR_16
-                    && previous >= 0
-                    && Character.isExtendedPictographic(previous)) {
-                losses.add("variation-selector-dropped");
-            } else {
-                out.appendCodePoint(cp);
-            }
-            previous = cp;
-            i += Character.charCount(cp);
-        }
-        return out.toString();
-    }
-
-    private static String replace(
-            Pattern pattern,
-            String text,
-            java.util.function.Function<java.util.regex.MatchResult, String> with,
-            Set<String> losses,
-            String loss) {
-        final Matcher matcher = pattern.matcher(text);
-        if (!matcher.find()) {
-            return text;
-        }
-        losses.add(loss);
-        return matcher.replaceAll(m -> Matcher.quoteReplacement(with.apply(m)));
-    }
-
     private static String undoubleBraces(String message) {
         final StringBuilder out = new StringBuilder(message.length());
         for (int i = 0; i < message.length(); i++) {
@@ -302,158 +378,20 @@ public final class ReviewText {
         return out.toString();
     }
 
-    /** A run of text that is code (a fence or a code span) or prose. */
-    private record Segment(String text, boolean code, boolean fence) {}
-
     /**
-     * Why a fence may not be code where GitHub renders it: indented, it may sit in a list item that
-     * the next line ends; after a line opening an HTML block, it is part of that block.
-     */
-    private static @Nullable String doubtfulFence(Segment segment, String text, int at) {
-        if (!segment.fence()) {
-            return null;
-        }
-        if (segment.text().charAt(0) == ' ') {
-            return "an indented fence";
-        }
-        return afterHtmlBlockLine(text, at) ? "a fence after a line of HTML" : null;
-    }
-
-    /**
-     * Tells whether a line of the paragraph before a position may open an HTML block.
-     *
-     * @param text Markdown, line ends {@code \n}.
-     * @param at Where a fence starts.
-     * @return {@code true} if a line since the last blank one starts with markup.
-     */
-    static boolean afterHtmlBlockLine(String text, int at) {
-        final String[] before = text.substring(0, at).split("\n", -1);
-        for (int i = before.length - 1; i >= 0; i--) {
-            if (onlySpacesAndTabs(before[i]) && i < before.length - 1) {
-                return false;
-            }
-            if (HTML_BLOCK_LINE.matcher(before[i]).matches()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Finds the fenced code blocks that stand in prose, not inside another block.
+     * Finds the fenced code blocks that stand in the document itself, not inside another block.
      *
      * @param text Markdown, line ends {@code \n}.
      * @return Each block's start and end in the text, from its opening line to its closing one.
      */
     static List<int[]> fences(String text) {
         final List<int[]> out = new ArrayList<>();
-        int at = 0;
-        for (final Segment segment : segments(text)) {
-            if (segment.fence()) {
-                out.add(new int[] {at, at + segment.text().length()});
+        for (Node child = parse(text).getFirstChild(); child != null; child = child.getNext()) {
+            if (child instanceof FencedCodeBlock) {
+                out.add(new int[] {start(child), end(child)});
             }
-            at += segment.text().length();
         }
         return out;
-    }
-
-    /** Splits Markdown into code and prose, so rules for prose never touch code. */
-    private static List<Segment> segments(String text) {
-        final List<Segment> out = new ArrayList<>();
-        final StringBuilder prose = new StringBuilder();
-        int i = 0;
-        while (i < text.length()) {
-            final int fenceEnd = fenceAt(text, i);
-            if (fenceEnd > i) {
-                flush(prose, out);
-                out.add(new Segment(text.substring(i, fenceEnd), true, true));
-                i = fenceEnd;
-                continue;
-            }
-            if (text.charAt(i) == '<') {
-                // Code spans and raw HTML bind from the left: a backtick inside a tag is no span.
-                final Matcher html = HTML.matcher(text).region(i, text.length());
-                if (html.lookingAt()) {
-                    prose.append(text, i, html.end());
-                    i = html.end();
-                    continue;
-                }
-            }
-            if (text.charAt(i) == '`' && isEscaped(text, i)) {
-                prose.append('`');
-                i++;
-                continue;
-            }
-            if (text.charAt(i) == '`') {
-                final int run = runOf(text, i, '`');
-                final int close = closingRun(text, i + run, run);
-                if (close >= 0) {
-                    flush(prose, out);
-                    out.add(new Segment(text.substring(i, close + run), true, false));
-                    i = close + run;
-                    continue;
-                }
-                prose.append(text, i, i + run);
-                i += run;
-                continue;
-            }
-            prose.append(text.charAt(i));
-            i++;
-        }
-        flush(prose, out);
-        return out;
-    }
-
-    /** A backslash escapes the character after it unless it is itself escaped. */
-    private static boolean isEscaped(String text, int i) {
-        int backslashes = 0;
-        while (i - backslashes > 0 && text.charAt(i - backslashes - 1) == '\\') {
-            backslashes++;
-        }
-        return backslashes % 2 == 1;
-    }
-
-    /** At the start of a line opening a fence of three or more backticks or tildes, its end. */
-    private static int fenceAt(String text, int i) {
-        if (i > 0 && text.charAt(i - 1) != '\n') {
-            return -1;
-        }
-        int start = i;
-        while (start < text.length() && start - i < 3 && text.charAt(start) == ' ') {
-            start++;
-        }
-        if (start >= text.length() || (text.charAt(start) != '`' && text.charAt(start) != '~')) {
-            return -1;
-        }
-        final char mark = text.charAt(start);
-        final int run = runOf(text, start, mark);
-        if (run < 3 || (mark == '`' && infoHasBacktick(text, start + run))) {
-            return -1;
-        }
-        int line = text.indexOf('\n', start);
-        while (line >= 0) {
-            int at = line + 1;
-            while (at < text.length() && at - line - 1 < 3 && text.charAt(at) == ' ') {
-                at++;
-            }
-            final int closing = runOf(text, at, mark);
-            if (closing >= run) {
-                final int end = text.indexOf('\n', at);
-                if (onlySpacesAndTabs(
-                        text.substring(at + closing, end < 0 ? text.length() : end))) {
-                    return end < 0 ? text.length() : end;
-                }
-            }
-            line = text.indexOf('\n', at);
-        }
-        // An unclosed fence runs to the end, as Markdown has it.
-        return text.length();
-    }
-
-    /** A backtick fence's info line holds no backtick; with one, the line is a code span. */
-    private static boolean infoHasBacktick(String text, int from) {
-        final int end = text.indexOf('\n', from);
-        return text.substring(from, end < 0 ? text.length() : end).indexOf('`') >= 0;
     }
 
     /** CommonMark's blank: spaces and tabs only, no other white space. */
@@ -469,31 +407,77 @@ public final class ReviewText {
         return n;
     }
 
-    private static int closingRun(String text, int from, int run) {
-        int i = from;
-        while (i < text.length()) {
-            if (text.charAt(i) == '\n') {
-                // A line may start a block that ends the paragraph; a span crossing it is not
-                // trusted to be one, so what follows stays prose.
-                return -1;
-            }
-            if (text.charAt(i) == '`') {
-                final int n = runOf(text, i, '`');
-                if (n == run) {
-                    return i;
-                }
-                i += n;
-            } else {
-                i++;
-            }
-        }
-        return -1;
+    // ------------------------------------------------------------------------- the parse
+
+    private static Document parse(String text) {
+        return (Document)
+                Parser.builder()
+                        .extensions(List.of(TablesExtension.create()))
+                        .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
+                        .build()
+                        .parse(text);
     }
 
-    private static void flush(StringBuilder prose, List<Segment> out) {
-        if (!prose.isEmpty()) {
-            out.add(new Segment(prose.toString(), false, false));
-            prose.setLength(0);
+    /** A node's place in the text; a node the parser cannot place is refused, never guessed. */
+    private static List<SourceSpan> spans(Node node) {
+        final List<SourceSpan> spans = node.getSourceSpans();
+        if (spans.isEmpty()) {
+            throw new IllegalStateException(
+                    "The parser placed no " + node.getClass().getSimpleName() + " in the text");
         }
+        return spans;
+    }
+
+    private static int start(Node node) {
+        return spans(node).get(0).getInputIndex();
+    }
+
+    private static int end(Node node) {
+        final List<SourceSpan> spans = spans(node);
+        return end(spans.get(spans.size() - 1));
+    }
+
+    private static int end(SourceSpan span) {
+        return span.getInputIndex() + span.getLength();
+    }
+
+    /** One replacement of a range of the text; an insertion when the range is empty. */
+    private record Edit(int start, int end, String with) {}
+
+    private static String apply(String text, List<Edit> edits) {
+        final List<Edit> sorted =
+                edits.stream()
+                        .sorted(Comparator.comparingInt(Edit::start).thenComparingInt(Edit::end))
+                        .toList();
+        final StringBuilder out = new StringBuilder(text.length());
+        int at = 0;
+        for (final Edit edit : sorted) {
+            if (edit.start() < at) {
+                throw new IllegalStateException("Two edits of one range of the text");
+            }
+            out.append(text, at, edit.start()).append(edit.with());
+            at = edit.end();
+        }
+        return out.append(text, at, text.length()).toString();
+    }
+
+    /** Joins ranges that touch, so a mention split over two text nodes is found whole. */
+    private static List<int[]> merged(List<int[]> ranges) {
+        final List<int[]> sorted =
+                ranges.stream().sorted(Comparator.comparingInt((int[] r) -> r[0])).toList();
+        final List<int[]> out = new ArrayList<>();
+        for (final int[] range : sorted) {
+            final int[] last = out.isEmpty() ? null : out.get(out.size() - 1);
+            if (last != null && range[0] <= last[1]) {
+                last[1] = Math.max(last[1], range[1]);
+            } else {
+                out.add(new int[] {range[0], range[1]});
+            }
+        }
+        return out;
+    }
+
+    private static ReviewRefusal violation(String detail) {
+        return new ReviewRefusal(ReviewRefusal.Reason.PROFILE_VIOLATION, detail, "message.text");
     }
 }

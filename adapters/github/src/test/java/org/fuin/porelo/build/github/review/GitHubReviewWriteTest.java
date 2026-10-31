@@ -223,7 +223,8 @@ class GitHubReviewWriteTest {
                 "ask \\@octocat|ask \\ `@octocat`",
                 "see `@octocat here|see ` ``@octocat`` here",
                 "`\\n# @octocat `|`\\n# ``@octocat`` `",
-                "> `\\n>\\n> @octocat `|> `\\n>\\n> ``@octocat`` `"
+                "> `\\n>\\n> @octocat `|> `\\n>\\n> ``@octocat`` `",
+                "- item\\n  ```\\n@octocat|- item\\n  ```\\n````@octocat````"
             })
     void aMentionGitHubWouldRenderAsProseBecomesACodeSpan(String text, String body) {
         assertThat(ReviewText.toForge(unescape(text)))
@@ -378,7 +379,7 @@ class GitHubReviewWriteTest {
                 "<a title=\"`\"> @octocat `</a>",
                 "see <https://example.org/x.png>",
                 "mail <user@example.org>",
-                "- item\n  ```\n@octocat"
+                "```suggestion\nSystem.exit(1);\n```"
             })
     void markupInProseIsRefused(String text) {
         assertThatThrownBy(() -> ReviewText.toForge(text))

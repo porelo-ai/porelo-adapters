@@ -53,6 +53,8 @@
         <porelo.version>0.5.1-SNAPSHOT</porelo.version>
         <!-- The forge clients every forge call goes through. A snapshot while they are developed. -->
         <porelo.forge-clients.version>0.1.0-SNAPSHOT</porelo.forge-clients.version>
+        <!-- The CommonMark parser that tells a review comment's code, HTML and text apart as GitHub renders them. -->
+        <commonmark.version>0.29.0</commonmark.version>
         <!-- What makes one snapshot package newer than the last; CI passes the run number. -->
         <reader.snapshot.run>0</reader.snapshot.run>
         <!-- The C library and zlib the native reader needs, measured with readelf, which both packages declare by

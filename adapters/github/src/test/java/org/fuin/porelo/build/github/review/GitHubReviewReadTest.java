@@ -317,19 +317,6 @@ class GitHubReviewReadTest {
         assertThat(read.held()).as("10000 bytes once doubled").hasSize(1);
     }
 
-    // Harm: markup rebuilt from its pieces reaches a reader that renders it.
-    @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(
-            strings = {"<<script>script>alert(1)<</script>/script>", "see <HTTPS://example.org/x>"})
-    void markupRebuiltFromItsPiecesIsDroppedToo(String body) {
-        final String text = ReviewText.fromForge(body).text();
-
-        assertThat(text)
-                .as("no tag and no autolink is left")
-                .doesNotContain("<")
-                .doesNotContain(">");
-    }
-
     // Harm: one URI the profile refuses makes a reader refuse the whole page.
     @Test
     void aCommentOnAPathWithAPercentIsHeld() {
@@ -413,20 +400,6 @@ class GitHubReviewReadTest {
         assertThat(read.held()).as("held, not applied").hasSize(1);
     }
 
-    // Harm: markup a reader renders survives as text.
-    @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(
-            strings = {
-                "<svg/onload=alert(1)>",
-                "<javascript:alert(1)>",
-                "<!--\n~~~\n-->\n<script>alert(1)</script>"
-            })
-    void markupOfOtherShapesIsDroppedToo(String body) {
-        assertThat(ReviewText.fromForge("see " + body).text())
-                .as("no tag and no autolink is left")
-                .doesNotContain("<");
-    }
-
     // Harm: a suggestion GitHub hides inside an HTML comment becomes a fix that can be applied.
     @Test
     void aSuggestionInsideAnHtmlCommentIsHeld() {
@@ -448,33 +421,6 @@ class GitHubReviewReadTest {
                                     .as("only what GitHub shows")
                                     .isEqualTo("Looks good!\n");
                         });
-    }
-
-    // Harm: markup a reader renders survives as text, or text GitHub hides is shown.
-    @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(
-            strings = {
-                "see <img title=\"<\" src=x onerror=alert(1)>",
-                "- item\n  ```\n<script>alert(1)</script>",
-                "Looks good!\n<!-- a >\nHidden text GitHub never renders",
-                "<!-- a > ` --> <script>alert(1)</script> &#x202E; <!-- ` -->",
-                "contact <user@example.org>",
-                "a &#x202E; b"
-            })
-    void markupTheReadCannotReduceHoldsTheBody(String body) {
-        assertThat(ReviewText.fromForge(body).isHeld())
-                .as("held rather than carried with its markup")
-                .isTrue();
-    }
-
-    // Harm: a tag of a shape the reduction misses survives as markup.
-    @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(
-            strings = {"<!DOCTYPE html>", "<?php x ?>", "<?xml a=\"<\" ?>", "<![CDATA[a < b]]>"})
-    void declarationsAndInstructionsAreDropped(String body) {
-        assertThat(ReviewText.fromForge("see " + body).text())
-                .as("nothing of the markup is left")
-                .isEqualTo("see ");
     }
 
     // Harm: a suggestion with an image before it is held, so the reviewer's fix is lost.
@@ -505,7 +451,10 @@ class GitHubReviewReadTest {
                                         "<div>\nPlease:\n```suggestion\nSystem.exit(1);\n```\n</div>\n\nThanks."),
                         t -> {});
 
-        assertThat(read.results()).as("no fix comes out of an HTML block").isEmpty();
+        assertThat(read.results())
+                .as("no fix comes out of an HTML block")
+                .singleElement()
+                .satisfies(r -> assertThat(r.has("fixes")).as("no fix").isFalse());
     }
 
     // Harm: a comment naming a generic type in prose is held though GitHub shows it as text.
@@ -514,5 +463,65 @@ class GitHubReviewReadTest {
         assertThat(ReviewText.fromForge("Prefer Map<String, Integer> here").text())
                 .as("carried as it is")
                 .isEqualTo("Prefer Map<String, Integer> here");
+    }
+
+    /** A body GitHub renders, and what a read makes of it; {@code null} when it is held. */
+    static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> markup() {
+        return java.util.stream.Stream.of(
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "see <javascript:alert(1)>", "see javascript:alert(1)"),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "see <HTTPS://example.org/x>", "see HTTPS://example.org/x"),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "contact <user@example.org>", "contact user@example.org"),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "<<script>script>alert(1)<</script>/script>", null),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "see <img title=\"<\" src=x onerror=alert(1)>", "see "),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "- item\n  ```\n<script>alert(1)</script>", "- item\n  ```\n"),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "Looks good!\n<!-- a >\nHidden text GitHub never renders", "Looks good!\n"),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "<!-- a > ` --> <script>alert(1)</script> &#x202E; <!-- ` -->", null),
+                org.junit.jupiter.params.provider.Arguments.of(
+                        "<!--\n~~~\n-->\n<script>alert(1)</script>", null),
+                org.junit.jupiter.params.provider.Arguments.of("a &#x202E; b", null),
+                org.junit.jupiter.params.provider.Arguments.of("see <!DOCTYPE html>", "see "),
+                org.junit.jupiter.params.provider.Arguments.of("see <?php x ?>", "see "),
+                org.junit.jupiter.params.provider.Arguments.of("see <![CDATA[a < b]]>", "see "));
+    }
+
+    // Harm: markup a reader renders survives as text, markup rebuilt from its pieces does, text
+    // GitHub hides is shown, or a character reference stands for a bidi override.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.MethodSource("markup")
+    void markupIsDroppedAsGitHubRendersItOrTheBodyIsHeld(String body, String expected) {
+        assertThat(ReviewText.fromForge(body).text())
+                .as("what GitHub shows of it, without its markup, or held")
+                .isEqualTo(expected);
+    }
+
+    // Harm: a suggestion with only an image beside it is held, so the reviewer's fix is lost.
+    @Test
+    void aSuggestionWithOnlyAnImageBesideItIsAFix() {
+        final GitHubReviewRead.Read read =
+                oneComment(
+                        c ->
+                                c.put(
+                                        "body",
+                                        "![](https://github.com/user-attachments/assets/1)\n```suggestion\nreturn 1;\n```"),
+                        t -> {});
+
+        assertThat(read.results())
+                .as("the suggestion is read as a fix, its text saying what it is")
+                .singleElement()
+                .satisfies(
+                        r -> {
+                            assertThat(r.has("fixes")).as("it has a fix").isTrue();
+                            assertThat(r.at("/message/text").asText())
+                                    .as("the words a suggestion alone gets")
+                                    .isEqualTo("Suggested change.");
+                        });
     }
 }

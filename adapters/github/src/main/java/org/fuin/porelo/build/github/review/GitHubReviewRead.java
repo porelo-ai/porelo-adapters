@@ -599,12 +599,11 @@ public final class GitHubReviewRead {
             if (found == null || fix == null) {
                 return none(body);
             }
-            if (ReviewText.afterHtmlBlockLine(lines, found[0])) {
-                // In an HTML block GitHub shows the fence as text, never as a suggestion.
-                throw new HeldItem("a suggestion after a line of HTML");
-            }
             final String rest = (lines.substring(0, found[0]) + lines.substring(found[1])).strip();
-            return new Suggestion(rest.isEmpty() ? "Suggested change." : rest, fix);
+            // A suggestion with nothing to read beside it, an image say, still says what it is.
+            final boolean nothingElse =
+                    rest.isEmpty() || "an empty body".equals(ReviewText.fromForge(rest).held());
+            return new Suggestion(nothingElse ? "Suggested change." : rest, fix);
         }
 
         /** A fence's lines when it is a closed suggestion fence, else {@code null}. */

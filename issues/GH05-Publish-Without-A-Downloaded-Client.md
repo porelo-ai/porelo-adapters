@@ -1,6 +1,6 @@
 # GH05 — Publish Without A Downloaded Client
 
-**Status:** Analyzed.
+**Status:** Implementing (Estimated and Backlog by the operator).
 **Size:** S - one workflow file, `.github/workflows/build.yml`, and no contract another repository reads.
 
 **What must be true.** The Build's `Publish` speaks to Artifactory without downloading a client into the job that

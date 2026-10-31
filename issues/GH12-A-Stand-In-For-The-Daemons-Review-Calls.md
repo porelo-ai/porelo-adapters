@@ -47,6 +47,10 @@ work needs anyway.
   `partial`, `failed` and `unknown` runs, more results than one page holds, a push at `E0` and one at `C3` waiting for a
   second approval - and the refusals the review display maps: `PullRequestMoved` on a `toForge` comment,
   `MovedSinceReview` on `Approve`, one anchor refusal.
+- **The interface text:** no published artifact carries `Tasks1`'s interface, so the stand-in carries its own copy of
+  just the methods it serves and their types: the gate's as the daemon has them today, and the review additions as
+  drafted, marked as draft, with a header line naming the daemon commit it was copied from; it is deleted with the
+  stand-in.
 - **Module:** `standin/` beside `contract` and `adapters`, a plain jar run with `exec:java`, never packaged, published
   or deployed (`maven.deploy.skip`, no `dist` profile), its README saying what it is and that it goes when the daemon
   serves the calls.
@@ -78,9 +82,6 @@ work needs anyway.
 
 ## To be checked
 
-- The `Tasks1` interface text the stand-in serves: it is in the daemon's sources, which this repository does not build
-  against. Ask Agent Core whether a released file can be read at build time; otherwise the stand-in carries its own
-  copy of the methods it serves, deleted with it.
 - Which calls the review display makes before these (a project list, a describe), and how its fetch reaches the bare
   clone (a local path first) - from the plugin's agent.
 - Building against the forge clients' local snapshot under another agent's installed area (`maven.repo.local.tail`),

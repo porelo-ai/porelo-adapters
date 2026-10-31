@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.fuin.porelo.build.github.review.GitHubReviewRead;
+import org.fuin.porelo.build.github.review.GitHubReviewWrite;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -61,6 +62,9 @@ final class Push {
 
     /** Threads resolved or reopened here, by thread id; nothing of this goes to the forge. */
     final Map<String, String> localThreadState = new ConcurrentHashMap<>();
+
+    /** Results written here and sent to the forge, by the native key of the comment it made. */
+    private final Map<String, ObjectNode> sent = new ConcurrentHashMap<>();
 
     /** A Comment's caller id, with what made the call (document, parent, forge) and its answer. */
     final Map<String, Map.Entry<String, Map<String, Object>>> commentIds =
@@ -166,9 +170,19 @@ final class Push {
         }
         stampRun(shell, run);
         run.shell = shell;
-        run.held = List.copyOf(held);
-        final List<ObjectNode> stamped = new ArrayList<>();
+        final List<ObjectNode> fromElsewhere = new ArrayList<>();
         for (final ObjectNode result : results) {
+            if (!joinedSent(result)) {
+                fromElsewhere.add(result);
+            }
+        }
+        run.held =
+                held.stream()
+                        // The person released that body already; the forge's copy is not inbound.
+                        .filter(h -> !sent.containsKey(heldKey(h)))
+                        .toList();
+        final List<ObjectNode> stamped = new ArrayList<>();
+        for (final ObjectNode result : fromElsewhere) {
             stamped.add(stamp(result, kind));
         }
         synchronized (run.results) {
@@ -176,6 +190,54 @@ final class Push {
             run.results.addAll(stamped);
         }
         return run;
+    }
+
+    /**
+     * Binds a result written here to the comment the forge made of it, so the forge's copy is that
+     * result and a reply to it on the forge answers it.
+     *
+     * @param result The stored result.
+     * @param written What the forge made.
+     */
+    synchronized void markSent(ObjectNode result, GitHubReviewWrite.Written written) {
+        final ObjectNode properties = result.with("properties");
+        properties.put("porelo/nativeCommentId", Long.toString(written.commentId()));
+        properties.put("porelo/nativeCommentKind", written.commentKind());
+        properties.put("porelo/nativeCommentNodeId", written.commentNodeId());
+        if (written.reviewId() != null) {
+            properties.put("porelo/nativeReviewId", Long.toString(written.reviewId()));
+        }
+        final String key = nativeKey(result);
+        guids.put(key, result.path("guid").asText());
+        sent.put(key, result);
+    }
+
+    /**
+     * Tells whether a result read from the forge is the copy of one sent from here; if so, the
+     * forge's thread becomes that result's thread.
+     */
+    private boolean joinedSent(ObjectNode read) {
+        final ObjectNode local = sent.get(nativeKey(read));
+        if (local == null) {
+            return false;
+        }
+        final String nativeThread =
+                read.path("properties").path("porelo/nativeThreadId").asText(null);
+        if (nativeThread != null) {
+            final ObjectNode properties = local.with("properties");
+            threads.putIfAbsent(
+                    "native:" + nativeThread, properties.path("porelo/threadId").asText());
+            properties.put("porelo/nativeThreadId", nativeThread);
+        }
+        return true;
+    }
+
+    private static String heldKey(GitHubReviewRead.Held held) {
+        return switch (held.kind()) {
+            case "comment" -> "comment:review:" + held.id();
+            case "issueComment" -> "comment:issue:" + held.id();
+            default -> held.kind() + ":" + held.id();
+        };
     }
 
     /**

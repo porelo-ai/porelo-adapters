@@ -252,6 +252,79 @@ class StandInReplayTest {
                 .containsKey("pending");
     }
 
+    // Harm: a comment sent to GitHub shows twice and its thread counts twice; a reply there
+    // lands on a result the person never wrote.
+    @Test
+    @SuppressWarnings("unchecked")
+    void aCommentSentToGitHubIsOneResultThatGitHubsReplyJoins() throws Exception {
+        github = new GitHubReplay(tmp.resolve("remote.git"));
+        final GitHubReplay.Pull pull = github.pull(6, List.of()).empty();
+        start(List.of(6L));
+        final String sarif = submission("pr-6");
+        github.seen =
+                request -> {
+                    if ("POST".equals(request.method())) {
+                        // GitHub now holds the comment it answers with, and a reply to it.
+                        pull.comments = GitHubReplay.recorded("reviewComments");
+                        pull.threads = GitHubReplay.recorded("reviewThreads");
+                    }
+                };
+
+        final Map<String, Object> sent =
+                call("Comment", Map.of("name", "pr-6", "sarif", sarif, "toForge", true));
+        github.clock.advance(Duration.ofMinutes(1));
+
+        assertThat(String.valueOf(sent.get("sentToForge")))
+                .as("the recorded comment is the one sent")
+                .contains("4431405345");
+        final JsonNode forge =
+                JSON.readTree(
+                        (String)
+                                call("Comments", Map.of("name", "pr-6", "run", forgeRun("pr-6")))
+                                        .get("sarif"));
+        assertThat(forge.at("/runs/0/results").findValuesAsText("porelo/nativeCommentId"))
+                .as("GitHub's copy of the sent comment is not stored again; its reply is")
+                .containsExactly("4431405381");
+        final JsonNode reply = forge.at("/runs/0/results/0");
+        assertThat(reply.at("/properties/porelo~1replyTo").asText())
+                .as("the reply answers the local result")
+                .isEqualTo(sent.get("guid"));
+        assertThat(reply.at("/properties/porelo~1threadId").asText())
+                .as("the reply joins the local result's thread")
+                .isEqualTo(sent.get("thread"));
+        assertThat(((Map<String, Object>) push("pr-6").get("review")).get("openThreads"))
+                .as("one open thread")
+                .isEqualTo(1.0);
+    }
+
+    // Harm: the person's own released comment, as GitHub reads it back, is held as inbound.
+    @Test
+    void aSentCommentThatGitHubReadsBackOddlyIsNotHeld() throws Exception {
+        github = new GitHubReplay(tmp.resolve("remote.git"));
+        final GitHubReplay.Pull pull = github.pull(6, List.of()).empty();
+        start(List.of(6L));
+        final String sarif = submission("pr-6");
+        github.seen =
+                request -> {
+                    if ("POST".equals(request.method())) {
+                        // Its line differs from its thread's, which holds any other comment.
+                        pull.comments =
+                                GitHubReplay.changed(
+                                        GitHubReplay.recorded("reviewComments"), 0, "line", 2);
+                        pull.threads = GitHubReplay.recorded("reviewThreads");
+                    }
+                };
+
+        call("Comment", Map.of("name", "pr-6", "sarif", sarif, "toForge", true));
+        github.clock.advance(Duration.ofMinutes(1));
+
+        final Map<String, Object> page =
+                call("Comments", Map.of("name", "pr-6", "run", forgeRun("pr-6")));
+        assertThat(String.valueOf(page.get("held")))
+                .as("the sent comment's copy is not held")
+                .doesNotContain("4431405345");
+    }
+
     private static void await(CountDownLatch latch) {
         try {
             if (!latch.await(20, TimeUnit.SECONDS)) {

@@ -74,9 +74,12 @@ work needs anyway.
   `RepositoryPath`, `ReviewDocument`), the stand-in in `standin/` with its own interface copy, eleven fixture pushes,
   and `StandInTest`; every guard seen red once. The live run against the test repository passed: a line comment and
   a reply with `toForge` reached GitHub and read back in one thread, and a resolve showed. The replaying cases run in
-  `StandInReplayTest` over the forge clients' recordings, a local repository standing in for GitHub's git. **Still
-  open:** after a `toForge` comment the stand-in keeps its local copy beside the forge's, so the push counts the
-  thread twice (seen live); whether the daemon shows both or lets the local copy give way is for the daemon's comment contract to say, asked.
+  `StandInReplayTest` over the forge clients' recordings, a local repository standing in for GitHub's git.
+- **A sent comment is one result:** as the daemon's comment contract has it, a `toForge` comment keeps its local
+  result, which takes GitHub's comment, kind and review IDs once sent; GitHub's copy, matched by that comment ID and
+  never by body, is neither stored again nor held, and a reply to it on GitHub joins the local result's thread and
+  answers its guid. An edit or deletion of that comment on GitHub is not shown, since the stand-in reads GitHub's
+  copy only to match it.
 - **The first reading's findings not fixed, and why:** a `porelo/resolverType` of `user` stays, since GitHub's
   GraphQL types a thread's `resolvedBy` as `User`; a thread's `startDiffSide` is not compared, since a comment whose
   `start_side` differs from its `side` is already held; REST IDs are not checked to be positive, since GitHub numbers

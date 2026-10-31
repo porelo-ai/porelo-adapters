@@ -78,7 +78,7 @@ work needs anyway.
 - **A sent comment is one result:** as the daemon's comment contract has it, a `toForge` comment keeps its local
   result, which takes GitHub's comment, kind and review IDs once sent; GitHub's copy, matched by that comment ID and
   never by body, is neither stored again nor held, and a reply to it on GitHub joins the local result's thread and
-  answers its guid. An edit or deletion of that comment on GitHub is not shown, since the stand-in reads GitHub's
+  answers its guid; a sent reply keeps the GitHub comment it answered, so a reply to it goes to that root. An edit or deletion of that comment on GitHub is not shown, since the stand-in reads GitHub's
   copy only to match it.
 - **The first reading's findings not fixed, and why:** a `porelo/resolverType` of `user` stays, since GitHub's
   GraphQL types a thread's `resolvedBy` as `User`; a thread's `startDiffSide` is not compared, since a comment whose

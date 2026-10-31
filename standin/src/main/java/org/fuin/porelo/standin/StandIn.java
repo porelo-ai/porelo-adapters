@@ -554,10 +554,10 @@ final class StandIn {
             throw refusal("NoSuchResult", Map.of("guid", replyTo));
         }
         final boolean toForge = flag(parameters, "toForge");
-        final GitHubReviewWrite.Written sent = toForge ? send(push, submission, parent) : null;
+        final Sent sent = toForge ? send(push, submission, parent) : null;
         final Map<String, Object> answer = store(push, submission, parent, sent);
         if (sent != null) {
-            answer.put("sentToForge", sentAnswer(sent, submission));
+            answer.put("sentToForge", sentAnswer(sent.written(), submission));
         }
         if (id != null) {
             push.commentIds.put(id, Map.entry(callKey(parameters, sarif), answer));
@@ -566,10 +566,7 @@ final class StandIn {
     }
 
     private Map<String, Object> store(
-            Push push,
-            Submission submission,
-            @Nullable ObjectNode parent,
-            GitHubReviewWrite.@Nullable Written sent) {
+            Push push, Submission submission, @Nullable ObjectNode parent, @Nullable Sent sent) {
         final ObjectNode document = submission.document;
         final ObjectNode run = (ObjectNode) document.at("/runs/0");
         ((ObjectNode) run.at("/versionControlProvenance/0"))
@@ -618,12 +615,12 @@ final class StandIn {
             if (local == null) {
                 local = push.putRun(PEOPLE_HERE, "person", round, shell, List.of(), List.of());
             }
+            if (sent != null) {
+                // One copy: the forge's is this result, never a second one; bound before it shows.
+                push.markSent(result, sent.written(), sent.root());
+            }
             synchronized (local.results) {
                 local.results.add(result);
-            }
-            if (sent != null) {
-                // One copy: the forge's is this result, never a second one.
-                push.markSent(result, sent);
             }
             // The run as the daemon stamped it, around this one result.
             stored = local.shell.deepCopy();
@@ -642,8 +639,10 @@ final class StandIn {
     /**
      * Sends a comment to GitHub at once, as the caller asked; the daemon would hold it for release.
      */
-    private GitHubReviewWrite.Written send(
-            Push push, Submission submission, @Nullable ObjectNode parent) {
+    /** What GitHub made of a sent comment, and the root it took it as a reply to. */
+    private record Sent(GitHubReviewWrite.Written written, @Nullable Long root) {}
+
+    private Sent send(Push push, Submission submission, @Nullable ObjectNode parent) {
         final Long number = push.pullRequest;
         if ("PullRequestMoved".equals(push.refuseToForge)) {
             throw refusal(
@@ -691,7 +690,7 @@ final class StandIn {
                     "AdapterRefused",
                     Map.of("error", "Failed", "detail", String.valueOf(ex.getMessage())));
         }
-        return written;
+        return new Sent(written, replyTo);
     }
 
     private static Map<String, Object> sentAnswer(

@@ -103,16 +103,26 @@ class StandInReplayTest {
         return pending.stream().filter(p -> name.equals(p.get("name"))).findFirst().orElseThrow();
     }
 
-    @SuppressWarnings("unchecked")
     private String forgeRun(String push) {
+        return run(push, "github.com");
+    }
+
+    @SuppressWarnings("unchecked")
+    private String run(String push, String name) {
         final Map<String, Object> review = (Map<String, Object>) push(push).get("review");
         return (String)
                 ((List<Map<String, Object>>) review.get("runs"))
                         .stream()
-                                .filter(r -> "github.com".equals(r.get("name")))
+                                .filter(r -> name.equals(r.get("name")))
                                 .findFirst()
                                 .orElseThrow()
                                 .get("run");
+    }
+
+    private JsonNode results(String push, String run) throws Exception {
+        return JSON.readTree(
+                        (String) call("Comments", Map.of("name", push, "run", run)).get("sarif"))
+                .at("/runs/0/results");
     }
 
     private String submission(String push) {
@@ -295,6 +305,59 @@ class StandInReplayTest {
         assertThat(((Map<String, Object>) push("pr-6").get("review")).get("openThreads"))
                 .as("one open thread")
                 .isEqualTo(1.0);
+        final JsonNode local = results("pr-6", run("pr-6", "people here"));
+        assertThat(local.findValuesAsText("guid"))
+                .as("the written result stays, once")
+                .containsExactly((String) sent.get("guid"));
+        assertThat(
+                        List.of(
+                                local.at("/0/properties/porelo~1nativeCommentId").asText(),
+                                local.at("/0/properties/porelo~1nativeCommentKind").asText(),
+                                local.at("/0/properties/porelo~1nativeCommentNodeId").asText(),
+                                local.at("/0/properties/porelo~1nativeReviewId").asText()))
+                .as("it carries what GitHub made of it")
+                .containsExactly(
+                        "4431405345", "review", "PRRC_kwDOVc0D888AAAABCCHhIQ", "5722360485");
+    }
+
+    // Harm: a reply to a reply sent to GitHub goes to a comment GitHub takes no reply to.
+    @Test
+    void aReplyToASentReplyGoesToItsRootOnGitHub() throws Exception {
+        startOnPullSix();
+        final String sarif = submission("pr-6");
+        final Map<String, Object> root =
+                call("Comment", Map.of("name", "pr-6", "sarif", sarif, "toForge", true));
+        final Map<String, Object> reply =
+                call(
+                        "Comment",
+                        Map.of(
+                                "name",
+                                "pr-6",
+                                "sarif",
+                                sarif,
+                                "toForge",
+                                true,
+                                "replyTo",
+                                root.get("guid")));
+
+        call(
+                "Comment",
+                Map.of(
+                        "name",
+                        "pr-6",
+                        "sarif",
+                        sarif,
+                        "toForge",
+                        true,
+                        "replyTo",
+                        reply.get("guid")));
+
+        assertThat(github.writes().stream().map(r -> r.uri().getPath()).toList())
+                .as("both replies go to the root GitHub made")
+                .containsExactly(
+                        "/repos/fixture-org/fixture-repo/pulls/6/comments",
+                        "/repos/fixture-org/fixture-repo/pulls/6/comments/4431405345/replies",
+                        "/repos/fixture-org/fixture-repo/pulls/6/comments/4431405345/replies");
     }
 
     // Harm: the person's own released comment, as GitHub reads it back, is held as inbound.
@@ -315,7 +378,8 @@ class StandInReplayTest {
                     }
                 };
 
-        call("Comment", Map.of("name", "pr-6", "sarif", sarif, "toForge", true));
+        final Map<String, Object> sent =
+                call("Comment", Map.of("name", "pr-6", "sarif", sarif, "toForge", true));
         github.clock.advance(Duration.ofMinutes(1));
 
         final Map<String, Object> page =
@@ -323,6 +387,12 @@ class StandInReplayTest {
         assertThat(String.valueOf(page.get("held")))
                 .as("the sent comment's copy is not held")
                 .doesNotContain("4431405345");
+        assertThat(
+                        JSON.readTree((String) page.get("sarif"))
+                                .at("/runs/0/results/0/properties/porelo~1threadId")
+                                .asText())
+                .as("GitHub's reply to it joins its thread")
+                .isEqualTo(sent.get("thread"));
     }
 
     private static void await(CountDownLatch latch) {

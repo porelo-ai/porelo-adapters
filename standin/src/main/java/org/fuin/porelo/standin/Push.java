@@ -172,7 +172,8 @@ final class Push {
         run.shell = shell;
         final List<ObjectNode> fromElsewhere = new ArrayList<>();
         for (final ObjectNode result : results) {
-            if (!joinedSent(result)) {
+            joinSentThread(result);
+            if (!sent.containsKey(nativeKey(result))) {
                 fromElsewhere.add(result);
             }
         }
@@ -198,9 +199,14 @@ final class Push {
      *
      * @param result The stored result.
      * @param written What the forge made.
+     * @param root The comment GitHub took it as a reply to, if any.
      */
-    synchronized void markSent(ObjectNode result, GitHubReviewWrite.Written written) {
+    synchronized void markSent(
+            ObjectNode result, GitHubReviewWrite.Written written, @Nullable Long root) {
         final ObjectNode properties = result.with("properties");
+        if (root != null) {
+            properties.put("porelo/nativeReplyTo", Long.toString(root));
+        }
         properties.put("porelo/nativeCommentId", Long.toString(written.commentId()));
         properties.put("porelo/nativeCommentKind", written.commentKind());
         properties.put("porelo/nativeCommentNodeId", written.commentNodeId());
@@ -213,23 +219,25 @@ final class Push {
     }
 
     /**
-     * Tells whether a result read from the forge is the copy of one sent from here; if so, the
-     * forge's thread becomes that result's thread.
+     * Makes a forge thread that holds a comment sent from here, as its copy or a reply to it, that
+     * result's thread; the copy itself may be held, so its reply decides as well.
      */
-    private boolean joinedSent(ObjectNode read) {
-        final ObjectNode local = sent.get(nativeKey(read));
-        if (local == null) {
-            return false;
+    private void joinSentThread(ObjectNode read) {
+        final JsonNode properties = read.path("properties");
+        final String nativeThread = properties.path("porelo/nativeThreadId").asText(null);
+        if (nativeThread == null) {
+            return;
         }
-        final String nativeThread =
-                read.path("properties").path("porelo/nativeThreadId").asText(null);
-        if (nativeThread != null) {
-            final ObjectNode properties = local.with("properties");
+        ObjectNode local = sent.get(nativeKey(read));
+        final String replyTo = properties.path("porelo/nativeReplyTo").asText(null);
+        if (local == null && replyTo != null) {
+            local = sent.get("comment:review:" + replyTo);
+        }
+        if (local != null) {
             threads.putIfAbsent(
-                    "native:" + nativeThread, properties.path("porelo/threadId").asText());
-            properties.put("porelo/nativeThreadId", nativeThread);
+                    "native:" + nativeThread,
+                    local.path("properties").path("porelo/threadId").asText());
         }
-        return true;
     }
 
     private static String heldKey(GitHubReviewRead.Held held) {

@@ -94,6 +94,11 @@ work needs anyway.
   type is checked, a refusal either way; a code span over several lines is read as prose, its markup dropped and
   named as a loss, since a line may start a block that ends the span; a `WatchProjects` stream is not tested past its
   first answer, since every later one passes the same guard.
+- **What the fourth reading changed, and why:** a fence indented by one to three spaces may sit in a list item the
+  next line ends, so a write refuses it and a read holds its comment, rather than modeling lists; a fence after a line
+  that may open an HTML block is treated the same way. A push's base and commit are both read without one lock, so a
+  check may see a torn pair; it then refuses loud, and the next call checks again, since the pair is what is
+  remembered.
 - **Fixed without a test seen red first, the test still owed:** a toForge `Comment` held the push's lock while it
   refreshed from GitHub, which `Pending`, `Projects` and `WatchProjects` lock in the other order, so the two could
   deadlock; the refresh now runs after the lock is released. Its test needs the GitHub source, so the replaying

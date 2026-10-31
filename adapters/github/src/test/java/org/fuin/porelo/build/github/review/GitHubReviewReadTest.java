@@ -11,6 +11,9 @@ import org.junit.jupiter.api.Test;
 
 class GitHubReviewReadTest {
 
+    /** The head the fixtures' review is bound to. */
+    private static final String HEAD = "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd";
+
     private static GitHubReviewRead.Read read(
             List<PullRequestReview> reviews,
             List<PullRequestReviewComment> comments,
@@ -18,7 +21,7 @@ class GitHubReviewReadTest {
             List<GitHubReviewRead.Thread> threads) {
         return GitHubReviewRead.read(
                 "github.com",
-                new GitHubReviewRead.Native(reviews, comments, issueComments, threads, true));
+                new GitHubReviewRead.Native(reviews, comments, issueComments, threads, true, HEAD));
     }
 
     private static GitHubReviewRead.Read oneComment(
@@ -325,5 +328,41 @@ class GitHubReviewReadTest {
                 .as("no tag and no autolink is left")
                 .doesNotContain("<")
                 .doesNotContain(">");
+    }
+
+    // Harm: one URI the profile refuses makes a reader refuse the whole page.
+    @Test
+    void aCommentOnAPathWithAPercentIsHeld() {
+        final GitHubReviewRead.Read read =
+                oneComment(c -> c.put("path", "src/100%.txt"), t -> t.put("path", "src/100%.txt"));
+
+        assertThat(read.results()).as("no URI the profile refuses is written").isEmpty();
+        assertThat(read.held()).as("the comment is held").hasSize(1);
+    }
+
+    // Harm: an approval of an older commit reads as approval of a head nobody reviewed.
+    @Test
+    void anApprovalOfAnotherCommitCountsNothingForTheHead() {
+        final PullRequestReview approved =
+                GitHubAnswers.review(
+                        r -> r.put("state", "APPROVED").put("commit_id", "1".repeat(40)));
+
+        assertThat(read(List.of(approved), List.of(), List.of(), List.of()).verdict())
+                .as("no review is bound to the head")
+                .isNull();
+    }
+
+    // Harm: two deleted accounts merged into one let an approval hide a change request.
+    @Test
+    void twoDeletedAccountsAreTwoReviewers() {
+        final PullRequestReview changes =
+                GitHubAnswers.review(r -> r.putNull("user").put("state", "CHANGES_REQUESTED"));
+        final PullRequestReview approved =
+                GitHubAnswers.review(
+                        r -> r.putNull("user").put("state", "APPROVED").put("id", 5722360486L));
+
+        assertThat(read(List.of(changes, approved), List.of(), List.of(), List.of()).verdict())
+                .as("the change request stands")
+                .isEqualTo("changesRequested");
     }
 }

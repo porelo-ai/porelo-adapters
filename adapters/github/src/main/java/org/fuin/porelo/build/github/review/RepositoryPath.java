@@ -87,6 +87,7 @@ public final class RepositoryPath {
                 || path.getBytes(StandardCharsets.UTF_8).length > DECODED_LIMIT
                 || path.startsWith("/")
                 || path.indexOf('\\') >= 0
+                || path.indexOf('%') >= 0
                 || path.indexOf('�') >= 0
                 || (path.length() > 1 && path.charAt(1) == ':')
                 || ReviewText.refusedCharacter(path) != null

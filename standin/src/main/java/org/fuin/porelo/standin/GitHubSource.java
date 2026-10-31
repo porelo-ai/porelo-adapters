@@ -191,7 +191,8 @@ final class GitHubSource {
                         reviews.complete()
                                 && comments.complete()
                                 && issueComments.complete()
-                                && threadsComplete);
+                                && threadsComplete,
+                        head);
         final GitHubReviewRead.Read read = GitHubReviewRead.read(forgeInstance, answers);
         final ReviewDocument.Run run =
                 new ReviewDocument.Run(

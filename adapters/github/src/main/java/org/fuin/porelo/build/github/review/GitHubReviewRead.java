@@ -73,13 +73,15 @@ public final class GitHubReviewRead {
      * @param issueComments Its general comments.
      * @param threads Its review threads.
      * @param complete Whether every list was read to its end.
+     * @param head The pull request's head commit, the one the run reads.
      */
     public record Native(
             List<PullRequestReview> reviews,
             List<PullRequestReviewComment> comments,
             List<IssueComment> issueComments,
             List<Thread> threads,
-            boolean complete) {
+            boolean complete,
+            String head) {
 
         /** Copies the lists. */
         public Native {
@@ -156,7 +158,8 @@ public final class GitHubReviewRead {
             item("issueComment", comment.id(), () -> issueComment(comment, losses), results, held);
         }
         final String completeness = answers.complete() && held.isEmpty() ? "complete" : "partial";
-        return new Read(results, losses, held, completeness, verdict(answers.reviews()));
+        return new Read(
+                results, losses, held, completeness, verdict(answers.reviews(), answers.head()));
     }
 
     /** Converts one item, or holds it with the reason its conversion gave. */
@@ -439,20 +442,23 @@ public final class GitHubReviewRead {
     }
 
     /**
-     * The run's verdict: each reviewer's latest verdict that is not a comment, then changes
-     * requested over approved over commented; dismissed when every review is.
+     * The run's verdict over the reviews bound to the head: each reviewer's latest verdict that is
+     * not a comment, then changes requested over approved over commented; dismissed when every
+     * review is. A deleted account is a reviewer of its own per review, never merged with another.
      */
-    static @Nullable String verdict(List<PullRequestReview> reviews) {
+    static @Nullable String verdict(List<PullRequestReview> reviews, String head) {
         final Map<String, String> latest = new LinkedHashMap<>();
         boolean any = false;
         boolean allDismissed = true;
         for (final PullRequestReview review : reviews) {
-            if ("PENDING".equals(review.state())) {
+            if ("PENDING".equals(review.state()) || !head.equals(review.commitId())) {
                 continue;
             }
             any = true;
             final String reviewer =
-                    review.user() == null ? "unknown" : Long.toString(review.user().id());
+                    review.user() == null
+                            ? "deleted:" + review.id()
+                            : Long.toString(review.user().id());
             final String state = review.state();
             allDismissed &= "DISMISSED".equals(state);
             if (!"COMMENTED".equals(state) || !latest.containsKey(reviewer)) {

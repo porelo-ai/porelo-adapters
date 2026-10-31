@@ -1,6 +1,6 @@
 # GH05 — Publish Without A Downloaded Client
 
-**Status:** Implementing (Estimated and Backlog by the operator).
+**Status:** Review.
 **Size:** S - one workflow file, `.github/workflows/build.yml`, and no contract another repository reads.
 
 **What must be true.** The Build's `Publish` speaks to Artifactory without downloading a client into the job that
@@ -18,18 +18,27 @@ test on a branch and the first `Publish` on main, whose indexes listed every pac
 
 - Read in `.github/workflows/build.yml`, job `Build, packages and publish`: the `jfrog/setup-jfrog-cli` step goes; the
   step *Publish the packages* uploads each `.deb` and `.rpm` with `curl -fsS -K - -T`, the token's header reaching curl
-  as its config on standard input once per call, under `set +x`, never in a file or on a command line; each upload
-  carries `X-Checksum-Sha1` and `X-Checksum-Sha256`, which Artifactory checks, and the `.deb` the matrix parameters
-  `deb.distribution`, `deb.component` and `deb.architecture`, without which it is stored and never indexed.
+  as its config on standard input once per call, with no shell trace on, never in a file or on a command line; each
+  upload carries `X-Checksum-Sha1` and `X-Checksum-Sha256`, which Artifactory checks, and the `.deb` the matrix
+  parameters `deb.distribution`, `deb.component` and `deb.architecture`, without which it is stored and never indexed.
 - No copy of porelo's `.github/scripts/artifactory.sh`: the shared rules let no repository keep a copy of a helper
   another one has, and buildtools plans one published upload helper for every Publish. The calls stay inline in the
   step, as in porelo-message-sluice, until that helper exists.
 - *The package is indexed, not merely stored* reads the index anonymously with `curl -fsSL`, as the refusal of an
   already published release does already, so only the upload step holds the token.
-- Red first: the step's script replayed on the host against a stand-in HTTP server that records each request. It must
-  be seen to fail with a missing token (no request made), with a wrong checksum header (the stand-in refuses, the step
-  exits non-zero), and when the `.deb` lacks its properties; and the token must not show in a trace (`set -x`) or in
-  `/proc/<pid>/cmdline` of the running curl.
+- Both steps refuse before any request a `JF_URL` that is not `https://`, a glob that does not match exactly one
+  package, and a checksum that cannot be computed; every call takes `--proto =https`, the index reads also
+  `--proto-redir =https`. An upload counts only on a 2xx, since curl's `-f` passes a redirect, which the upload does not
+  follow so that the token stays with its host. A release whose index cannot be read is not uploaded. The read-back
+  reads the index into a variable before matching it, since `grep -q` leaving a pipe early fails curl under `pipefail`
+  once the index outgrows a pipe's buffer, and says what curl last answered.
+- Red first: the steps' scripts replayed on the host, taken from `build.yml` as the runner runs them, against a stand-in
+  Artifactory over HTTPS that records each request, checks the token and the checksums it is sent, and serves the index.
+  Each guard is broken in a copy and the replay seen to fail: the `.deb` properties, a shell trace (the token in the
+  output), a fail-open release index, the token check, the checksum headers and their assignment, the `https` checks,
+  the 2xx check on a redirected upload, an index redirected to plain http, the single-package check, the piped read-back
+  on a large index, an authenticated read-back. A token holding a newline already fails without a request and without a
+  fragment of it in the output, so it needs no check of its own.
 
 ## Acceptance
 

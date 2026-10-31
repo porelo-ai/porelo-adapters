@@ -140,65 +140,100 @@ jobs:
                   OSS_SONATYPE_TOKEN: ${{ secrets.OSS_SONATYPE_TOKEN }}
               run: ./mvnw -B -s settings.xml -Pcentral-sonatype-release deploy
 
-            # The action publishes build-info by itself at the end of the workflow.
-            - uses: jfrog/setup-jfrog-cli@1e584506871998c267b7c100c02628a5b9c81db6 # v5.3.0
-              with:
-                  disable-auto-build-publish: true
-              if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
-              env:
-                  JF_URL: ${{ vars.JF_URL }}
-                  JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
-
-            # The same two repositories Porelo and its agents publish to.
+            # Curl alone, so no downloaded tool runs beside the token; the token reaches it as config on standard input,
+            # so neither a file nor a command line holds it. A .deb without its properties is stored and never indexed.
             - name: Publish the packages
+              timeout-minutes: 5
               if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
               env:
                   JF_URL: ${{ vars.JF_URL }}
                   JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
                   CHANNEL: ${{ steps.channel.outputs.channel }}
               run: |
-                  set -eux
+                  set -euo pipefail
+                  case "$JF_URL" in
+                      https://?*) ;;
+                      *) echo "::error::variable JF_URL is '$JF_URL', not an https:// address the token may go to"; exit 1 ;;
+                  esac
+                  base="${JF_URL%/}/artifactory"
+                  # A glob that matches several files would shift put's arguments and upload the wrong thing.
+                  only() {
+                      [ "$#" = 1 ] && [ -f "$1" ] || { echo "::error::expected one package, matched: $*" >&2; exit 1; }
+                      echo "$1"
+                  }
+                  declare -A deb rpm
                   for forge in github forgejo; do
-                      # A published release is never replaced, as on Central.
-                      if [ "$CHANNEL" = releases ] && curl -sfL "${JF_URL}/artifactory/porelo-dist-deb/dists/releases/main/binary-amd64/Packages" \
-                              | grep -qF "Filename: pool/main/p/porelo-adapter-$forge/$(basename adapters/$forge/target/*.deb)"; then
-                          echo "::error::this $forge release is published already"; exit 1
-                      fi
+                      deb[$forge]="$(only adapters/$forge/target/*.deb)"
+                      rpm[$forge]="$(only adapters/$forge/target/*.rpm)"
                   done
+                  if [ "$CHANNEL" = releases ]; then
+                      # Read into a file, so an index that cannot be read stops the release rather than reading as
+                      # "not published": a published release is never replaced, as on Central.
+                      curl -sSfL --proto =https --proto-redir =https --max-time 60 -o "$RUNNER_TEMP/published-index" "$base/porelo-dist-deb/dists/releases/main/binary-amd64/Packages" \
+                          || { echo "::error::the release index could not be read, so whether this release is published is unknown"; exit 1; }
+                      for forge in github forgejo; do
+                          if grep -qxF "Filename: pool/main/p/porelo-adapter-$forge/$(basename "${deb[$forge]}")" "$RUNNER_TEMP/published-index"; then
+                              echo "::error::this $forge release is published already"; exit 1
+                          fi
+                      done
+                  fi
+                  [ -n "$JF_ACCESS_TOKEN" ] || { echo "::error::secret JF_ACCESS_TOKEN is not set"; exit 1; }
+                  # Assigned first, so a checksum that cannot be computed stops here instead of sending an empty header,
+                  # which curl drops; Artifactory checks the bytes against both. Only a 2xx is an upload: curl's -f
+                  # passes a redirect, which put does not follow, so the token stays with this host.
+                  put() {
+                      local sha1 sha256 status
+                      sha1="$(sha1sum "$1" | cut -d' ' -f1)"
+                      sha256="$(sha256sum "$1" | cut -d' ' -f1)"
+                      echo "  put   $2$(basename "$1")"
+                      status="$(printf 'header = "Authorization: Bearer %s"\n' "$JF_ACCESS_TOKEN" \
+                          | curl -fsS --proto =https --max-time 120 -K - -o /dev/null -w '%{http_code}' -T "$1" \
+                              -H "X-Checksum-Sha1: $sha1" -H "X-Checksum-Sha256: $sha256" \
+                              "$base/$2$(basename "$1")${3:+;$3}")"
+                      case "$status" in
+                          2??) ;;
+                          *) echo "::error::Artifactory answered $status to the upload of $(basename "$1"), not a 2xx"; exit 1 ;;
+                      esac
+                  }
                   for forge in github forgejo; do
-                      # --flat keeps each package beside its siblings.
-                      jf rt upload "adapters/$forge/target/*.deb" "porelo-dist-deb/pool/main/p/porelo-adapter-$forge/" \
-                          --flat=true \
-                          --target-props="deb.distribution=${CHANNEL};deb.component=main;deb.architecture=amd64"
-                      jf rt upload "adapters/$forge/target/*.rpm" "porelo-dist-rpm/${CHANNEL}/" --flat=true
+                      put "${deb[$forge]}" "porelo-dist-deb/pool/main/p/porelo-adapter-$forge/" \
+                          "deb.distribution=${CHANNEL};deb.component=main;deb.architecture=amd64"
+                      put "${rpm[$forge]}" "porelo-dist-rpm/${CHANNEL}/"
                   done
 
-            # Uploaded is not installable.
+            # Uploaded is not installable. Read anonymously, as an installer sees it, into a variable before grep: grep
+            # leaving a pipe early would fail curl under pipefail on a large index.
             - name: The package is indexed, not merely stored
+              timeout-minutes: 12
               if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
               env:
                   JF_URL: ${{ vars.JF_URL }}
-                  JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
                   CHANNEL: ${{ steps.channel.outputs.channel }}
               run: |
-                  set -eu
+                  set -euo pipefail
+                  index="${JF_URL%/}/artifactory/porelo-dist-deb/dists/${CHANNEL}/main/binary-amd64/Packages"
                   for forge in github forgejo; do
-                      DEB="$(basename adapters/$forge/target/*.deb)"
+                      set -- adapters/$forge/target/*.deb
+                      [ "$#" = 1 ] && [ -f "$1" ] || { echo "::error::expected one $forge package, matched: $*"; exit 1; }
+                      DEB="$(basename "$1")"
                       tries=0
                       indexed=false
-                      # -L follows Artifactory's cloud-storage redirect without forwarding credentials.
                       while [ "$tries" -lt 20 ]; do
-                          if jf rt curl -sL -XGET "/porelo-dist-deb/dists/${CHANNEL}/main/binary-amd64/Packages" 2>/dev/null \
-                              | grep -qF "Filename: pool/main/p/porelo-adapter-$forge/$DEB"; then
-                              echo "  OK    the Debian index lists $DEB"
-                              indexed=true
-                              break
+                          if packages="$(curl -sSfL --proto =https --proto-redir =https --max-time 10 "$index" 2>"$RUNNER_TEMP/index-error")"; then
+                              if grep -qxF "Filename: pool/main/p/porelo-adapter-$forge/$DEB" <<< "$packages"; then
+                                  echo "  OK    the Debian index lists $DEB"
+                                  indexed=true
+                                  break
+                              fi
+                              last="the index does not list it"
+                          else
+                              last="$(cat "$RUNNER_TEMP/index-error")"
                           fi
                           tries=$((tries + 1))
                           sleep 6
                       done
                       if [ "$indexed" != true ]; then
-                          echo "::error::$DEB never appeared in the index - uploaded but not indexed"
+                          echo "::error::$DEB is not in $index after $tries reads; the last: $last"
                           exit 1
                       fi
                   done

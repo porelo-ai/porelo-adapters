@@ -62,7 +62,7 @@ final class Push {
     /** Threads resolved or reopened here, by thread id; nothing of this goes to the forge. */
     final Map<String, String> localThreadState = new ConcurrentHashMap<>();
 
-    /** A Comment's caller id, with the document it came with and what it answered. */
+    /** A Comment's caller id, with what made the call (document, parent, forge) and its answer. */
     final Map<String, Map.Entry<String, Map<String, Object>>> commentIds =
             new ConcurrentHashMap<>();
 

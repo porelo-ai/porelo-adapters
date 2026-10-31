@@ -42,8 +42,11 @@ final class Git {
     static Git open(Path dir) {
         final Git git = new Git(dir);
         try {
-            Files.createDirectories(dir);
             // A private repository's objects: its owner alone reads them, whatever the umask.
+            Files.createDirectories(
+                    dir,
+                    java.nio.file.attribute.PosixFilePermissions.asFileAttribute(
+                            java.nio.file.attribute.PosixFilePermissions.fromString("rwx------")));
             Files.setPosixFilePermissions(
                     dir, java.nio.file.attribute.PosixFilePermissions.fromString("rwx------"));
         } catch (IOException ex) {

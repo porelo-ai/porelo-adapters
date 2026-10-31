@@ -762,8 +762,15 @@ class StandInTest {
 
     // Harm: a path git quotes is no path of the push, so a comment on it can never be anchored.
     @Test
-    void aNonAsciiPathIsAnsweredAsItIs() throws Exception {
-        assertThat(headFile("fixture-unicode-path")).as("unquoted").isEqualTo("docs/Über.md");
+    @SuppressWarnings("unchecked")
+    void aPathGitWouldQuoteIsAnsweredAsItIs() {
+        final List<Map<String, Object>> files =
+                (List<Map<String, Object>>)
+                        call("Review", Map.of("name", "fixture-unicode-path")).get("files");
+
+        assertThat(files.stream().map(f -> f.get("path")).toList())
+                .as("unquoted")
+                .containsExactlyInAnyOrder("docs/\"a\".md", "docs/Über.md");
     }
 
     // Harm: a client checking the stored comment against the profile refuses it.
@@ -794,5 +801,205 @@ class StandInTest {
                                 Files.getPosixFilePermissions(tmp.resolve("state/mirror.git"))))
                 .as("whatever the umask")
                 .isEqualTo("rwx------");
+    }
+
+    // Harm: a stream that skips the guard sends the token to the caller.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"Projects", "WatchProjects"})
+    void aProjectsAnswerThatWouldCarryTheTokenIsNotSent(String method) throws Exception {
+        final Pushes pushes = new Pushes();
+        // The mirror's path is in the answer; here it holds the token.
+        final Git git = Git.open(tmp.resolve("state-" + TOKEN + ".git"));
+        final String commit = git.commitTree(Map.of("a", "a\n"), List.of(), "a");
+        pushes.add(
+                new Push(
+                        "p",
+                        "s",
+                        "2026-01-01T00:00:00Z",
+                        null,
+                        "E1",
+                        "C1",
+                        Map.of(),
+                        1,
+                        null,
+                        null,
+                        "",
+                        commit,
+                        commit));
+        final Path dir =
+                Files.createDirectory(
+                        tmp.resolve("leak"),
+                        PosixFilePermissions.asFileAttribute(
+                                PosixFilePermissions.fromString("rwx------")));
+        final StandIn standIn =
+                new StandIn(
+                        pushes,
+                        git,
+                        null,
+                        List.of(),
+                        TOKEN,
+                        Clock.systemUTC(),
+                        new PrintStream(log, true, StandardCharsets.UTF_8));
+        try (VarlinkServer leaky =
+                        standIn.register(
+                                new VarlinkServer(dir.resolve("s.sock"), StandIn.INTERFACE));
+                VarlinkClient leakyClient = new VarlinkClient(leaky.socketPath())) {
+            Thread.ofVirtual().start(leaky);
+
+            assertThatThrownBy(() -> leakyClient.call(StandIn.INTERFACE + "." + method, Map.of()))
+                    .as("the answer is refused")
+                    .isInstanceOfSatisfying(
+                            VarlinkException.class,
+                            ex ->
+                                    assertThat(String.valueOf(ex.getParameters()))
+                                            .as("its error holds no token")
+                                            .doesNotContain(TOKEN));
+        }
+    }
+
+    // Harm: a retry with the same id but a forge write asked for answers as if it had been sent.
+    @Test
+    void theSameIdWithAnotherReplyToIsReused() throws Exception {
+        final String sarif = submission("fixture-anchor", headFile("fixture-anchor"), 1, "");
+        final Map<String, Object> first =
+                call("Comment", Map.of("name", "fixture-anchor", "sarif", sarif, "id", "k1"));
+
+        assertThat(
+                        errorOf(
+                                "Comment",
+                                Map.of(
+                                        "name",
+                                        "fixture-anchor",
+                                        "sarif",
+                                        sarif,
+                                        "id",
+                                        "k1",
+                                        "replyTo",
+                                        first.get("guid"))))
+                .as("another call under the same id")
+                .endsWith(".IdReused");
+    }
+
+    // Harm: a stored comment the profile refuses is served to every reader.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {
+                "driver:{}",
+                "driver:{\"name\":7}",
+                "message:{\"text\":\"x\",\"markdown\":{\"a\":1}}",
+                "region:{\"startLine\":1,\"endLine\":1,\"startColumn\":-5}",
+                "region:{\"startLine\":1,\"endLine\":1,\"endColumn\":[false]}"
+            })
+    void aCommentWithAFieldOfTheWrongShapeIsRefused(String change) throws Exception {
+        final String[] at = change.split(":", 2);
+        final ObjectNode document =
+                (ObjectNode)
+                        JSON.readTree(
+                                submission("fixture-anchor", headFile("fixture-anchor"), 1, ""));
+        final JsonNode value = JSON.readTree(at[1]);
+        switch (at[0]) {
+            case "driver" -> ((ObjectNode) document.at("/runs/0/tool")).set("driver", value);
+            case "message" -> ((ObjectNode) document.at("/runs/0/results/0")).set("message", value);
+            default ->
+                    ((ObjectNode) document.at("/runs/0/results/0/locations/0/physicalLocation"))
+                            .set("region", value);
+        }
+
+        assertThat(
+                        errorOf(
+                                "Comment",
+                                Map.of(
+                                        "name",
+                                        "fixture-anchor",
+                                        "sarif",
+                                        JSON.writeValueAsString(document))))
+                .as("refused, not stored")
+                .endsWith(".ProfileViolation");
+    }
+
+    @Test
+    void aCommentClaimingADraftIsRefusedAsForbidden() throws Exception {
+        final String sarif =
+                submission("fixture-anchor", "src/Notes.java", 1, ",\"porelo/draft\":true");
+
+        assertThat(errorOf("Comment", Map.of("name", "fixture-anchor", "sarif", sarif)))
+                .as("an adapter's field")
+                .endsWith(".ForbiddenField");
+    }
+
+    // Harm: with pull requests stacked on one another no default branch gives each its base, so
+    // a review display would show one of them another diff; the stand-in must say so, not serve it.
+    @Test
+    void stackedPullRequestsAreRefusedNotServedWithAWrongBase() throws Exception {
+        final Pushes pushes = new Pushes();
+        final Git git = Git.open(tmp.resolve("stacked.git"));
+        final String b1 = git.commitTree(Map.of("a", "1\n"), List.of(), "b1");
+        final String h1 = git.commitTree(Map.of("a", "2\n"), List.of(b1), "h1");
+        final String h2 = git.commitTree(Map.of("a", "3\n"), List.of(h1), "h2");
+        git.updateRef("refs/porelo/incoming/one", h1);
+        git.updateRef("refs/porelo/incoming/two", h2);
+        pushes.add(
+                new Push(
+                        "one",
+                        "s",
+                        "2026-01-01T00:00:00Z",
+                        null,
+                        "E1",
+                        "C1",
+                        Map.of(),
+                        1,
+                        null,
+                        null,
+                        "",
+                        h1,
+                        b1));
+        pushes.add(
+                new Push(
+                        "two",
+                        "s",
+                        "2026-01-01T00:00:00Z",
+                        null,
+                        "E1",
+                        "C1",
+                        Map.of(),
+                        1,
+                        null,
+                        null,
+                        "",
+                        h2,
+                        h1));
+        final Path dir =
+                Files.createDirectory(
+                        tmp.resolve("stacked"),
+                        PosixFilePermissions.asFileAttribute(
+                                PosixFilePermissions.fromString("rwx------")));
+        final StandIn standIn =
+                new StandIn(
+                        pushes,
+                        git,
+                        null,
+                        List.of(),
+                        null,
+                        Clock.systemUTC(),
+                        new PrintStream(log, true, StandardCharsets.UTF_8));
+        try (VarlinkServer stacked =
+                        standIn.register(
+                                new VarlinkServer(dir.resolve("s.sock"), StandIn.INTERFACE));
+                VarlinkClient stackedClient = new VarlinkClient(stacked.socketPath())) {
+            Thread.ofVirtual().start(stacked);
+
+            assertThatThrownBy(
+                            () ->
+                                    stackedClient.call(
+                                            StandIn.INTERFACE + ".Pending",
+                                            Map.of("project", StandIn.PROJECT)))
+                    .as("refused, naming why")
+                    .isInstanceOfSatisfying(
+                            VarlinkException.class,
+                            ex ->
+                                    assertThat(String.valueOf(ex.getParameters()))
+                                            .as("the push whose base it cannot give")
+                                            .contains("one"));
+        }
     }
 }

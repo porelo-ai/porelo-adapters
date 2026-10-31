@@ -72,7 +72,30 @@ final class Submission {
                     "porelo/originalEndColumn",
                     "porelo/originalDiffSide",
                     "ruleId",
-                    "relatedLocations");
+                    "relatedLocations",
+                    // An adapter's: what the forge says, never a person's client.
+                    "porelo/draft",
+                    "porelo/nativeCommentId",
+                    "porelo/nativeCommentKind",
+                    "porelo/nativeCommentNodeId",
+                    "porelo/nativeThreadId",
+                    "porelo/nativeReviewId",
+                    "porelo/nativeReviewNodeId",
+                    "porelo/nativeReplyTo",
+                    "porelo/reviewState",
+                    "porelo/reviewCommitId",
+                    "porelo/reviewVerdict",
+                    "porelo/bodyless",
+                    "porelo/authorNodeId",
+                    "porelo/authorType",
+                    "porelo/authorAssociation",
+                    "porelo/authorMember",
+                    "porelo/resolverId",
+                    "porelo/resolverType",
+                    "porelo/resolverMember",
+                    "porelo/fromFork",
+                    "provenance",
+                    "hostedViewerUri");
 
     private static final ObjectMapper JSON =
             JsonMapper.builder()
@@ -156,10 +179,13 @@ final class Submission {
         final ObjectNode run = (ObjectNode) runs.get(0);
         only(run, RUN, "$.runs[0]");
         only((ObjectNode) object(run, "tool", "$.runs[0]"), Set.of("driver"), "$.runs[0].tool");
-        only(
-                (ObjectNode) object(run.path("tool"), "driver", "$.runs[0].tool"),
-                Set.of("name", "version"),
-                "$.runs[0].tool.driver");
+        final ObjectNode driver = (ObjectNode) object(run.path("tool"), "driver", "$.runs[0].tool");
+        only(driver, Set.of("name", "version"), "$.runs[0].tool.driver");
+        if (!driver.path("name").isTextual()
+                || driver.path("name").asText().isEmpty()
+                || (driver.has("version") && !driver.path("version").isTextual())) {
+            throw violation("the driver's name and version are strings", "$.runs[0].tool.driver");
+        }
         if (!"unicodeCodePoints".equals(run.path("columnKind").asText())) {
             throw violation("columnKind is unicodeCodePoints", "$.runs[0].columnKind");
         }

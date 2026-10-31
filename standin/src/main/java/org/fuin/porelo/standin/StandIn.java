@@ -241,29 +241,31 @@ final class StandIn {
      * and every error is the interface's own.
      */
     private VarlinkServer.Method guarded(String method, Body body) {
-        return (parameters, replies) -> {
-            Map<String, Object> answer;
-            try {
-                answer = body.call(parameters);
-            } catch (ReviewRefusal ex) {
-                log(method + " refused: " + ex.reason().error() + " at " + ex.path());
-                throw refused(ex);
-            } catch (VarlinkException ex) {
-                log(method + " answered " + ex.getErrorName());
-                throw clean(ex);
-            } catch (RuntimeException ex) {
-                log(method + " failed: " + ex.getClass().getSimpleName());
-                throw clean(failed(String.valueOf(ex.getMessage())));
-            }
-            final String text = json(answer);
-            if (carriesToken(text)) {
-                log(method + " failed: its answer would have carried the token");
-                throw failed(
-                        "The stand-in's answer would have carried the token; nothing was sent");
-            }
-            log(method + " answered");
-            replies.last(answer);
-        };
+        return (parameters, replies) -> replies.last(checked(method, body, parameters));
+    }
+
+    /** One answer of a method, refused if it or its error would carry the token. */
+    private Map<String, Object> checked(String method, Body body, Map<String, Object> parameters) {
+        Map<String, Object> answer;
+        try {
+            answer = body.call(parameters);
+        } catch (ReviewRefusal ex) {
+            log(method + " refused: " + ex.reason().error() + " at " + ex.path());
+            throw refused(ex);
+        } catch (VarlinkException ex) {
+            log(method + " answered " + ex.getErrorName());
+            throw clean(ex);
+        } catch (RuntimeException ex) {
+            log(method + " failed: " + ex.getClass().getSimpleName());
+            throw clean(failed(String.valueOf(ex.getMessage())));
+        }
+        final String text = json(answer);
+        if (carriesToken(text)) {
+            log(method + " failed: its answer would have carried the token");
+            throw failed("The stand-in's answer would have carried the token; nothing was sent");
+        }
+        log(method + " answered");
+        return answer;
     }
 
     private VarlinkException clean(VarlinkException ex) {
@@ -305,7 +307,8 @@ final class StandIn {
     /** Projects once, or with "more" again whenever it changes, until the client is gone. */
     private void watchProjects(Map<String, Object> parameters, VarlinkServer.Replies replies)
             throws java.io.IOException {
-        Map<String, Object> last = projects();
+        final Body body = p -> projects();
+        Map<String, Object> last = checked("WatchProjects", body, parameters);
         if (!replies.streaming()) {
             replies.last(last);
             return;
@@ -318,7 +321,7 @@ final class StandIn {
                 Thread.currentThread().interrupt();
                 return;
             }
-            final Map<String, Object> now = projects();
+            final Map<String, Object> now = checked("WatchProjects", body, parameters);
             if (!now.equals(last)) {
                 replies.more(now);
                 last = now;
@@ -407,16 +410,17 @@ final class StandIn {
         final String against = optional(parameters, "against");
         final String base = against == null ? push.base : git.commit(against);
         final List<Object> files = new ArrayList<>();
+        // NUL-separated, so no path comes back quoted.
         final Map<String, String> status = new LinkedHashMap<>();
-        for (final String line :
-                git.read("diff", "--no-renames", "--name-status", base, push.commit).split("\n")) {
-            if (!line.isBlank()) {
-                final String[] parts = line.split("\t", 2);
-                status.put(parts[1], parts[0]);
-            }
+        final String[] names =
+                git.read("diff", "-z", "--no-renames", "--name-status", base, push.commit)
+                        .split("\0");
+        for (int i = 0; i + 1 < names.length; i += 2) {
+            status.put(names[i + 1], names[i]);
         }
         for (final String line :
-                git.read("diff", "--no-renames", "--numstat", base, push.commit).split("\n")) {
+                git.read("diff", "-z", "--no-renames", "--numstat", base, push.commit)
+                        .split("\0")) {
             if (line.isBlank()) {
                 continue;
             }
@@ -517,7 +521,7 @@ final class StandIn {
             }
             final var earlier = push.commentIds.get(id);
             if (earlier != null) {
-                if (!earlier.getKey().equals(sarif)) {
+                if (!earlier.getKey().equals(callKey(parameters, sarif))) {
                     throw refusal("IdReused", Map.of("id", id));
                 }
                 return earlier.getValue();
@@ -542,7 +546,7 @@ final class StandIn {
             answer.put("sentToForge", sent);
         }
         if (id != null) {
-            push.commentIds.put(id, Map.entry(sarif, answer));
+            push.commentIds.put(id, Map.entry(callKey(parameters, sarif), answer));
         }
         return answer;
     }
@@ -783,6 +787,17 @@ final class StandIn {
         }
         git.updateRef(DEFAULT_BRANCH, git.commitTree(Map.of(), bases, "The stand-in's bases"));
         git.read("symbolic-ref", "HEAD", DEFAULT_BRANCH);
+        for (final Push push : pushes.all()) {
+            // One push's history holding another's base, as stacked pull requests do.
+            if (!git.mergeBase(DEFAULT_BRANCH, push.commit).equals(push.base)) {
+                throw failed(
+                        "No default branch gives push "
+                                + push.name
+                                + " its base "
+                                + push.base
+                                + "; the stand-in serves no pull requests stacked on one another");
+            }
+        }
         defaultBranchBases = bases;
     }
 
@@ -897,6 +912,11 @@ final class StandIn {
 
     static VarlinkException refusal(String error, Map<String, Object> parameters) {
         return new VarlinkException(INTERFACE + "." + error, parameters);
+    }
+
+    /** What makes two Comment calls the same call: the document, the parent and the forge. */
+    private static String callKey(Map<String, Object> parameters, String sarif) {
+        return parameters.get("replyTo") + "\n" + flag(parameters, "toForge") + "\n" + sarif;
     }
 
     /** An optional bool: absent is false, anything but a bool is refused. */

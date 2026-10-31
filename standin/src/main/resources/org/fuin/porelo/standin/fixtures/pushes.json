@@ -325,13 +325,15 @@
   },
   {
     "name": "fixture-unicode-path",
-    "subject": "A file whose name is not ASCII",
-    "shows": "A changed file named with a non-ASCII letter, as a path in Review and as an anchor.",
+    "subject": "Files whose names git would quote",
+    "shows": "Changed files named with a non-ASCII letter and with a double quote, as paths in Review and as anchors.",
     "base": {
-      "docs/Über.md": "Gate\n"
+      "docs/Über.md": "Gate\n",
+      "docs/\"a\".md": "Gate\n"
     },
     "head": {
-      "docs/Über.md": "Gate\nReady\n"
+      "docs/Über.md": "Gate\nReady\n",
+      "docs/\"a\".md": "Gate\nReady\n"
     },
     "sourceLevel": "E1",
     "riskClass": "C1",

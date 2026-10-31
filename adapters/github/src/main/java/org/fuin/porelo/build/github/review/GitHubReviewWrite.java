@@ -3,6 +3,7 @@ package org.fuin.porelo.build.github.review;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -137,7 +138,18 @@ public final class GitHubReviewWrite {
         // The canonical text goes, never the Markdown form beside it, so what is checked is sent.
         final JsonNode message =
                 object(result.path("message"), Set.of("text", "markdown"), "message");
+        if (message.has("markdown") && !message.path("markdown").isTextual()) {
+            throw refusal("message.markdown is a string", "message.markdown");
+        }
         body.append(ReviewText.toForge(text(message, "text")));
+        // What a read gives back as the message: the body without its suggestion fence.
+        if (body.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8).length
+                > ReviewText.BODY_LIMIT) {
+            throw new ReviewRefusal(
+                    ReviewRefusal.Reason.TOO_LARGE,
+                    "the body over " + ReviewText.BODY_LIMIT + " bytes",
+                    "message.text");
+        }
         if (result.has("relatedLocations")) {
             losses.merge("related-locations-dropped", 1, Integer::sum);
         }
@@ -298,6 +310,12 @@ public final class GitHubReviewWrite {
                         "a file comment has no fix",
                         "fixes");
             }
+            if (!"RIGHT".equals(side)) {
+                throw new ReviewRefusal(
+                        ReviewRefusal.Reason.NOT_SUPPORTED,
+                        "GitHub's file comment is on the new side only",
+                        "porelo/diffSide");
+            }
             return new Rendered(Anchor.FILE, body.toString(), path, null, null, side, losses);
         }
         final int start = line(region, "startLine");
@@ -306,6 +324,11 @@ public final class GitHubReviewWrite {
             throw refusal("a region of 1 to 100 lines", "region");
         }
         if (region.has("startColumn") || region.has("endColumn")) {
+            for (final String column : List.of("startColumn", "endColumn")) {
+                if (region.has(column)) {
+                    line(region, column);
+                }
+            }
             losses.merge("columns-dropped", 1, Integer::sum);
         }
         onlyFields(
@@ -360,7 +383,8 @@ public final class GitHubReviewWrite {
                     "fixes");
         }
         final int fixStart = line(deleted, "startLine");
-        final int fixEnd = deleted.has("endLine") ? line(deleted, "endLine") : -1;
+        // SARIF's endLine defaults to the startLine.
+        final int fixEnd = deleted.has("endLine") ? line(deleted, "endLine") : fixStart;
         if (fixStart != start || fixEnd != end) {
             throw outside("the replaced lines are not the anchor's");
         }

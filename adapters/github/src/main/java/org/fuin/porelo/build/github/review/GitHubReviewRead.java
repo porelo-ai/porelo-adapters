@@ -610,10 +610,16 @@ public final class GitHubReviewRead {
             if (!opening.matches()) {
                 return null;
             }
-            final String last = lines[lines.length - 1].strip();
+            final String last = lines[lines.length - 1];
+            final String marks = last.stripLeading();
+            final int run = marks.length() - marks.replaceFirst("^`+", "").length();
             if (lines.length < 2
-                    || last.length() < opening.group(1).length()
-                    || !last.chars().allMatch(c -> c == '`')) {
+                    || last.length() - marks.length() > 3
+                    || !last.substring(0, last.length() - marks.length())
+                            .chars()
+                            .allMatch(c -> c == ' ')
+                    || run < opening.group(1).length()
+                    || !ReviewText.onlySpacesAndTabs(marks.substring(run))) {
                 throw new HeldItem("a suggestion fence that is not closed");
             }
             if (lines.length == 2) {

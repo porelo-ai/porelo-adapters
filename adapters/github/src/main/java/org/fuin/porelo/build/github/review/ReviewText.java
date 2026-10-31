@@ -24,17 +24,19 @@ public final class ReviewText {
     private static final int VARIATION_SELECTOR_16 = 0xFE0F;
 
     private static final Pattern HTML =
-            Pattern.compile("<!--.*?-->|</?[A-Za-z][A-Za-z0-9-]*(?:\\s[^<>]*)?/?>", Pattern.DOTALL);
+            Pattern.compile(
+                    "<!--.*?-->|<[!?][^<>]*>|</?[A-Za-z][A-Za-z0-9-]*(?:[\\s/][^<>]*)?>",
+                    Pattern.DOTALL);
 
     private static final Pattern IMAGE_OR_LINK =
             Pattern.compile("!?\\[([^\\]\\n]*)\\]\\([^)\\n]*\\)");
 
     private static final Pattern AUTOLINK =
-            Pattern.compile("<((?:https?|mailto|ftp):[^<>\\s]*)>", Pattern.CASE_INSENSITIVE);
+            Pattern.compile("<([A-Za-z][A-Za-z0-9+.-]{1,31}:[^<>\\s]*)>");
 
     private static final Pattern MENTION =
             Pattern.compile(
-                    "(?<![A-Za-z0-9`@])@[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:/[A-Za-z0-9_.-]+)?");
+                    "(?<![A-Za-z0-9@])@[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:/[A-Za-z0-9_.-]+)?");
 
     private ReviewText() {}
 
@@ -109,15 +111,49 @@ public final class ReviewText {
                     "message.text");
         }
         final String body = undoubleBraces(message);
+        // Longer than every backtick run of the body, so no stray backtick pairs with it.
+        final String marks = "`".repeat(longestBacktickRun(body) + 1);
         final StringBuilder out = new StringBuilder(body.length());
+        int at = 0;
         for (final Segment segment : segments(body)) {
-            out.append(
-                    segment.code()
-                            ? segment.text()
-                            : MENTION.matcher(segment.text())
-                                    .replaceAll(m -> "`" + m.group() + "`"));
+            if (segment.code()) {
+                out.append(segment.text());
+            } else {
+                escapeMentions(body, at, at + segment.text().length(), marks, out);
+            }
+            at += segment.text().length();
         }
         return out.toString();
+    }
+
+    /** Copies prose, each mention in it a code span that touches no backslash or backtick. */
+    private static void escapeMentions(
+            String body, int from, int to, String marks, StringBuilder out) {
+        final Matcher mention = MENTION.matcher(body).region(from, to);
+        int copied = from;
+        while (mention.find()) {
+            out.append(body, copied, mention.start());
+            final char before = mention.start() > 0 ? body.charAt(mention.start() - 1) : ' ';
+            if (before == '\\' || before == '`') {
+                out.append(' ');
+            }
+            out.append(marks).append(mention.group()).append(marks);
+            if (mention.end() < body.length() && body.charAt(mention.end()) == '`') {
+                out.append(' ');
+            }
+            copied = mention.end();
+        }
+        out.append(body, copied, to);
+    }
+
+    private static int longestBacktickRun(String text) {
+        int longest = 0;
+        int run = 0;
+        for (int i = 0; i < text.length(); i++) {
+            run = text.charAt(i) == '`' ? run + 1 : 0;
+            longest = Math.max(longest, run);
+        }
+        return longest;
     }
 
     /**
@@ -302,7 +338,8 @@ public final class ReviewText {
             final int closing = runOf(text, at, mark);
             if (closing >= run) {
                 final int end = text.indexOf('\n', at);
-                if (text.substring(at + closing, end < 0 ? text.length() : end).isBlank()) {
+                if (onlySpacesAndTabs(
+                        text.substring(at + closing, end < 0 ? text.length() : end))) {
                     return end < 0 ? text.length() : end;
                 }
             }
@@ -318,6 +355,11 @@ public final class ReviewText {
         return text.substring(from, end < 0 ? text.length() : end).indexOf('`') >= 0;
     }
 
+    /** CommonMark's blank: spaces and tabs only, no other white space. */
+    static boolean onlySpacesAndTabs(String text) {
+        return text.chars().allMatch(c -> c == ' ' || c == '\t');
+    }
+
     private static int runOf(String text, int i, char c) {
         int n = 0;
         while (i + n < text.length() && text.charAt(i + n) == c) {
@@ -329,8 +371,9 @@ public final class ReviewText {
     private static int closingRun(String text, int from, int run) {
         int i = from;
         while (i < text.length()) {
-            if (blankLineAt(text, i)) {
-                // A code span never crosses a paragraph's end.
+            if (text.charAt(i) == '\n') {
+                // A line may start a block that ends the paragraph; a span crossing it is not
+                // trusted to be one, so what follows stays prose.
                 return -1;
             }
             if (text.charAt(i) == '`') {
@@ -344,18 +387,6 @@ public final class ReviewText {
             }
         }
         return -1;
-    }
-
-    /** At a line end followed by a line of only spaces and tabs. */
-    private static boolean blankLineAt(String text, int i) {
-        if (text.charAt(i) != '\n') {
-            return false;
-        }
-        int at = i + 1;
-        while (at < text.length() && (text.charAt(at) == ' ' || text.charAt(at) == '\t')) {
-            at++;
-        }
-        return at < text.length() && text.charAt(at) == '\n';
     }
 
     private static void flush(StringBuilder prose, List<Segment> out) {

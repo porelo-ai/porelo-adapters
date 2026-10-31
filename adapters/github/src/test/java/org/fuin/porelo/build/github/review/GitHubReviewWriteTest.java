@@ -44,7 +44,7 @@ class GitHubReviewWriteTest {
 
         assertThat(rendered.body())
                 .as("prose mention escaped, code untouched")
-                .isEqualTo("ask `@octocat` or `@team`");
+                .isEqualTo("ask ``@octocat`` or `@team`");
     }
 
     // Harm: a client claims an authority field the daemon owns.
@@ -208,19 +208,32 @@ class GitHubReviewWriteTest {
         return names;
     }
 
-    // Harm: a mention GitHub renders as prose notifies that person or team.
+    // Harm: a mention GitHub renders as prose notifies that person or team. Each expected body
+    // is checked by hand against CommonMark: the mention ends inside a code span.
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(
-            strings = {
-                "```x``` @octocat",
-                "one ` mark\n\n@octocat and ` another",
-                "ask _@octocat_ now",
-                "ask __@octocat__ now"
+    @org.junit.jupiter.params.provider.CsvSource(
+            delimiter = '|',
+            quoteCharacter = '"',
+            value = {
+                "```x``` @octocat|```x``` ````@octocat````",
+                "one ` mark\\n\\n@octocat and ` another|one ` mark\\n\\n``@octocat`` and ` another",
+                "ask _@octocat_ now|ask _`@octocat`_ now",
+                "ask __@octocat__ now|ask __`@octocat`__ now",
+                "one ` mark, @alice and @bob|one ` mark, ``@alice`` and ``@bob``",
+                "ask \\@octocat|ask \\ `@octocat`",
+                "see `@octocat here|see ` ``@octocat`` here",
+                "`\\n# @octocat `|`\\n# ``@octocat`` `",
+                "> `\\n>\\n> @octocat `|> `\\n>\\n> ``@octocat`` `"
             })
-    void aMentionGitHubWouldRenderAsProseBecomesACodeSpan(String text) {
-        assertThat(ReviewText.toForge(text))
-                .as("the mention is a code span, so it notifies no one")
-                .contains("`@octocat`");
+    void aMentionGitHubWouldRenderAsProseBecomesACodeSpan(String text, String body) {
+        assertThat(ReviewText.toForge(unescape(text)))
+                .as("the mention is a code span no stray backtick can pair with")
+                .isEqualTo(unescape(body));
+    }
+
+    /** A CSV record holds no line end: a backslash and n stand for one. */
+    private static String unescape(String csv) {
+        return csv.replace("\\\\", "\u0000").replace("\\n", "\n").replace("\u0000", "\\");
     }
 
     private static ObjectNode finding(String ruleId) {
@@ -301,6 +314,55 @@ class GitHubReviewWriteTest {
 
         assertThatThrownBy(() -> GitHubReviewWrite.render(result))
                 .as("refused, never coerced")
+                .isInstanceOf(ReviewRefusal.class);
+    }
+
+    @Test
+    void aOneLineFixWithoutEndLinesIsItsAnchor() {
+        final ObjectNode result =
+                result(
+                        """
+                        {"kind":"review","level":"none","message":{"text":"x"},
+                         "locations":[{"physicalLocation":{"artifactLocation":{"uri":"src/Gate.java"},
+                           "region":{"startLine":12}}}],
+                         "fixes":[{"artifactChanges":[{"artifactLocation":{"uri":"src/Gate.java"},
+                           "replacements":[{"deletedRegion":{"startLine":12},
+                             "insertedContent":{"text":"y"}}]}]}],
+                         "properties":{"porelo/anchorKind":"line","porelo/diffSide":"new"}}
+                        """);
+
+        assertThat(GitHubReviewWrite.render(result).body())
+                .as("SARIF's endLine defaults to startLine on both")
+                .endsWith("```suggestion\ny\n```");
+    }
+
+    // Harm: a body over GitHub's limit for the profile is held by every later read of it.
+    @Test
+    void aBodyOverTheLimitWithItsRuleIdIsRefused() {
+        final ObjectNode result = finding("R".repeat(100));
+        ((ObjectNode) result.get("message")).put("text", "x".repeat(8150));
+
+        assertThatThrownBy(() -> GitHubReviewWrite.render(result))
+                .as("the whole body counts")
+                .isInstanceOfSatisfying(
+                        ReviewRefusal.class,
+                        r ->
+                                assertThat(r.reason())
+                                        .as("too large")
+                                        .isEqualTo(ReviewRefusal.Reason.TOO_LARGE));
+    }
+
+    // Harm: a comment on the old side of a file lands on the new side.
+    @Test
+    void aFileCommentOnTheOldSideIsRefused() {
+        final ObjectNode result = line("x", "", "");
+        ((ObjectNode) result.get("properties"))
+                .put("porelo/anchorKind", "file")
+                .put("porelo/diffSide", "old");
+        ((ObjectNode) result.at("/locations/0/physicalLocation")).remove("region");
+
+        assertThatThrownBy(() -> GitHubReviewWrite.render(result))
+                .as("GitHub's file comment names no side")
                 .isInstanceOf(ReviewRefusal.class);
     }
 }

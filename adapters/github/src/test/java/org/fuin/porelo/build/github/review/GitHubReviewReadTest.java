@@ -389,4 +389,37 @@ class GitHubReviewReadTest {
                 .as("its review is pending")
                 .isTrue();
     }
+
+    // Harm: a fence GitHub does not close leaves a quoted suggestion read as a fix.
+    @Test
+    void aClosingFenceWithOtherThanSpacesIsNoClosingFence() {
+        final GitHubReviewRead.Read read =
+                oneComment(
+                        c -> c.put("body", "```\n```\u3000\n```suggestion\nSystem.exit(1);\n```"),
+                        t -> {});
+
+        assertThat(read.results().get(0).has("fixes"))
+                .as("the suggestion is quoted inside the first fence")
+                .isFalse();
+    }
+
+    // Harm: a suggestion GitHub does not close is applied as if it were.
+    @Test
+    void aSuggestionClosedOnlyByAnIndentedLineIsHeld() {
+        final GitHubReviewRead.Read read =
+                oneComment(c -> c.put("body", "```suggestion\nfoo\n    ```"), t -> {});
+
+        assertThat(read.results()).as("four spaces make no closing fence").isEmpty();
+        assertThat(read.held()).as("held, not applied").hasSize(1);
+    }
+
+    // Harm: markup a reader renders survives as text.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {"<svg/onload=alert(1)>", "<javascript:alert(1)>"})
+    void markupOfOtherShapesIsDroppedToo(String body) {
+        assertThat(ReviewText.fromForge("see " + body).text())
+                .as("no tag and no autolink is left")
+                .doesNotContain("<");
+    }
 }

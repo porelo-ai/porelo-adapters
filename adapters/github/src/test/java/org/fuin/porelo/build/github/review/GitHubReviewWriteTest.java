@@ -92,6 +92,7 @@ class GitHubReviewWriteTest {
                         () ->
                                 GitHubReviewWrite.render(
                                         line("x", "", fix(12, 13, "src/Other.java"))))
+                .as("a fix in another file")
                 .isInstanceOfSatisfying(
                         ReviewRefusal.class,
                         r ->
@@ -118,6 +119,7 @@ class GitHubReviewWriteTest {
         ((ObjectNode) result.get("properties")).put("porelo/diffSide", "old");
 
         assertThatThrownBy(() -> GitHubReviewWrite.render(result))
+                .as("a fix on the old side")
                 .isInstanceOfSatisfying(
                         ReviewRefusal.class,
                         r -> assertThat(r.reason()).isEqualTo(ReviewRefusal.Reason.OLD_SIDE_FIX));
@@ -140,6 +142,7 @@ class GitHubReviewWriteTest {
     @Test
     void aZeroWidthSpaceIsUnsafeText() {
         assertThatThrownBy(() -> GitHubReviewWrite.render(line("a​b", "", "")))
+                .as("a zero-width space")
                 .isInstanceOfSatisfying(
                         ReviewRefusal.class,
                         r -> assertThat(r.reason()).isEqualTo(ReviewRefusal.Reason.UNSAFE_TEXT));

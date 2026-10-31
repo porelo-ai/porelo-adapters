@@ -302,6 +302,7 @@ class StandInTest {
                                         submission("fixture-anchor", file, 4, ""),
                                         "id",
                                         "once")))
+                .as("the same id with another document")
                 .endsWith(".IdReused");
     }
 
@@ -313,6 +314,7 @@ class StandInTest {
                         errorOf(
                                 "Comment",
                                 Map.of("name", "fixture-moved", "sarif", sarif, "toForge", true)))
+                .as("the fixture's pull request moved")
                 .endsWith(".PullRequestMoved");
     }
 
@@ -374,11 +376,16 @@ class StandInTest {
     @Test
     void aMethodTheStandInDoesNotServeFailsNamingTheStandIn() {
         assertThatThrownBy(() -> call("Start", Map.of()))
+                .as("a method the stand-in does not serve")
                 .isInstanceOfSatisfying(
                         VarlinkException.class,
                         ex -> {
-                            assertThat(ex.getErrorName()).endsWith(".Failed");
-                            assertThat(String.valueOf(ex.getParameters())).contains("stand-in");
+                            assertThat(ex.getErrorName())
+                                    .as("the interface's Failed")
+                                    .endsWith(".Failed");
+                            assertThat(String.valueOf(ex.getParameters()))
+                                    .as("naming the stand-in")
+                                    .contains("stand-in");
                         });
     }
 
@@ -462,6 +469,7 @@ class StandInTest {
                                         HttpClient.newHttpClient(),
                                         URI.create("https://api.github.invalid/"),
                                         new PrintStream(log, true, StandardCharsets.UTF_8)))
+                .as("a socket directory others may read")
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("0700");
     }
@@ -493,6 +501,7 @@ class StandInTest {
                                                 .build(),
                                         URI.create("https://api.github.invalid/"),
                                         new PrintStream(log, true, StandardCharsets.UTF_8)))
+                .as("no token to read the pull request with")
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining(Main.TOKEN_VARIABLE);
     }
@@ -504,8 +513,7 @@ class StandInTest {
         if (!files.isEmpty()) {
             return (String) files.get(0).get("path");
         }
-        final ObjectNode any = (ObjectNode) JSON.readTree("{}");
-        throw new AssertionError("no changed file in " + push + any);
+        throw new AssertionError("no changed file in " + push);
     }
 
     // Harm: a suggestion sent as a reply lands on the parent's lines, which "Commit suggestion"
@@ -775,5 +783,16 @@ class StandInTest {
         assertThat(stored.at("/runs/0/properties/porelo~1reviewRound").asText())
                 .as("the round")
                 .isNotEmpty();
+    }
+
+    // Harm: the mirror holds a private repository's objects; other local accounts must not read
+    // them.
+    @Test
+    void theMirrorIsReadableByItsOwnerOnly() throws Exception {
+        assertThat(
+                        PosixFilePermissions.toString(
+                                Files.getPosixFilePermissions(tmp.resolve("state/mirror.git"))))
+                .as("whatever the umask")
+                .isEqualTo("rwx------");
     }
 }

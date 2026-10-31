@@ -143,7 +143,8 @@ public final class GitHubReviewWrite {
         }
         body.append(ReviewText.toForge(text(message, "text")));
         // What a read gives back as the message: the body without its suggestion fence.
-        if (body.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8).length
+        final String readBack = body.toString().replace("{", "{{").replace("}", "}}");
+        if (readBack.getBytes(java.nio.charset.StandardCharsets.UTF_8).length
                 > ReviewText.BODY_LIMIT) {
             throw new ReviewRefusal(
                     ReviewRefusal.Reason.TOO_LARGE,
@@ -329,6 +330,12 @@ public final class GitHubReviewWrite {
                     line(region, column);
                 }
             }
+            if (start == end
+                    && region.has("startColumn")
+                    && region.has("endColumn")
+                    && line(region, "endColumn") < line(region, "startColumn")) {
+                throw refusal("an end column before the start column", "region");
+            }
             losses.merge("columns-dropped", 1, Integer::sum);
         }
         onlyFields(
@@ -478,7 +485,7 @@ public final class GitHubReviewWrite {
 
     private static int line(JsonNode region, String field) {
         final JsonNode value = region.path(field);
-        if (!value.isIntegralNumber() || value.asLong() < 1 || value.asLong() > Integer.MAX_VALUE) {
+        if (!value.isIntegralNumber() || !value.canConvertToInt() || value.intValue() < 1) {
             throw refusal(field + " is a line number from 1", "region." + field);
         }
         return value.asInt();

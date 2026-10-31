@@ -38,6 +38,11 @@ public final class ReviewText {
             Pattern.compile(
                     "(?<![A-Za-z0-9@])@[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:/[A-Za-z0-9_.-]+)?");
 
+    /** What GitHub renders as markup in prose and the profile's text never holds. */
+    private static final Pattern MARKUP =
+            Pattern.compile(
+                    "<[A-Za-z/!?]|&(?:#[0-9]{1,7}|#[xX][0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});");
+
     private ReviewText() {}
 
     /** What a forge's text became: the profile's text and what was lost, or why it is held. */
@@ -72,7 +77,16 @@ public final class ReviewText {
         final String lines = body.replace("\r\n", "\n").replace('\r', '\n');
         final StringBuilder out = new StringBuilder(lines.length());
         for (final Segment segment : segments(lines)) {
-            out.append(segment.code() ? segment.text() : prose(segment.text(), losses));
+            if (segment.code()) {
+                out.append(segment.text());
+                continue;
+            }
+            final String prose = prose(segment.text(), losses);
+            if (MARKUP.matcher(prose).find()) {
+                // Markup the reduction cannot take apart may hide what follows it on GitHub.
+                return new Read(null, losses, "markup the profile cannot carry");
+            }
+            out.append(prose);
         }
         final String text = out.toString();
         final String refused = refusedCharacter(text);
@@ -119,6 +133,13 @@ public final class ReviewText {
             if (segment.code()) {
                 out.append(segment.text());
             } else {
+                if (MARKUP.matcher(segment.text()).find()) {
+                    throw new ReviewRefusal(
+                            ReviewRefusal.Reason.PROFILE_VIOLATION,
+                            "HTML, an autolink or a character reference in prose; code goes in a"
+                                    + " code span",
+                            "message.text");
+                }
                 escapeMentions(body, at, at + segment.text().length(), marks, out);
             }
             at += segment.text().length();
@@ -292,6 +313,11 @@ public final class ReviewText {
                 i = fenceEnd;
                 continue;
             }
+            if (text.charAt(i) == '`' && isEscaped(text, i)) {
+                prose.append('`');
+                i++;
+                continue;
+            }
             if (text.charAt(i) == '`') {
                 final int run = runOf(text, i, '`');
                 final int close = closingRun(text, i + run, run);
@@ -310,6 +336,15 @@ public final class ReviewText {
         }
         flush(prose, out);
         return out;
+    }
+
+    /** A backslash escapes the character after it unless it is itself escaped. */
+    private static boolean isEscaped(String text, int i) {
+        int backslashes = 0;
+        while (i - backslashes > 0 && text.charAt(i - backslashes - 1) == '\\') {
+            backslashes++;
+        }
+        return backslashes % 2 == 1;
     }
 
     /** At the start of a line opening a fence of three or more backticks or tildes, its end. */
@@ -360,7 +395,7 @@ public final class ReviewText {
         return text.chars().allMatch(c -> c == ' ' || c == '\t');
     }
 
-    private static int runOf(String text, int i, char c) {
+    static int runOf(String text, int i, char c) {
         int n = 0;
         while (i + n < text.length() && text.charAt(i + n) == c) {
             n++;

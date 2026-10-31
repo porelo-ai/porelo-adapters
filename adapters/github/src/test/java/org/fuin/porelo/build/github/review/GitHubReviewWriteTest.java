@@ -365,4 +365,89 @@ class GitHubReviewWriteTest {
                 .as("GitHub's file comment names no side")
                 .isInstanceOf(ReviewRefusal.class);
     }
+
+    // Harm: GitHub renders HTML, an autolink or a character reference in prose, which hides text
+    // from the mention escape or turns into a mention, a bidi override or a tracking image.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {
+                "ask &#64;octocat",
+                "ask &commat;octocat",
+                "a&#x200B;b",
+                "<!--\n~~~\n-->\n@octocat",
+                "<a title=\"`\"> @octocat `</a>",
+                "see <https://example.org/x.png>",
+                "mail <user@example.org>"
+            })
+    void markupInProseIsRefused(String text) {
+        assertThatThrownBy(() -> ReviewText.toForge(text))
+                .as("the profile's text holds no HTML, autolink or character reference")
+                .isInstanceOfSatisfying(
+                        ReviewRefusal.class,
+                        r ->
+                                assertThat(r.reason())
+                                        .as("a profile violation")
+                                        .isEqualTo(ReviewRefusal.Reason.PROFILE_VIOLATION));
+    }
+
+    // Harm: a backslash-escaped backtick opens no code span on GitHub, so the mention after it
+    // would notify.
+    @Test
+    void aMentionAfterAnEscapedBacktickIsEscaped() {
+        assertThat(ReviewText.toForge("\\` @octocat `"))
+                .as("the escaped backtick is prose, the mention a code span")
+                .isEqualTo("\\` ``@octocat`` `");
+    }
+
+    // Harm: markup inside code is code; refusing it would refuse every review of HTML.
+    @Test
+    void markupInCodeIsSentAsItIs() {
+        assertThat(ReviewText.toForge("use `<b>&amp;</b>` here"))
+                .as("a code span is never rewritten")
+                .isEqualTo("use `<b>&amp;</b>` here");
+    }
+
+    // Harm: a line number past 64 bits wraps to line 1 and anchors the comment there.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"18446744073709551617"})
+    void aLineNumberPastTheRangeIsRefusedNotWrapped(String startLine) {
+        final ObjectNode result = line("x", "", "").deepCopy();
+        ((ObjectNode) result.at("/locations/0/physicalLocation/region"))
+                .put("startLine", new java.math.BigInteger(startLine))
+                .put("endLine", new java.math.BigInteger(startLine));
+
+        assertThatThrownBy(() -> GitHubReviewWrite.render(result))
+                .as("refused, never read as another line")
+                .isInstanceOf(ReviewRefusal.class);
+    }
+
+    // Harm: a body whose braces a read doubles past the limit is held on every later read.
+    @Test
+    void aBodyOverTheLimitOnceItsBracesAreDoubledIsRefused() {
+        final ObjectNode result = finding("R".repeat(100));
+        ((ObjectNode) result.get("message")).put("text", "{{".repeat(4080));
+
+        assertThatThrownBy(() -> GitHubReviewWrite.render(result))
+                .as("the body a read gives back counts")
+                .isInstanceOfSatisfying(
+                        ReviewRefusal.class,
+                        r ->
+                                assertThat(r.reason())
+                                        .as("too large")
+                                        .isEqualTo(ReviewRefusal.Reason.TOO_LARGE));
+    }
+
+    // Harm: an inverted region is stored and served as SARIF no reader can place.
+    @Test
+    void aOneLineRegionWhoseColumnsAreInvertedIsRefused() {
+        final ObjectNode result = line("x", "", "");
+        ((ObjectNode) result.at("/locations/0/physicalLocation/region"))
+                .put("endLine", 12)
+                .put("startColumn", 10)
+                .put("endColumn", 2);
+
+        assertThatThrownBy(() -> GitHubReviewWrite.render(result))
+                .as("the end column comes before the start")
+                .isInstanceOf(ReviewRefusal.class);
+    }
 }

@@ -805,7 +805,8 @@ class StandInTest {
 
     // Harm: a stream that skips the guard sends the token to the caller.
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(strings = {"Projects", "WatchProjects"})
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {"Projects", "WatchProjects", "Comment"})
     void aProjectsAnswerThatWouldCarryTheTokenIsNotSent(String method) throws Exception {
         final Pushes pushes = new Pushes();
         // The mirror's path is in the answer; here it holds the token.
@@ -846,7 +847,18 @@ class StandInTest {
                 VarlinkClient leakyClient = new VarlinkClient(leaky.socketPath())) {
             Thread.ofVirtual().start(leaky);
 
-            assertThatThrownBy(() -> leakyClient.call(StandIn.INTERFACE + "." + method, Map.of()))
+            // A refused document names the field it refuses; here the field is the token.
+            final Map<String, Object> parameters =
+                    "Comment".equals(method)
+                            ? Map.of(
+                                    "project",
+                                    StandIn.PROJECT,
+                                    "name",
+                                    "p",
+                                    "sarif",
+                                    "{\"" + TOKEN + "\":1}")
+                            : Map.of();
+            assertThatThrownBy(() -> leakyClient.call(StandIn.INTERFACE + "." + method, parameters))
                     .as("the answer is refused")
                     .isInstanceOfSatisfying(
                             VarlinkException.class,
@@ -1000,6 +1012,60 @@ class StandInTest {
                                     assertThat(String.valueOf(ex.getParameters()))
                                             .as("the push whose base it cannot give")
                                             .contains("one"));
+            assertThatThrownBy(
+                            () ->
+                                    stackedClient.call(
+                                            StandIn.INTERFACE + ".Review",
+                                            Map.of("project", StandIn.PROJECT, "name", "one")))
+                    .as("a review is refused too, never served with a wrong base")
+                    .isInstanceOf(VarlinkException.class);
+            assertThat(git.read("for-each-ref", "refs/heads"))
+                    .as("no default branch is left that gives push one a wrong base")
+                    .isBlank();
         }
+    }
+
+    // Harm: a call asking for no parent is answered with another call's comment, or the reverse.
+    @Test
+    void theSameIdWithReplyToTheTextNullIsReused() throws Exception {
+        final String sarif = submission("fixture-anchor", headFile("fixture-anchor"), 1, "");
+        call("Comment", Map.of("name", "fixture-anchor", "sarif", sarif, "id", "k1"));
+
+        assertThat(
+                        errorOf(
+                                "Comment",
+                                Map.of(
+                                        "name",
+                                        "fixture-anchor",
+                                        "sarif",
+                                        sarif,
+                                        "id",
+                                        "k1",
+                                        "replyTo",
+                                        "null")))
+                .as("a parent named null is not no parent")
+                .endsWith(".IdReused");
+    }
+
+    // Harm: a retry asking for the forge write is answered as if it had been sent.
+    @Test
+    void theSameIdWithToForgeAskedIsReused() throws Exception {
+        final String sarif = submission("fixture-anchor", headFile("fixture-anchor"), 1, "");
+        call("Comment", Map.of("name", "fixture-anchor", "sarif", sarif, "id", "k1"));
+
+        assertThat(
+                        errorOf(
+                                "Comment",
+                                Map.of(
+                                        "name",
+                                        "fixture-anchor",
+                                        "sarif",
+                                        sarif,
+                                        "id",
+                                        "k1",
+                                        "toForge",
+                                        true)))
+                .as("the forge write is part of the call")
+                .endsWith(".IdReused");
     }
 }

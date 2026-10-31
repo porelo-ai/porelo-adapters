@@ -422,4 +422,45 @@ class GitHubReviewReadTest {
                 .as("no tag and no autolink is left")
                 .doesNotContain("<");
     }
+
+    // Harm: a suggestion GitHub hides inside an HTML comment becomes a fix that can be applied.
+    @Test
+    void aSuggestionInsideAnHtmlCommentIsHeld() {
+        final GitHubReviewRead.Read read =
+                oneComment(
+                        c ->
+                                c.put(
+                                        "body",
+                                        "Looks good!\n<!--\n```suggestion\nSystem.exit(1);\n```\n-->"),
+                        t -> {});
+
+        assertThat(read.results()).as("no fix comes out of hidden text").isEmpty();
+        assertThat(read.held()).as("the comment is held").hasSize(1);
+    }
+
+    // Harm: markup a reader renders survives as text, or text GitHub hides is shown.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {
+                "<!--\n~~~\n-->\n<script>alert(1)</script>",
+                "see <img title=\"<\" src=x onerror=alert(1)>",
+                "see <?xml a=\"<\" ?>",
+                "see <![CDATA[a < b]]>",
+                "contact <user@example.org>",
+                "a &#x202E; b"
+            })
+    void markupTheReadCannotReduceHoldsTheBody(String body) {
+        assertThat(ReviewText.fromForge(body).isHeld())
+                .as("held rather than carried with its markup")
+                .isTrue();
+    }
+
+    // Harm: a tag of a shape the reduction misses survives as markup.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"<!DOCTYPE html>", "<?php x ?>"})
+    void declarationsAndInstructionsAreDropped(String body) {
+        assertThat(ReviewText.fromForge("see " + body).text())
+                .as("nothing of the markup is left")
+                .isEqualTo("see ");
+    }
 }

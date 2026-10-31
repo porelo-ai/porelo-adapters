@@ -599,6 +599,13 @@ public final class GitHubReviewRead {
             if (found == null || fix == null) {
                 return none(body);
             }
+            final String prefix = lines.substring(0, found[0]);
+            final ReviewText.Read before = ReviewText.fromForge(prefix);
+            if (!prefix.isBlank()
+                    && (before.isHeld() || before.losses().contains("markup-dropped"))) {
+                // An HTML block or comment before it can make GitHub show the fence as text.
+                throw new HeldItem("a suggestion after markup");
+            }
             final String rest = (lines.substring(0, found[0]) + lines.substring(found[1])).strip();
             return new Suggestion(rest.isEmpty() ? "Suggested change." : rest, fix);
         }
@@ -612,7 +619,7 @@ public final class GitHubReviewRead {
             }
             final String last = lines[lines.length - 1];
             final String marks = last.stripLeading();
-            final int run = marks.length() - marks.replaceFirst("^`+", "").length();
+            final int run = ReviewText.runOf(marks, 0, '`');
             if (lines.length < 2
                     || last.length() - marks.length() > 3
                     || !last.substring(0, last.length() - marks.length())

@@ -246,12 +246,19 @@ final class StandIn {
 
     /** One answer of a method, refused if it or its error would carry the token. */
     private Map<String, Object> checked(String method, Body body, Map<String, Object> parameters) {
+        final Map<String, Object> answer = unlogged(method, body, parameters);
+        log(method + " answered");
+        return answer;
+    }
+
+    /** As {@link #checked}, without the log line of an answer, which a watch writes only once. */
+    private Map<String, Object> unlogged(String method, Body body, Map<String, Object> parameters) {
         Map<String, Object> answer;
         try {
             answer = body.call(parameters);
         } catch (ReviewRefusal ex) {
             log(method + " refused: " + ex.reason().error() + " at " + ex.path());
-            throw refused(ex);
+            throw clean(refused(ex));
         } catch (VarlinkException ex) {
             log(method + " answered " + ex.getErrorName());
             throw clean(ex);
@@ -264,7 +271,6 @@ final class StandIn {
             log(method + " failed: its answer would have carried the token");
             throw failed("The stand-in's answer would have carried the token; nothing was sent");
         }
-        log(method + " answered");
         return answer;
     }
 
@@ -321,8 +327,9 @@ final class StandIn {
                 Thread.currentThread().interrupt();
                 return;
             }
-            final Map<String, Object> now = checked("WatchProjects", body, parameters);
+            final Map<String, Object> now = unlogged("WatchProjects", body, parameters);
             if (!now.equals(last)) {
+                log("WatchProjects answered");
                 replies.more(now);
                 last = now;
             }
@@ -504,10 +511,16 @@ final class StandIn {
     private Map<String, Object> comment(Map<String, Object> parameters) {
         gate(parameters);
         final Push push = push(parameters);
+        final Map<String, Object> answer;
         // One comment of a push at a time, so one id never makes two comments or two writes.
         synchronized (push) {
-            return comment(parameters, push);
+            answer = comment(parameters, push);
         }
+        if (answer.containsKey("sentToForge")) {
+            // Outside the push's lock: a refresh takes the forge's lock, then each push's.
+            refresh(true);
+        }
+        return answer;
     }
 
     private Map<String, Object> comment(Map<String, Object> parameters, Push push) {
@@ -670,7 +683,6 @@ final class StandIn {
                     "AdapterRefused",
                     Map.of("error", "Failed", "detail", String.valueOf(ex.getMessage())));
         }
-        refresh(true);
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("commentId", Long.toString(written.commentId()));
         out.put("commentKind", written.commentKind());
@@ -785,11 +797,10 @@ final class StandIn {
         if (bases.equals(defaultBranchBases) || bases.isEmpty()) {
             return;
         }
-        git.updateRef(DEFAULT_BRANCH, git.commitTree(Map.of(), bases, "The stand-in's bases"));
-        git.read("symbolic-ref", "HEAD", DEFAULT_BRANCH);
+        final String branch = git.commitTree(Map.of(), bases, "The stand-in's bases");
         for (final Push push : pushes.all()) {
             // One push's history holding another's base, as stacked pull requests do.
-            if (!git.mergeBase(DEFAULT_BRANCH, push.commit).equals(push.base)) {
+            if (!git.mergeBase(branch, push.commit).equals(push.base)) {
                 throw failed(
                         "No default branch gives push "
                                 + push.name
@@ -798,6 +809,8 @@ final class StandIn {
                                 + "; the stand-in serves no pull requests stacked on one another");
             }
         }
+        git.updateRef(DEFAULT_BRANCH, branch);
+        git.read("symbolic-ref", "HEAD", DEFAULT_BRANCH);
         defaultBranchBases = bases;
     }
 
@@ -850,6 +863,8 @@ final class StandIn {
         if (repository != null && !REPOSITORY.equals(repository)) {
             throw failed("The stand-in's project has one repository, " + REPOSITORY);
         }
+        // Every call on the project, so no push is served with a base its mirror cannot give.
+        defaultBranch();
     }
 
     private Push push(Map<String, Object> parameters) {
@@ -916,7 +931,12 @@ final class StandIn {
 
     /** What makes two Comment calls the same call: the document, the parent and the forge. */
     private static String callKey(Map<String, Object> parameters, String sarif) {
-        return parameters.get("replyTo") + "\n" + flag(parameters, "toForge") + "\n" + sarif;
+        final String replyTo = optional(parameters, "replyTo");
+        return (replyTo == null ? "no parent" : "parent " + replyTo)
+                + "\n"
+                + flag(parameters, "toForge")
+                + "\n"
+                + sarif;
     }
 
     /** An optional bool: absent is false, anything but a bool is refused. */

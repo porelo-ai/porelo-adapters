@@ -162,7 +162,7 @@ class StandInReplayTest {
 
         assertThat(String.valueOf(page.get("held")))
                 .as("the reply is held, the reason naming the line")
-                .contains("4431405381")
+                .contains(GitHubReplay.REPLY.id())
                 .contains("line");
         final JsonNode sarif = JSON.readTree((String) page.get("sarif"));
         assertThat(sarif.at("/runs/0/properties/porelo~1completeness").asText())
@@ -294,7 +294,7 @@ class StandInReplayTest {
 
         assertThat(String.valueOf(sent.get("sentToForge")))
                 .as("the recorded comment is the one sent")
-                .contains("4431405345");
+                .contains(GitHubReplay.ROOT.id());
         final JsonNode forge =
                 JSON.readTree(
                         (String)
@@ -302,7 +302,7 @@ class StandInReplayTest {
                                         .get("sarif"));
         assertThat(forge.at("/runs/0/results").findValuesAsText("porelo/nativeCommentId"))
                 .as("GitHub's copy of the sent comment is not stored again; its reply is")
-                .containsExactly("4431405381");
+                .containsExactly(GitHubReplay.REPLY.id());
         final JsonNode reply = forge.at("/runs/0/results/0");
         assertThat(reply.at("/properties/porelo~1replyTo").asText())
                 .as("the reply answers the local result")
@@ -325,7 +325,10 @@ class StandInReplayTest {
                                 local.at("/0/properties/porelo~1nativeReviewId").asText()))
                 .as("it carries what GitHub made of it")
                 .containsExactly(
-                        "4431405345", "review", "PRRC_kwDOVc0D888AAAABCCHhIQ", "5722360485");
+                        GitHubReplay.ROOT.id(),
+                        "review",
+                        GitHubReplay.ROOT.nodeId(),
+                        GitHubReplay.ROOT.reviewId());
     }
 
     // Harm: a reply to a reply sent to GitHub goes to a comment GitHub takes no reply to.
@@ -364,8 +367,12 @@ class StandInReplayTest {
                 .as("both replies go to the root GitHub made")
                 .containsExactly(
                         "/repos/fixture-org/fixture-repo/pulls/6/comments",
-                        "/repos/fixture-org/fixture-repo/pulls/6/comments/4431405345/replies",
-                        "/repos/fixture-org/fixture-repo/pulls/6/comments/4431405345/replies");
+                        "/repos/fixture-org/fixture-repo/pulls/6/comments/"
+                                + GitHubReplay.ROOT.id()
+                                + "/replies",
+                        "/repos/fixture-org/fixture-repo/pulls/6/comments/"
+                                + GitHubReplay.ROOT.id()
+                                + "/replies");
     }
 
     // Harm: the person's own released comment, as GitHub reads it back, is held as inbound.
@@ -394,7 +401,7 @@ class StandInReplayTest {
                 call("Comments", Map.of("name", "pr-6", "run", forgeRun("pr-6")));
         assertThat(String.valueOf(page.get("held")))
                 .as("the sent comment's copy is not held")
-                .doesNotContain("4431405345");
+                .doesNotContain(GitHubReplay.ROOT.id());
         assertThat(
                         JSON.readTree((String) page.get("sarif"))
                                 .at("/runs/0/results/0/properties/porelo~1threadId")

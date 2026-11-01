@@ -33,14 +33,70 @@ final class GitHubReplay {
 
     static final URI API = URI.create("https://api.github.invalid/");
 
-    /** The path the recorded comments are on. */
-    static final String PATH = "forge-client-c18dcd8e-2ca8-43a1-8176-32a541753041.txt";
-
-    private static final String RECORDED_HEAD = "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd";
-
-    private static final String RECORDED_BASE = "80816f1cded6167373c9b41b162b5319de20eb20";
-
     private static final ObjectMapper JSON = new ObjectMapper();
+
+    /** A recorded review comment, as the tests need to name it. */
+    record Recorded(String id, String nodeId, String reviewId) {}
+
+    /** The recorded thread's first comment, which the stand-in's sent comment is taken for. */
+    static final Recorded ROOT;
+
+    /** The recorded reply to {@link #ROOT}. */
+    static final Recorded REPLY;
+
+    /** The path the recorded comments are on. */
+    static final String PATH;
+
+    private static final String RECORDED_HEAD;
+
+    private static final String RECORDED_BASE;
+
+    // The forge clients re-record against a live repository, so every ID and SHA is read here.
+    static {
+        try {
+            final JsonNode pull = JSON.readTree(recorded("pull"));
+            RECORDED_HEAD = pull.at("/head/sha").asText();
+            RECORDED_BASE = pull.at("/base/sha").asText();
+            final JsonNode comments = JSON.readTree(recorded("reviewComments"));
+            final JsonNode root = comments.path(0);
+            final JsonNode reply = comments.path(1);
+            PATH = root.path("path").asText();
+            final boolean shaped =
+                    comments.size() == 2
+                            && !root.hasNonNull("in_reply_to_id")
+                            && reply.path("in_reply_to_id")
+                                    .asText()
+                                    .equals(root.path("id").asText())
+                            && reply.path("path").asText().equals(PATH)
+                            && root.path("line").asInt() == 1
+                            && reply.path("line").asInt() == 1
+                            && "Fixture reply".equals(reply.path("body").asText())
+                            && RECORDED_HEAD.matches("[0-9a-f]{40}")
+                            && RECORDED_BASE.matches("[0-9a-f]{40}")
+                            && !PATH.isEmpty();
+            if (!shaped) {
+                throw new IllegalStateException(
+                        "The recorded pull request is not one root comment on line 1 and its reply"
+                                + " 'Fixture reply': head="
+                                + RECORDED_HEAD
+                                + " base="
+                                + RECORDED_BASE
+                                + " comments="
+                                + comments);
+            }
+            ROOT = recordedComment(root);
+            REPLY = recordedComment(reply);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
+    private static Recorded recordedComment(JsonNode comment) {
+        return new Recorded(
+                comment.path("id").asText(),
+                comment.path("node_id").asText(),
+                comment.path("pull_request_review_id").asText());
+    }
 
     /** One pull request as GitHub answers it now; a test changes it between calls. */
     static final class Pull {

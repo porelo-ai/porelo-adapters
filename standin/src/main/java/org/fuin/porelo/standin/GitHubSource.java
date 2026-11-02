@@ -11,6 +11,7 @@ import org.fuin.porelo.build.github.review.GitHubReviewRead;
 import org.fuin.porelo.build.github.review.ReviewDocument;
 import org.fuin.porelo.forge.github.GitHubClient;
 import org.fuin.porelo.forge.github.GitHubGraphQl;
+import org.fuin.porelo.forge.github.Page;
 import org.fuin.porelo.forge.github.model.PullRequest;
 import org.jspecify.annotations.Nullable;
 
@@ -252,12 +253,12 @@ final class GitHubSource {
     /** Every page of a list, and whether it was read to its end. */
     private record Paged<T>(List<T> items, boolean complete) {}
 
-    private static <T> Paged<T> all(IntFunction<List<T>> page) {
+    private static <T> Paged<T> all(IntFunction<Page<T>> pages) {
         final List<T> out = new ArrayList<>();
         for (int n = 1; n <= PAGE_LIMIT; n++) {
-            final List<T> items = page.apply(n);
-            out.addAll(items);
-            if (items.size() < PER_PAGE) {
+            final Page<T> page = pages.apply(n);
+            out.addAll(page.items());
+            if (!page.more()) {
                 return new Paged<>(out, true);
             }
         }

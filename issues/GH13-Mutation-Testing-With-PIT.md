@@ -10,8 +10,7 @@ surviving mutants are real gaps in its tests and which are harmless.
 - A `pit` Maven profile, run by hand, not in CI and with no threshold.
 - PIT and its JUnit 5 plugin pinned.
 - Run on a VM where tests call real tools.
-- The model is the `pit` profile of `porelo-message-matrix`, on its branch `pit-try` until it is pushed, with the report
-  `pit-014d86a/report.md` in that repository's handover directory.
+- The model is the `pit` profile of `porelo-message-matrix`, on its branch `pit-try` until it is pushed.
 
 ## Acceptance
 

@@ -34,7 +34,7 @@
           "properties": {
             "porelo/anchorKind": "general",
             "porelo/sourceKind": "person",
-            "porelo/authorId": "michi",
+            "porelo/authorId": "fixture-person",
             "porelo/nativeCommentId": "9000000055",
             "porelo/nativeCommentKind": "issue",
             "porelo/nativeCommentNodeId": "IC_fixture0055",

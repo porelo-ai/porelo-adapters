@@ -14,4 +14,7 @@ serves the calls.
 - Run from the repository root:
   `./mvnw -B -s settings.xml -pl standin -am -q install -DskipTests` once, then
   `./mvnw -B -s settings.xml -pl standin exec:java -Dstandin.args="--socket <dir>/porelod.sock --repository <owner>/<repo> --pull <n> --state <dir>"`.
-  The socket's directory must be the caller's own, mode 0700. `--fixtures` adds the fixture pushes.
+  The socket's directory must be the caller's own, mode 0700. `--fixtures` adds the fixture pushes, and with only those
+  no token is needed. A real pull request is read from the forge clients' test repository
+  `porelo-ai-test/forge-clients-live`, with a fine-grained token of its test user limited to that repository.
+- What it settled is in [decisions](../doc/decisions.md).

@@ -46,7 +46,8 @@ token supplied for that call; every forge interaction, including builds, goes th
 
 - **Built first, now:** the GitHub to SARIF conversion in both directions in `adapters/github`, against the review
   profile and GitHub mapping as Porelo's review contract draft states them, through the `github` client's local
-  snapshot; the stand-in for the daemon's review calls ([GH12](README.md#gh12)) uses it. **Waits for the daemon's
+  snapshot; the stand-in for the daemon's review calls in `standin/` uses it, and
+  [decisions](../doc/decisions.md) holds what it settled. **Waits for the daemon's
   side:** serving `Review1` and its discovery, the published profile and its fixtures, the hardened reader, and the
   release binding of writes. **Waits for [GH09](README.md#gh09):** the shared contract cases both adapters pass.
 - Consume the API and discovery contract supplied by the dependencies. `GitHubReader` in `adapters/github` currently

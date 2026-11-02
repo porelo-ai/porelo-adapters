@@ -38,7 +38,8 @@ test on a branch and the first `Publish` on main, whose indexes listed every pac
   output), a fail-open release index, the token check, the checksum headers and their assignment, the `https` checks,
   the 2xx check on a redirected upload, an index redirected to plain http, the single-package check, the piped read-back
   on a large index, an authenticated read-back. A token holding a newline already fails without a request and without a
-  fragment of it in the output, so it needs no check of its own.
+  fragment of it in the output, so it needs no check of its own. `--proto =https` alone already stops a redirect to plain
+  http (measured on curl 8.18.0), so that guard goes red only with `--proto` and `--proto-redir` both removed.
 
 ## Acceptance
 
@@ -46,3 +47,7 @@ test on a branch and the first `Publish` on main, whose indexes listed every pac
 - The replay against the stand-in server passes and each of its failure paths has been seen red.
 - The first `Publish` on main uploads all four packages and the read-back finds both `.deb` files in the snapshots
   index; the `.rpm` files are listed in `porelo-dist-rpm/snapshots/`.
+
+## To be checked
+
+- The releases channel stays unmeasured until a tag contains this change: no tag has run these steps yet.

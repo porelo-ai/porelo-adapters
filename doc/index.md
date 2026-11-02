@@ -23,7 +23,8 @@ is there and answers:
 /usr/libexec/porelo/builds/github describe     # {"protocolVersion":2,"forge":"github"}
 ```
 
-A reader in `~/.local/share/porelo/builds/github` is found first, for one account only; the package needs none.
+A reader in `porelo/builds/github` under the account's own data directory is found first, for one account only; the
+package needs none.
 
 ## What it answers
 
@@ -69,8 +70,8 @@ is held in Porelo's vault and passed to the adapter in each call, as `Authorizat
 Redirects are refused; credentials never travel to a redirect destination. Public repositories can allow anonymous
 reads, although a configured credential still accompanies the adapter's requests.
 
-Like Porelo, the adapter trusts the account's `~/.config/porelo/ca-certificates.pem` in addition to the public
-certificate roots. An absolute `XDG_CONFIG_HOME` selects that configuration directory instead of `~/.config`.
+Like Porelo, the adapter trusts `porelo/ca-certificates.pem` in the account's configuration directory in addition to the
+public certificate roots. An absolute `XDG_CONFIG_HOME` selects that directory instead of the default in the home directory.
 
 The adapter reads each workflow's single status: failure takes precedence over outstanding runs, then
 cancellation, then success. `waiting` and `blocked` are queued, `running` is running, and `success` and `skipped`

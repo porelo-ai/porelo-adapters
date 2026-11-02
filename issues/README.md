@@ -10,11 +10,6 @@ left out.
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
 | <a id="gh05"></a>[GH05](GH05-Publish-Without-A-Downloaded-Client.md) | S | - | `Publish` speaks to Artifactory with inline `curl`, the token on standard input, downloading no client beside the token |
-
-## Implementing
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
 | <a id="gh12"></a>[GH12](GH12-A-Stand-In-For-The-Daemons-Review-Calls.md) | L | - | A test-only stand-in serves the daemon's `Tasks1` review calls on a unix socket from a real GitHub pull request, through the forge clients and the GitHub-SARIF conversion, with the daemon's decisions as marked fixed values |
 
 ## Backlog

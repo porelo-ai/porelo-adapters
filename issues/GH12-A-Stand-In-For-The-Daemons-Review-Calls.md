@@ -1,6 +1,6 @@
 # [GH12](README.md#gh12) — A Stand-In For The Daemon's Review Calls
 
-**Status:** Implementing.
+**Status:** Review.
 **Size:** L - a varlink server of seven calls, a bare clone the review fetch reads, fixture pushes, and the GitHub to
 SARIF conversion in both directions it takes from [GH02](README.md#gh02); several days, and it builds against two other
 repositories' unpublished work.
@@ -121,12 +121,11 @@ work needs anyway.
 
 ## Acceptance
 
-- The review display, pointed at the socket, reads a real pull request's comments and threads, writes a comment and a
-  reply that appear on GitHub, and resolves a thread; each fixture push shows what it was made for.
+- The review display, pointed at the socket with fixtures only, lists the project and every fixture push, and opens
+  each with its files against its base.
 - A read never writes; `Approve` and `Reject` send nothing anywhere; the token appears in no answer, log or file. Each
   guard is seen to fail first.
 
-## To be checked
-
-- That the review display, pointed at the restarted stand-in, lists the project and shows every fixture push with its
-  base.
+The display reading a real pull request's comments and threads, writing a comment and a reply that appear on GitHub,
+resolving a thread, and showing what each fixture push was made for are tested with the display's code comments, with
+a token the operator provides; this issue's stand-in did the same live over its socket.

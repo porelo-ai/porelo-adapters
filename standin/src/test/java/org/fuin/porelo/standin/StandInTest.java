@@ -30,7 +30,7 @@ class StandInTest {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    private static final String TOKEN = "ghp_standinTestTokenNeverShown0123456789";
+    private static final String TOKEN = "fixture-test-token-never-shown";
 
     @TempDir Path tmp;
 

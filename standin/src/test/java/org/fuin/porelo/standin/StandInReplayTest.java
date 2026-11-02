@@ -28,7 +28,7 @@ import org.junit.jupiter.api.io.TempDir;
 /** The stand-in over its socket, reading and writing GitHub as the forge clients recorded it. */
 class StandInReplayTest {
 
-    private static final String TOKEN = "ghp_standinReplayTokenNeverShown012345678";
+    private static final String TOKEN = "fixture-replay-token-never-shown";
 
     private static final ObjectMapper JSON = new ObjectMapper();
 

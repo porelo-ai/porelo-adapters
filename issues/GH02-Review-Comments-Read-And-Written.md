@@ -1,6 +1,6 @@
 # [GH02](README.md#gh02) — Review Comments Read And Written
 
-**Status:** Backlog (Estimated and Backlog by the operator); blocked by porelo's review contract (`Review1`, and
+**Status:** Backlog; blocked by porelo's review contract (`Review1`, and
 comments on lines sent back to the agent), its forge review synchronization, its written SARIF profile, its hardened
 SARIF reader and its source levels and risk classes; by each adapter listing the services it offers, each by contract
 and version; and by `porelo-forge-clients`, which knows nothing of Porelo; and by [GH09](README.md#gh09).
@@ -84,7 +84,7 @@ token supplied for that call; every forge interaction, including builds, goes th
   set. `$schema`, external references, `uriBaseId`, source snippets, artifact contents, invocation details, reactions
   and unlisted property bags do not survive normalization. No report URI triggers a file read or network fetch.
 - On every read, a U+FE0F variation selector that directly follows an emoji in prose is dropped and named as the loss
-  `variation-selector-dropped`; any other variation selector still holds the item (operator).
+  `variation-selector-dropped`; any other variation selector still holds the item.
 - Canonical prose uses one safe Markdown representation; bidi and zero-width characters are refused. Outgoing user
   and team mentions cannot notify through prose; suggestion code is preserved exactly or held. The native content
   passed to the client remains bound to release and disclosure checks; the client must preserve that content.

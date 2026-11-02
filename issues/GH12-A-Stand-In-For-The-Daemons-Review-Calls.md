@@ -58,9 +58,9 @@ work needs anyway.
   serves the calls.
 - **What reaches GitHub:** as the drafted daemon contract has it, a comment without `toForge` and every resolve stay
   local; a comment with `toForge` is sent at once, without the release step the daemon will have, and its answer says
-  so. The stand-in's own replies (`A`) are served only locally (operator).
+  so. The stand-in's own replies (`A`) are served only locally.
 - **Where:** the forge clients' test repository `porelo-ai-test/forge-clients-live`, with a fine-grained token of its
-  test user limited to that repository, which the operator makes (operator).
+  test user limited to that repository, which the operator makes.
 - **The token** reaches the stand-in through its environment and goes to the client per call; it is in no answer, log
   line, file or command line, and the socket's directory is the caller's own, mode 0700.
 - **Red first:** `StandInTest` connects to the stand-in's socket with `porelo-wire`'s client, the GitHub client given a

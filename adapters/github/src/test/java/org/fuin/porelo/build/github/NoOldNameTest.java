@@ -11,12 +11,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Pattern;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests that no tracked file of this repository says the product's old name, but where it must.
+ * Tests that no tracked file of this repository says the product's old name.
  *
  * <p>The repository was renamed by a script; a word it left behind, or one written later out of
  * habit, names something that is no longer there. The old name is spelled here in two pieces, so
@@ -26,12 +25,6 @@ import org.junit.jupiter.api.Test;
 class NoOldNameTest {
 
     private static final String OLD = "so" + "kar";
-
-    /**
-     * Paths that keep the old name, name and text: the released changelog entries and the changelog
-     * made of them.
-     */
-    private static final Pattern KEPT_PATHS = Pattern.compile("CHANGELOG\\.md|changelog/v[^/]+/.*");
 
     private static List<String> tracked() throws IOException, InterruptedException {
         final ProcessBuilder command =
@@ -69,8 +62,7 @@ class NoOldNameTest {
         final List<String> files = tracked();
         final List<String> found = new ArrayList<>();
         for (final String file : files) {
-            if (KEPT_PATHS.matcher(file).matches()
-                    || !Files.isRegularFile(Path.of("../..", file))) {
+            if (!Files.isRegularFile(Path.of("../..", file))) {
                 continue;
             }
             if (file.toLowerCase(Locale.ROOT).contains(OLD)) {
@@ -88,7 +80,7 @@ class NoOldNameTest {
         // A guard that reads nothing passes forever: assert what it read, then what it checks.
         assertThat(files)
                 .as("the tracked files were read")
-                .contains("pom.xml", "AGENTS.md", "issues/README.md");
+                .contains("pom.xml", "AGENTS.md", "issues/README.md", "CHANGELOG.md");
         assertThat(found).as("tracked files that say the old name").isEmpty();
     }
 }

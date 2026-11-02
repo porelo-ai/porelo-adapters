@@ -27,13 +27,13 @@
 ### Added (2 changes)
 
 - Build the reader on every push - compiled, tested and its native executable built and asked to describe itself 
-- Read what GitHub Actions did with a commit for Sokar - the verdict across its runs, every job once it is settled and the last 64 KiB of each failed job's log or of every job's - and where a branch points, with the token Sokar hands over in each call and never on to the log's host 
+- Read what GitHub Actions did with a commit for Porelo - the verdict across its runs, every job once it is settled and the last 64 KiB of each failed job's log or of every job's - and where a branch points, with the token Porelo hands over in each call and never on to the log's host 
 
 ### Changed (3 changes)
 
-- Every build checks that each Maven module has a README.md linking its submodules, with sokar-release check-readmes from the build tools 
-- The NullAway compile comes from sokar-parent, and exec-maven-plugin is 3.6.3 as it sets 
-- The build takes org.fuin.sokar:sokar-parent as its parent, with every version it builds with unchanged 
+- Every build checks that each Maven module has a README.md linking its submodules, with check-readmes from the build tools 
+- The NullAway compile comes from the shared parent, and exec-maven-plugin is 3.6.3 as it sets 
+- The build takes the shared parent as its parent, with every version it builds with unchanged 
 
 ### Fixed (1 change)
 

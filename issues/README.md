@@ -5,12 +5,6 @@ issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questio
 waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
 
-## Review
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
-| <a id="gh05"></a>[GH05](GH05-Publish-Without-A-Downloaded-Client.md) | S | - | `Publish` speaks to Artifactory with inline `curl`, the token on standard input, downloading no client beside the token |
-
 ## Backlog
 
 | # | Size | Blocked by | What it covers |
@@ -35,6 +29,7 @@ left out.
 
 | # | Title | What was built |
 |---|---|---|
+| <a id="gh05"></a>GH05 | Publish Without A Downloaded Client | `Publish` speaks to Artifactory with inline `curl`, the token on standard input, each upload carrying its checksums, and no client downloaded beside the token. |
 | <a id="gh12"></a>GH12 | A Stand-In For The Daemon's Review Calls | `standin/`, a test-only tool never shipped, serves the daemon's `Tasks1` review calls on a unix socket from real GitHub pull requests and eleven fixture pushes, through the forge clients and the GitHub-SARIF conversion in `adapters/github`, with the daemon's decisions as marked fixed values; an IDE's review display listed and opened every fixture push. |
 | <a id="gh08"></a>GH08 | The Forgejo Adapter Trusts The Account's Authorities | `Http.overNetwork()` trusts the account's `~/.config/porelo/ca-certificates.pem` beside the built-in roots, so a reader reaches a forge signed by the host's own authority and still one signed by a public one |
 | <a id="gh06"></a>GH06 | One Contract Suite Every Adapter Passes | `porelo-build-contract` holds one suite of questions, answer rules and generated boundary cases with evidence-checked recordings per forge, and the GitHub reader passes it over `Build2` as `porelo-adapter-github`, replacing `porelo-build-github`. |

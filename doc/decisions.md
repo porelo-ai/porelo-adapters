@@ -9,6 +9,8 @@ What holds and why: one row per decision, and its full text below.
 | Review conversion | [What the conversion leaves unchecked](#what-the-conversion-leaves-unchecked) |
 | Stand-in | [The stand-in sends a comment at once, and a sent comment is one result](#the-stand-in-sends-a-comment-at-once-and-a-sent-comment-is-one-result) |
 | Stand-in | [What the stand-in leaves unguarded, as a test tool](#what-the-stand-in-leaves-unguarded-as-a-test-tool) |
+| Publishing | [Publish speaks to Artifactory with inline curl](#publish-speaks-to-artifactory-with-inline-curl) |
+| Publishing | [The releases channel is unmeasured until a tag contains these steps](#the-releases-channel-is-unmeasured-until-a-tag-contains-these-steps) |
 
 ## Review text is parsed, not modeled
 
@@ -67,3 +69,21 @@ were to move into something that ships.
 - A `WatchProjects` stream is not tested past its first answer, since every later one passes the same guard.
 - That a sent result is bound before a reader can see it has no test, since no seam lets a test stop between the two; a
   reader there sees the result without GitHub's IDs for one call or answers `Failed`.
+
+## Publish speaks to Artifactory with inline curl
+
+The job that holds the token downloads no client, so nothing fetched without a checksum runs beside it.
+
+- The calls stay inline in `.github/workflows/build.yml` until a shared upload helper exists, since no repository keeps a
+  copy of a helper another one has.
+- `--proto =https` alone already stops a redirect to plain http (measured on curl 8.18.0), so a test of that guard removes
+  `--proto` and `--proto-redir` both.
+
+## The releases channel is unmeasured until a tag contains these steps
+
+- **Exposure:** the release path of `Publish` - the refusal of a published release, the upload with
+  `deb.distribution=releases`, the read-back of the releases index - has run only against a stand-in server, never against
+  Artifactory. The snapshots channel has run against it, and the indexes list its four packages.
+- **Why it stays:** only a tag runs that path, and a release is not made to measure it.
+- **What would change the answer:** the first tag measures it. If that run fails or its index does not list the packages,
+  this no longer holds.

@@ -188,9 +188,11 @@ public final class GitHubReviewRead {
     private ObjectNode review(PullRequestReview review, Map<String, Integer> losses) {
         final ObjectNode result = comment();
         final String state = reviewState(review.state());
-        final boolean bodyless = review.body().isEmpty();
+        final @Nullable String sent = review.body();
+        final String body = sent == null ? "" : sent;
+        final boolean bodyless = body.isEmpty();
         result.putObject("message")
-                .put("text", bodyless ? bodylessText(state) : text(review.body(), losses));
+                .put("text", bodyless ? bodylessText(state) : text(body, losses));
         provenance(result, review.submittedAt(), null);
         viewer(result, review.htmlUrl(), losses);
         final ObjectNode properties = result.putObject("properties");

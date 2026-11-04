@@ -149,6 +149,25 @@ class StandInReplayTest {
                 .formatted(commit, review.get("base"), GitHubReplay.PATH);
     }
 
+    // Harm: a deleted fork would stop the read of its pull request, or call its origin known.
+    @Test
+    void aPullRequestWhoseHeadRepositoryIsGoneSaysItsForkOriginIsUnknown() throws Exception {
+        github = new GitHubReplay(tmp.resolve("remote.git"));
+        final GitHubReplay.Pull pull = github.pull(6, List.of());
+        pull.answer = GitHubReplay.withoutHeadRepository(pull.answer);
+        start(List.of(6L));
+
+        final JsonNode sarif =
+                JSON.readTree(
+                        (String)
+                                call("Comments", Map.of("name", "pr-6", "run", forgeRun("pr-6")))
+                                        .get("sarif"));
+
+        assertThat(sarif.at("/runs/0/properties/porelo~1fromFork").asText())
+                .as("no repository names the head, so nothing says whose it was")
+                .isEqualTo("unknown");
+    }
+
     // Harm: a comment shown on another line than GitHub's thread misleads the reviewer.
     @Test
     void aCommentWhoseLineDiffersFromItsThreadIsHeldAndTheRunPartial() throws Exception {

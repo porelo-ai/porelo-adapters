@@ -221,6 +221,26 @@ class GitHubReviewReadTest {
         assertThat(result.at("/message/text").asText()).as("a fixed text").isEqualTo("Commented.");
     }
 
+    // Harm: one review GitHub sends with a null body would stop the whole pull request's read.
+    @Test
+    void aReviewWhoseBodyIsNullIsReadAsBodyless() {
+        final ObjectNode result =
+                read(
+                                List.of(GitHubAnswers.review(r -> r.putNull("body"))),
+                                List.of(),
+                                List.of(),
+                                List.of())
+                        .results()
+                        .get(0);
+
+        assertThat(result.at("/properties/porelo~1bodyless").asBoolean())
+                .as("a null body is no body")
+                .isTrue();
+        assertThat(result.at("/message/text").asText())
+                .as("the fixed text of its state")
+                .isEqualTo("Commented.");
+    }
+
     @Test
     void aViewerLinkOnAnotherHostIsDropped() {
         final GitHubReviewRead.Read read =

@@ -106,6 +106,7 @@ final class GitHubReplay {
         volatile String comments;
         volatile String issueComments;
         volatile String threads;
+        volatile String answer;
 
         Pull(String head, String base) {
             this.head = head;
@@ -114,6 +115,7 @@ final class GitHubReplay {
             this.comments = recorded("reviewComments");
             this.issueComments = recorded("issueComments");
             this.threads = recorded("reviewThreads");
+            this.answer = recorded("pull");
         }
 
         /** No review, comment or thread at all. */
@@ -219,7 +221,7 @@ final class GitHubReplay {
             return ok(pull.shas(pull.issueComments));
         }
         return switch (what) {
-            case "" -> ok(pull.shas(recorded("pull")));
+            case "" -> ok(pull.shas(pull.answer));
             case "reviews" -> ok(pull.shas(pull.reviews));
             case "comments" ->
                     get
@@ -278,6 +280,17 @@ final class GitHubReplay {
             final ArrayNode items = (ArrayNode) JSON.readTree(list);
             ((com.fasterxml.jackson.databind.node.ObjectNode) items.get(index)).put(field, value);
             return JSON.writeValueAsString(items);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
+    /** A recorded pull request whose head names no repository, as after a fork was deleted. */
+    static String withoutHeadRepository(String pull) {
+        try {
+            final JsonNode answer = JSON.readTree(pull);
+            ((com.fasterxml.jackson.databind.node.ObjectNode) answer.path("head")).putNull("repo");
+            return JSON.writeValueAsString(answer);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }

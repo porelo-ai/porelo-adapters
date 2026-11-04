@@ -1,0 +1,2 @@
+title: "A GitHub review with a null body reads as bodyless, and the stand-in reads a pull request whose head repository is gone with its fork origin unknown."
+type: fixed

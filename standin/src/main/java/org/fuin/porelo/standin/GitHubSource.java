@@ -210,7 +210,12 @@ final class GitHubSource {
     }
 
     private static String fromFork(PullRequest pull) {
-        return pull.head().repo().id().equals(pull.base().repo().id()) ? "false" : "true";
+        final var head = pull.head().repo();
+        // GitHub names no head repository once it is gone, so nothing says whose it was.
+        if (head == null) {
+            return "unknown";
+        }
+        return head.id().equals(pull.base().repo().id()) ? "false" : "true";
     }
 
     /** Reads every page of the threads and of each thread's comments. */

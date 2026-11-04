@@ -1,6 +1,6 @@
 # [GH09](README.md#gh09) — Review Cases In The Contract Suite
 
-**Status:** Idea.
+**Status:** Accepted.
 
 **What must be true.** Every GitHub and Forgejo review adapter passes one published `Review1` contract suite for
 Porelo's SARIF 2.1.0 profile, so conversion cannot lose anchors, misattribute a comment, leak a credential or send an

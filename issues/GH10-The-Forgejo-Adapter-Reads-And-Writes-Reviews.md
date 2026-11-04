@@ -19,11 +19,13 @@ origin and conversion limits, and holds unsupported writes without changing thei
   version and conversion name/build version. The client knows nothing of Porelo or SARIF; adapters make no HTTP calls.
 - Require client calls to read a pull request and revisions, list reviews, general comments and review threads with
   their comments, submit a batch review, create/reply/edit/delete comments and obtain account/resolver/membership
-  evidence. Ask for resolve/reopen operations only when the client reports support. Preserve native old/new position
+  evidence. Ask for resolve/reopen operations only when the client reports support. On Forgejo 17 the client's README
+  names neither a reply to a review comment nor a thread state to read or change, so there both are held as
+  unsupported writes and a thread's state stays unknown. Preserve native old/new position
   semantics in SARIF; scope inferred grouping to instance, repository, pull request and revision without inventing
   parent IDs. Summaries are general data; preserve verdict observations, IDs, timestamps and completeness.
-- Delegate `ForgejoReader`'s existing branch-head, repository, build-run, job and job-log calls to the client and
-  remove its direct transport dependency. Require client guarantees for credential stripping across origins,
+- Delegate `ForgejoReader`'s existing branch-head, repository, build-run, job and job-log calls and its opening of a
+  pull request to the client and remove its direct transport dependency. Require client guarantees for credential stripping across origins,
   bounded responses and explicit pagination cut-offs; check returned scope, revision, capability, completeness and
   failure outcomes before emitting SARIF. Client transport tests establish those guarantees.
 - Return authenticated, instance-scoped stable PR/comment/resolver identities and membership/fork evidence;
@@ -46,11 +48,11 @@ origin and conversion limits, and holds unsupported writes without changing thei
 - Confirm the client's published calls, native records and evidence for reply/grouping rules, position asymmetry,
   completeness and supported operations on the configured Forgejo version, including resolver and outdated state.
   Do not assume client class or method names before that contract is published.
-- The `forgejo` client has no call yet for general pull request comments (list with `since`, create, edit, delete) or
-  for the server's version, and does not say whether Forgejo can reply to a review comment through its API or whether
-  editing an issue comment reaches a review comment; its exceptions carry no retry delay, and a list does not say
-  whether another page follows. All are planned there, the reply and edit questions answered by a recording; confirm
-  each against the published client before building on it.
+- The `forgejo` client now has general pull request comments (`issueComments` with `since`, `createIssueComment`,
+  `editIssueComment`, `deleteIssueComment`) and the server's `version`; `ForgejoException` tells a rate limit, only a
+  429, by `rateLimited()` and carries `delay()`, and a paged list says by `Page.more` whether another follows.
+  `issueComments` and `reviewComments` return a plain list: Forgejo pages no general comments, and whether a review's
+  comments can be cut off is still open. Confirm each against the published client before building on it.
 - Measured on Forgejo 17.0.1: `PATCH .../issues/comments/{id}` edits a review comment, but `DELETE` on that path
   answers 204 for a review comment and keeps it; only the review comment's own path deletes it. A 204 there is
   therefore not proof that the comment is gone, and a delete of a review comment goes through the review path.

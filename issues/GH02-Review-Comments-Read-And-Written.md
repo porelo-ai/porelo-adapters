@@ -47,7 +47,8 @@ token supplied for that call; every forge interaction, including builds, goes th
 - **Built first, now:** the GitHub to SARIF conversion in both directions in `adapters/github`, against the review
   profile and GitHub mapping as Porelo's review contract draft states them, through the `github` client's local
   snapshot; the stand-in for the daemon's review calls in `standin/` uses it, and
-  [decisions](../doc/decisions.md) holds what it settled. **Waits for the daemon's
+  [decisions](../doc/decisions.md) holds what it settled. It builds its SARIF as a Jackson tree (`ReviewDocument`), with
+  no `java-sarif` dependency yet, so *The shape*'s binding is still to come. **Waits for the daemon's
   side:** serving `Review1` and its discovery, the published profile and its fixtures, the hardened reader, and the
   release binding of writes. **Waits for [GH09](README.md#gh09):** the shared contract cases both adapters pass.
 - Consume the API and discovery contract supplied by the dependencies. `GitHubReader` in `adapters/github` currently
@@ -106,10 +107,10 @@ token supplied for that call; every forge interaction, including builds, goes th
   both anchor sides, file comments, nested completeness, edits/deletes, thread state and identity/membership evidence.
   No client class or method name is assumed to exist. Confirm its origin, byte-limit and pagination guarantees and
   documented minimum read/write scopes; do not infer them from build credentials.
-- The `github` client has no call yet for general pull request comments (issue comments: list with `since`, create,
-  edit, delete), for editing or deleting a review comment, or for one thread with its resolved and outdated state and
-  resolver by its ID (`threadComments` reads only the comments); its exceptions carry no retry delay, a rate-limit 403
-  is not told from a permission 403, and a list does not say whether another page follows. All are planned there;
-  confirm each against the published client before building on it.
+- The `github` client now has general pull request comments (`issueComments` with `since`, `createIssueComment`,
+  `updateIssueComment`, `deleteIssueComment`), `updateReviewComment` and `deleteReviewComment`, and `reviewThread`, one
+  thread by its ID with its resolved and outdated state and resolver; `GitHubException` tells a rate limit from a refusal
+  by `rateLimited()` and carries `delay()`, and a list says by `Page.more` whether another page follows. Confirm each
+  against the published client before building on it.
 - Confirm suggestion fence escaping, mention behavior and serialization defaults against the selected client and
   library versions. Decide exact helper placement and reuse after the shared profile and parser are published.

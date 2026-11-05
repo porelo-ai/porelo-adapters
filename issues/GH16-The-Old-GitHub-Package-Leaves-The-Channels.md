@@ -1,7 +1,7 @@
 # GH16 — The Old GitHub Package Leaves The Channels
 
 **Status:** Idea.
-**Size:** S - twelve published files removed in two steps, a few lines of documentation, no code; M if a transitional package is chosen.
+**Size:** S - two published files left to remove, a few lines of documentation, no code; M if a transitional package is chosen.
 
 **What must be true.** `apt install 'porelo*'` installs and updates every Porelo package on `snapshots` and on `releases`, on a
 new host and on one that has `porelo-build-github`, and `porelo-build-github` stays out of both channels.
@@ -10,15 +10,13 @@ new host and on one that has `porelo-build-github`, and `porelo-build-github` st
 
 `porelo-adapter-github` replaced `porelo-build-github` and declares `Conflicts` and `Replaces` for it, or `Obsoletes` in the
 rpm. Both install `/usr/libexec/porelo/builds/github`, the one path two packages share on either channel. Nothing publishes
-the old name anymore, yet its files still lie in the channels:
+the old name anymore. Its ten files are gone from `snapshots`: both of its indices list the name no more, and every other package name
+stayed. It remains in `releases`, as `porelo-build-github_0.5.0_amd64.deb` and `porelo-build-github-0.5.0-1.x86_64.rpm`, the only
+GitHub reader there.
 
-| Channel | Debian | RPM |
-|---|---|---|
-| `releases` | `0.5.0` | `0.5.0` |
-| `snapshots` | `0.5.0~snapshot.7`, `0.5.1~snapshot.9`, `.11`, `.13`, `.14` | the same five |
-
-Measured in fresh Ubuntu 26.04 and Fedora 44 containers against the published indices, with a removal simulated on a filtered
-copy of the index and nothing changed in the channels. The apt rows are `apt-get -s`, which solves dependencies without unpacking.
+The table was measured before that deletion, in fresh Ubuntu 26.04 and Fedora 44 containers against the published indices, with a
+removal simulated on a filtered copy of the index. "Today" in it means both channels still holding the old package. The apt rows are
+`apt-get -s`, which solves dependencies without unpacking. The line on a fresh host has not been run since the deletion.
 
 | Line | Case | Result |
 |---|---|---|
@@ -42,13 +40,11 @@ are released there would leave that channel without a GitHub reader.
 
 ## Plan
 
-- From `snapshots`, delete the five Debian files under `porelo-dist-deb/pool/main/p/porelo-build-github/` and the five rpm
-  files under `porelo-dist-rpm/snapshots/`. This can happen at any time. Until the second step, a host with both sources stays
-  refused.
-- From `releases`, delete `porelo-build-github_0.5.0_amd64.deb` and `porelo-dist-rpm/releases/porelo-build-github-0.5.0-1.x86_64.rpm`,
-  right after the published index shows the first released `porelo-adapter-github`, built against a released Porelo that speaks
-  `Build2`.
-- After each step, read both indices anonymously with retries until the name is gone, then run the line on a fresh host.
+- `snapshots` is done. Until the step below, a host with both sources stays refused, by `0.5.0` in `releases`.
+- From `releases`, delete `porelo-dist-deb/pool/main/p/porelo-build-github/porelo-build-github_0.5.0_amd64.deb` and
+  `porelo-dist-rpm/releases/porelo-build-github-0.5.0-1.x86_64.rpm`, right after the published index shows the first released
+  `porelo-adapter-github`, built against a released Porelo that speaks `Build2`. Each by its full path, its digest read first.
+- After it, read both indices anonymously with retries until the name is gone, then run the line on a fresh host.
 - Keep `Conflicts`, `Replaces` and `Obsoletes` in `adapters/github`, since they remove the old package from a host.
 - Write what a host with the old package does once in `doc/index.md`, and correct what the changelog entry says.
 - Nothing here adds a test: the published-index check of the line belongs to the repository that publishes Porelo itself, and it
@@ -68,8 +64,6 @@ a re-run republishes it. Nothing in this repository prevents that re-run.
 
 ## Open questions
 
-- May the ten files of `snapshots` be deleted now, and the two of `releases` at the first release of the adapter? A deleted
-  release cannot be installed anymore.
 - A host with the old package: one documented `sudo apt purge porelo-build-github`, or a transitional package? Recommended is the
   purge: the only release is `0.5.0` and the name stays gone. A transitional `porelo-build-github` that depends on the adapter
   would keep the line working without a step, but keeps the name in both channels and installs an empty package on every new
@@ -77,9 +71,12 @@ a re-run republishes it. Nothing in this repository prevents that re-run.
 
 ## To be checked
 
-- Whether `JF_ACCESS_TOKEN`, the account the build publishes with, may delete in these paths. Only a run's own probe file has
-  been deleted with it, in a step that ignores failure, so this is unknown until tried. No agent holds a token for it.
-- Whether Artifactory recalculates both indices on a deletion, and how long that takes: expected, not observed.
+- How the two files of `releases` are deleted. Whether `JF_ACCESS_TOKEN`, the account the build publishes with, may delete in
+  these paths is unknown until tried: only a run's own probe file has been deleted with it, in a step that ignores failure. No
+  agent holds a token for it.
+- How long Artifactory takes to recalculate both indices on a deletion: on `snapshots` they were read clean afterwards, the time
+  not measured.
+- The line on `snapshots`, on a fresh host, since the deletion.
 - `dnf` on a host with the old package really installed: `Obsoletes` should replace it, not run.
 - Whether `Depends: porelo` needs a lower bound at the first Porelo that speaks `Build2`, so that the adapter cannot be installed
   beside a Porelo that refuses it.

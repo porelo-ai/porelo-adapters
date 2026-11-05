@@ -1,7 +1,7 @@
 # GH16 — The Old GitHub Package Leaves The Channels
 
 **Status:** Idea.
-**Size:** S - two published files left to remove, a few lines of documentation, no code; M if a transitional package is chosen.
+**Size:** S - two published files left to remove, a few lines of documentation, no code.
 
 **What must be true.** `apt install 'porelo*'` installs and updates every Porelo package on `snapshots` and on `releases`, on a
 new host and on one that has `porelo-build-github`, and `porelo-build-github` stays out of both channels.
@@ -46,7 +46,9 @@ are released there would leave that channel without a GitHub reader.
   `porelo-adapter-github`, built against a released Porelo that speaks `Build2`. Each by its full path, its digest read first.
 - After it, read both indices anonymously with retries until the name is gone, then run the line on a fresh host.
 - Keep `Conflicts`, `Replaces` and `Obsoletes` in `adapters/github`, since they remove the old package from a host.
-- Write what a host with the old package does once in `doc/index.md`, and correct what the changelog entry says.
+- Write in `doc/index.md` that a host with the old package runs `sudo apt purge porelo-build-github` once, and correct what the
+  changelog entry says. There is no transitional package: it would keep the name in both channels and install an empty package on
+  every new host.
 - Nothing here adds a test: the published-index check of the line belongs to the repository that publishes Porelo itself, and it
   turns red when the name returns.
 
@@ -61,13 +63,6 @@ a re-run republishes it. Nothing in this repository prevents that re-run.
 - The line passes on `snapshots` and on `releases`, each alone and on both together, in a fresh Ubuntu 26.04 container.
 - A host with the old package really installed is taken through the documented way and ends with `porelo-adapter-github`
   installed, `porelo-build-github` gone.
-
-## Open questions
-
-- A host with the old package: one documented `sudo apt purge porelo-build-github`, or a transitional package? Recommended is the
-  purge: the only release is `0.5.0` and the name stays gone. A transitional `porelo-build-github` that depends on the adapter
-  would keep the line working without a step, but keeps the name in both channels and installs an empty package on every new
-  host; it also needs a version bound on the `Conflicts`. It has not been run.
 
 ## To be checked
 

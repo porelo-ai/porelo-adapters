@@ -13,7 +13,9 @@ approximations or a clean review.
   review synchronization, its written SARIF profile, its hardened SARIF reader and its source levels and risk
   classes; by each adapter listing the services it offers, each by contract and version; and
   by `porelo-forge-clients`, which knows nothing of Porelo.
-- **Blocks:** [GH02](README.md#gh02) and [GH10](README.md#gh10).
+- **Blocked by** [GH10](README.md#gh10) too, the second adapter that makes one suite earn its keep; until then the safety cases are
+  the GitHub adapter's own tests.
+- **Blocks:** [GH02](README.md#gh02).
 - Extend `porelo-build-contract` in `contract` beside the build-only `ContractCase` and `CaseExpectation`. Exercise
   SARIF input/output and native client calls with a `porelo-forge-clients` double where simpler, keeping protocol
   coverage through `AdapterContract` and `JavaExecutable`'s installed-executable approach. Native transport recording

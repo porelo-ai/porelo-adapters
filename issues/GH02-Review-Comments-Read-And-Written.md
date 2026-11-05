@@ -3,7 +3,8 @@
 **Status:** Backlog; blocked by porelo's review contract (`Review1`, and
 comments on lines sent back to the agent), its forge review synchronization, its written SARIF profile, its hardened
 SARIF reader and its source levels and risk classes; by each adapter listing the services it offers, each by contract
-and version; and by `porelo-forge-clients`, which knows nothing of Porelo; and by [GH09](README.md#gh09).
+and version; and by `porelo-forge-clients`, which knows nothing of Porelo; and by [GH17](README.md#gh17) and
+[GH09](README.md#gh09).
 **Size:** L - review serving, SARIF conversion, delegation of existing build calls to a separate client's contract,
 and shared contract tests cross repository boundaries and require several days.
 

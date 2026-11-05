@@ -12,7 +12,7 @@ origin and conversion limits, and holds unsupported writes without changing thei
 - **Blocked by:** porelo's review contract (`Review1`, and comments on lines sent back to the agent), its forge
   review synchronization, its written SARIF profile, its hardened SARIF reader and its source levels and risk
   classes; by each adapter listing the services it offers, each by contract and version; and
-  by `porelo-forge-clients`, which knows nothing of Porelo; and by [GH09](README.md#gh09).
+  by `porelo-forge-clients`, which knows nothing of Porelo.
 - **Blocks:** no separate downstream issue identified; supplies Forgejo review support.
 - Extend `ForgejoReader`'s `BuildReader`/`BuildMain` entry with published review serving and discovery. Consume the
   `forgejo` client's native records and the shared hardened `com.contrastsecurity:java-sarif` 2.0 binding, profile
@@ -39,7 +39,7 @@ origin and conversion limits, and holds unsupported writes without changing thei
   default to release by a person with the permitted I1 exception; agents never approve and copied markers confer
   no ownership. Apply the shared parser limits, closed fields, URI policy, safe Markdown, mention handling and
   bidi/zero-width refusal. Suppressions, missing results and partial reads never make a review clean.
-- Extend `ForgejoReaderTest` and `ForgejoContractTest` with [GH09](README.md#gh09)'s adapter-boundary cases using native
+- Extend `ForgejoReaderTest` and `ForgejoContractTest` with the adapter-boundary cases that [GH09](README.md#gh09) then shares using native
   client doubles and evidence-backed records; see guards fail first. Reuse shared SARIF security rules without
   depending on GitHub's client or adapter implementation.
 

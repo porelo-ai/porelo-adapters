@@ -169,7 +169,7 @@ jobs:
                   if [ "$CHANNEL" = releases ]; then
                       # Read into a file, so an index that cannot be read stops the release rather than reading as
                       # "not published": a published release is never replaced, as on Central.
-                      curl -sSfL --proto =https --proto-redir =https --max-time 60 -o "$RUNNER_TEMP/published-index" "$base/porelo-dist-deb/dists/releases/main/binary-amd64/Packages" \
+                      curl -sSfL --retry 5 --retry-all-errors --proto =https --proto-redir =https --max-time 60 -o "$RUNNER_TEMP/published-index" "$base/porelo-dist-deb/dists/releases/main/binary-amd64/Packages" \
                           || { echo "::error::the release index could not be read, so whether this release is published is unknown"; exit 1; }
                       for forge in github forgejo; do
                           if grep -qxF "Filename: pool/main/p/porelo-adapter-$forge/$(basename "${deb[$forge]}")" "$RUNNER_TEMP/published-index"; then
@@ -187,7 +187,7 @@ jobs:
                       sha256="$(sha256sum "$1" | cut -d' ' -f1)"
                       echo "  put   $2$(basename "$1")"
                       status="$(printf 'header = "Authorization: Bearer %s"\n' "$JF_ACCESS_TOKEN" \
-                          | curl -fsS --proto =https --max-time 120 -K - -o /dev/null -w '%{http_code}' -T "$1" \
+                          | curl -fsS --retry 5 --retry-all-errors --proto =https --max-time 120 -K - -o /dev/null -w '%{http_code}' -T "$1" \
                               -H "X-Checksum-Sha1: $sha1" -H "X-Checksum-Sha256: $sha256" \
                               "$base/$2$(basename "$1")${3:+;$3}")"
                       case "$status" in

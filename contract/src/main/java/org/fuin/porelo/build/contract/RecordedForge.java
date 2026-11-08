@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 import org.fuin.porelo.wire.Json;
+import org.jspecify.annotations.Nullable;
 
 final class RecordedForge implements AutoCloseable {
 
@@ -245,35 +246,52 @@ final class RecordedForge implements AutoCloseable {
         return Files.readAllBytes(file);
     }
 
+    /** What each kind of generated body lists its entries under. */
+    private static final Map<String, String> GENERATED_LISTS =
+            Map.of("github-jobs", "jobs", "workflow-runs", "workflow_runs");
+
     private static byte[] generatedBody(final Object value) throws IOException {
         if (!(value instanceof Map<?, ?> generated)
-                || !"github-jobs".equals(text(generated, "kind"))
+                || !(generated.get("kind") instanceof String kind)
+                || !GENERATED_LISTS.containsKey(kind)
                 || !(generated.get("template") instanceof Map<?, ?> template)) {
-            throw new IOException("bodyGenerated needs kind github-jobs and a template object");
+            throw new IOException(
+                    "bodyGenerated needs a kind of "
+                            + GENERATED_LISTS.keySet()
+                            + " and a template object");
         }
         final int count = count(generated, "count");
+        // A page of a longer list: the whole list's length, as the forge reports it on every page.
+        final int total =
+                generated.containsKey("totalCount") ? integer(generated, "totalCount") : count;
+        if (total < count) {
+            throw new IOException("totalCount " + total + " must be at least count " + count);
+        }
         final int first = integer(template, "id");
         if (first < 1 || first > Integer.MAX_VALUE - count) {
-            throw new IOException("Generated job IDs must be positive and fit an integer");
+            throw new IOException("Generated IDs must be positive and fit an integer");
         }
-        final String name = text(template, "name");
-        final List<Map<String, Object>> jobs = new ArrayList<>();
+        final List<Map<String, @Nullable Object>> entries = new ArrayList<>();
         for (int offset = 0; offset < count; offset++) {
-            final Map<String, Object> job = new LinkedHashMap<>();
+            final String id = Integer.toString(first + offset);
+            final Map<String, @Nullable Object> entry = new LinkedHashMap<>();
             for (final Map.Entry<?, ?> field : template.entrySet()) {
                 if (!(field.getKey() instanceof String key)) {
-                    throw new IOException("Generated job field names must be strings");
+                    throw new IOException("Generated field names must be strings");
                 }
-                job.put(key, field.getValue());
+                entry.put(
+                        key,
+                        field.getValue() instanceof String text
+                                ? text.replace("{{id}}", id)
+                                : field.getValue());
             }
-            job.put("id", first + offset);
-            job.put("name", name.replace("{{id}}", Integer.toString(first + offset)));
+            entry.put("id", first + offset);
             if (offset == count - 1 && generated.containsKey("lastConclusion")) {
-                job.put("conclusion", text(generated, "lastConclusion"));
+                entry.put("conclusion", text(generated, "lastConclusion"));
             }
-            jobs.add(job);
+            entries.add(entry);
         }
-        return Json.write(Map.of("total_count", count, "jobs", jobs))
+        return Json.write(Map.of("total_count", total, GENERATED_LISTS.get(kind), entries))
                 .getBytes(StandardCharsets.UTF_8);
     }
 

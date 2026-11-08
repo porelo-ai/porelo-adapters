@@ -103,7 +103,8 @@ public final class ForgejoReader implements BuildReader {
             running |= status.equals("running");
             cancelled |= status.equals("cancelled");
         }
-        if (!failed && outstanding) return new Build(running ? Build.RUNNING : Build.QUEUED, "");
+        if (!failed && outstanding)
+            return new Build(running ? Build.RUNNING : Build.QUEUED, List.of(), "", named(runs));
         final Build.Logs wanted = logs == Build.Logs.ALL && outstanding ? Build.Logs.FAILURE : logs;
         final List<Build.Job> jobs = jobs(target, repository, runs, wanted);
         return new Build(
@@ -111,7 +112,15 @@ public final class ForgejoReader implements BuildReader {
                 jobs,
                 failed && jobs.stream().noneMatch(job -> job.result().equals("failure"))
                         ? "no single job failed; the workflow did"
-                        : "");
+                        : "",
+                named(runs));
+    }
+
+    /** Each run in Forgejo's order, named by its workflow file, with its status. */
+    private static List<Build.Run> named(final List<Map<?, ?>> runs) {
+        return runs.stream()
+                .map(run -> new Build.Run(text(run.get("workflow_id")), text(run.get("status"))))
+                .toList();
     }
 
     @Override

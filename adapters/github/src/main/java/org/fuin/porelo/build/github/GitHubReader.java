@@ -172,13 +172,27 @@ public final class GitHubReader implements BuildReader {
                     jobs,
                     jobs.stream().anyMatch(job -> FAILED_JOB.contains(job.result()))
                             ? ""
-                            : "no single job failed; the workflow did");
+                            : "no single job failed; the workflow did",
+                    runs(found));
         }
         if (running) {
-            return new Build(queued ? Build.QUEUED : Build.RUNNING, "");
+            return new Build(queued ? Build.QUEUED : Build.RUNNING, List.of(), "", runs(found));
         }
         final String verdict = cancelled ? Build.CANCELLED : Build.SUCCESS;
-        return new Build(verdict, jobs(target, repository, found, logs), "");
+        return new Build(verdict, jobs(target, repository, found, logs), "", runs(found));
+    }
+
+    /** Each run in GitHub's order with its conclusion, or its state while it has none. */
+    private static List<Build.Run> runs(final List<Map<?, ?>> found) {
+        return found.stream()
+                .map(
+                        run ->
+                                new Build.Run(
+                                        name(run.get("name")),
+                                        run.get("conclusion") == null
+                                                ? lower(run.get("status"))
+                                                : lower(run.get("conclusion"))))
+                .toList();
     }
 
     /**

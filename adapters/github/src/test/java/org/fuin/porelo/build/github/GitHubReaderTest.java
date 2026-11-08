@@ -194,6 +194,32 @@ class GitHubReaderTest {
     }
 
     @Test
+    void eachRunIsNamedWithItsConclusionOrItsStateWhileItHasNone() {
+        // A run shown with another run's result tells Porelo a workflow passed that failed.
+        final String path = "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT;
+        answer(
+                path + "&per_page=100&page=1",
+                200,
+                "{\"total_count\":2,\"workflow_runs\":["
+                        + "{\"id\":2,\"name\":\"Lint\",\"status\":\"in_progress\",\"conclusion\":null},"
+                        + "{\"id\":1,\"name\":\"Build\",\"status\":\"completed\","
+                        + "\"conclusion\":\"failure\"}]}");
+        for (final int id : List.of(1, 2)) {
+            answer(
+                    "/repos/porelo-ai/porelo/actions/runs/" + id + "/jobs?per_page=100&page=1",
+                    200,
+                    "{\"total_count\":0,\"jobs\":[]}");
+        }
+
+        final Build build = reader().build(TARGET, COMMIT, Build.Logs.NONE);
+
+        assertThat(build.runs())
+                .as("every run in GitHub's order, each with its own result")
+                .containsExactly(
+                        new Build.Run("Lint", "in_progress"), new Build.Run("Build", "failure"));
+    }
+
+    @Test
     void moreRunsThanGitHubListsAreNoVerdict() {
         final String path = "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT;
         for (int page = 1; page <= 10; page++) {
@@ -202,7 +228,9 @@ class GitHubReaderTest {
                 runs.append(each == 0 ? "" : ",")
                         .append("{\"id\":")
                         .append(page * 1000 + each)
-                        .append(",\"status\":\"completed\",\"conclusion\":\"success\"}");
+                        .append(",\"name\":\"W")
+                        .append(page * 1000 + each)
+                        .append("\",\"status\":\"completed\",\"conclusion\":\"success\"}");
                 answer(
                         "/repos/porelo-ai/porelo/actions/runs/"
                                 + (page * 1000 + each)
@@ -224,6 +252,9 @@ class GitHubReaderTest {
         assertThat(build.detail())
                 .as("says why")
                 .contains("more runs of 0123456789ab at porelo-ai/porelo than GitHub lists");
+        assertThat(build.runs())
+                .as("no run is named beside a verdict GitHub's list could not give")
+                .isEmpty();
     }
 
     @Test

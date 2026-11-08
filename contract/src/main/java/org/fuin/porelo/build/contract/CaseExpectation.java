@@ -18,10 +18,18 @@ import org.fuin.porelo.wire.Json;
 import org.jspecify.annotations.Nullable;
 
 /** Values evidenced by a case's exchanges; contract rules never come from this file. */
-record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url) {
+record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url, List<Run> runs) {
+
     CaseExpectation(final String head, final List<Job> jobs, final long retryAfter) {
-        this(head, jobs, retryAfter, "");
+        this(head, jobs, retryAfter, "", List.of());
     }
+
+    CaseExpectation(
+            final String head, final List<Job> jobs, final long retryAfter, final String url) {
+        this(head, jobs, retryAfter, url, List.of());
+    }
+
+    record Run(String name, String result) {}
 
     record Job(String name, String result, byte @Nullable [] log) {
         boolean failed() {
@@ -92,7 +100,10 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url)
                     .isEqualTo(delays.isEmpty() ? 60 : Long.parseLong(delays.getFirst()));
             return new CaseExpectation("", List.of(), number.longValue());
         }
-        keys(map, Set.of("jobs"));
+        final boolean answersRuns =
+                !Build.UNKNOWN.equals(((ContractCase.Verdict) test.expected()).value());
+        keys(map, answersRuns ? Set.of("jobs", "runs") : Set.of("jobs"));
+        final List<Run> runs = answersRuns ? runs(map, evidence) : List.of();
         if (!(map.get("jobs") instanceof List<?> supplied))
             throw new IOException("expect.json jobs must be an array");
         final List<Job> jobs = new ArrayList<>();
@@ -131,7 +142,36 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url)
                                     : null));
         }
         evidence.verifyJobs();
-        return new CaseExpectation("", List.copyOf(jobs), 0);
+        return new CaseExpectation("", List.copyOf(jobs), 0, "", runs);
+    }
+
+    private static List<Run> runs(final Map<?, ?> map, final Evidence evidence) throws IOException {
+        if (!(map.get("runs") instanceof List<?> supplied))
+            throw new IOException("expect.json runs must be an array");
+        final List<Run> runs = new ArrayList<>();
+        for (final Object value : supplied) {
+            final Map<?, ?> run = object(value);
+            keys(run, Set.of("name", "result", "nameFrom", "resultFrom"));
+            final String nameFrom = text(run, "nameFrom");
+            final String resultFrom = text(run, "resultFrom");
+            evidence.run(nameFrom, resultFrom);
+            final String name = text(run, "name");
+            assertThat(evidence.value(nameFrom))
+                    .as("expect.json run name must appear in its recorded run")
+                    .isEqualTo(name);
+            final String result = text(run, "result");
+            assertThat(evidence.value(resultFrom))
+                    .as("expect.json run result must appear in its recorded run")
+                    .isEqualTo(result);
+            runs.add(new Run(name, result));
+        }
+        evidence.verifyRuns();
+        return List.copyOf(runs);
+    }
+
+    /** The runs an answer carries: the first ones in the forge's order. */
+    List<Run> retainedRuns() {
+        return runs.subList(0, Math.min(Build.MOST_RUNS, runs.size()));
     }
 
     List<Job> retainedJobs() {
@@ -169,6 +209,7 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url)
         private final List<RecordedForge.Exchange> exchanges;
         private final Map<String, List<String>> lists = new LinkedHashMap<>();
         private final List<String> ordered = new ArrayList<>();
+        private final List<String> runs = new ArrayList<>();
 
         Evidence(final List<RecordedForge.Exchange> exchanges) {
             this.exchanges = exchanges;
@@ -220,6 +261,43 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url)
             lists.get(list).add(item);
             ordered.add(item);
             assertThat(entries).as("recorded job list").isNotEmpty();
+        }
+
+        void run(final String name, final String result) throws IOException {
+            final String item = item(name, "Run name", Set.of("name", "workflow_id"));
+            if (!item.equals(item(result, "Run result", Set.of("status", "conclusion"))))
+                throw new IOException("Run result must come from the same recorded run: " + result);
+            // A run's state stands for its result only while it has no conclusion.
+            if (result.endsWith("/status")
+                    && value(item) instanceof Map<?, ?> recorded
+                    && recorded.get("conclusion") != null)
+                throw new IOException("A finished run's result is its conclusion: " + result);
+            runs.add(item);
+        }
+
+        void verifyRuns() throws IOException {
+            final List<String> recorded = new ArrayList<>();
+            for (final RecordedForge.Exchange exchange : exchanges) {
+                if (!exchange.path().contains("/actions/runs?")) continue;
+                final String list = exchange.file() + "#/workflow_runs";
+                if (!(value(list) instanceof List<?> entries))
+                    throw new IOException("Expected a recorded run list: " + list);
+                for (int index = 0; index < entries.size(); index++)
+                    recorded.add(list + "/" + index);
+            }
+            assertThat(runs)
+                    .as("expect.json must cover every recorded run in forge order")
+                    .containsExactlyElementsOf(recorded);
+        }
+
+        private static String item(
+                final String reference, final String what, final Set<String> fields)
+                throws IOException {
+            final int slash = reference.lastIndexOf('/');
+            if (slash < 0 || !fields.contains(reference.substring(slash + 1)))
+                throw new IOException(
+                        what + " evidence must name one of " + fields + ": " + reference);
+            return reference.substring(0, slash);
         }
 
         void verifyJobs() throws IOException {

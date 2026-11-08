@@ -500,5 +500,13 @@
       "resultFrom": "02.json#/jobs/49/conclusion",
       "log": "03.json#99"
     }
+  ],
+  "runs": [
+    {
+      "name": "Matrix",
+      "result": "success",
+      "nameFrom": "01.json#/workflow_runs/0/name",
+      "resultFrom": "01.json#/workflow_runs/0/conclusion"
+    }
   ]
 }

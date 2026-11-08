@@ -37,5 +37,25 @@
       "resultFrom": "04.json#/0/status",
       "log": "05.json"
     }
+  ],
+  "runs": [
+    {
+      "name": "wait.yml",
+      "result": "success",
+      "nameFrom": "01.json#/workflow_runs/0/workflow_id",
+      "resultFrom": "01.json#/workflow_runs/0/status"
+    },
+    {
+      "name": "ok.yml",
+      "result": "success",
+      "nameFrom": "01.json#/workflow_runs/1/workflow_id",
+      "resultFrom": "01.json#/workflow_runs/1/status"
+    },
+    {
+      "name": "fail.yml",
+      "result": "failure",
+      "nameFrom": "01.json#/workflow_runs/2/workflow_id",
+      "resultFrom": "01.json#/workflow_runs/2/status"
+    }
   ]
 }

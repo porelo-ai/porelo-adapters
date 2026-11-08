@@ -9,5 +9,13 @@
       ],
       "resultFrom": "02.json#/jobs/0/conclusion"
     }
+  ],
+  "runs": [
+    {
+      "name": "Build",
+      "result": "cancelled",
+      "nameFrom": "01.json#/workflow_runs/0/name",
+      "resultFrom": "01.json#/workflow_runs/0/conclusion"
+    }
   ]
 }

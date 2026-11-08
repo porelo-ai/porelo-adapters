@@ -1,6 +1,6 @@
 # GH18 — Every Run Of A Commit In The Build Answer
 
-**Status:** Implementing
+**Status:** Review
 **Size:** M - both readers, the published contract suite and its recordings change, against a new field of
 `porelo-build-api`.
 
@@ -14,14 +14,19 @@ The contract it builds against, as `porelo-build-api` will state it:
 - `type Run (name: string, result: string)` beside `Job`; `Build(...) -> (verdict, jobs, runs: ?[]Run, detail)`.
 - `name` is the workflow or pipeline as the forge spells it. `result` is lower case: the conclusion once finished,
   otherwise the state (`queued`, `waiting`, `in_progress`, ...).
-- One entry per run of the commit at every answer; a rerun replaces its run; at most 50, in the forge's order. A reader
-  that does not fill it leaves it absent.
+- One entry per run of the commit at every answer; a rerun replaces its run; at most `Build.MOST_RUNS` (50), in the
+  forge's order. `Build.runs()` is never null: a reader that names no run leaves it empty, and the wire then omits
+  `runs`. `Build`'s constructor makes each text one line, lower-cases a result, drops a run without a name or a
+  result, and of several runs of one name keeps the first the reader gave, up to 50 names; since both forges list
+  the newest run first, the newest stand.
 
 Today's code:
 - `GitHubReader.build` lists the commit's runs (`/actions/runs?head_sha=`, 100 a page, up to 10 pages). A failed run
   is the verdict even while another still runs, and that answer already carries jobs; queued and running answer
   `new Build(verdict, "")`. GitHub's list holds a run once, at its latest attempt (measured: a run attempted three
-  times is one entry with `run_attempt` 3), so a rerun already replaces its run. An outstanding run's `conclusion` is
+  times is one entry with `run_attempt` 3), so a rerun already replaces its run. So does Forgejo's (measured against
+  Forgejo 17 in podman: after a rerun through the API the commit's list still has one entry, the same `id`, with new
+  `started` and `stopped` times). An outstanding run's `conclusion` is
   `null`, which `lower()` turns into `""`. Two answers are `unknown` after a run list was read: none, and more runs
   than ten pages hold.
 - `ForgejoReader.build` lists the runs (50 a page, until `total_count`) and answers the same way, failure first. A
@@ -32,7 +37,7 @@ Today's code:
   is answered there.
 
 The rule the readers follow: every `queued`, `running`, `success`, `failure` and `cancelled` answer carries `runs`;
-every `unknown` answer leaves it absent (`null`, not empty), also when a run list was read.
+every `unknown` answer names no run (an empty list, absent on the wire), also when a run list was read.
 
 Steps:
 1. Red first, in `porelo-build-contract`:
@@ -41,38 +46,45 @@ Steps:
      finished, `status` while outstanding; Forgejo: `status`). Its evidence check holds that the entries cover every
      recorded run, in the recorded order, and refuses a fabricated one, as it does for jobs; `CaseExpectationTest`
      gains the fabricated-run cases.
-   - `AdapterContract.compare` splits today's early return: `unknown` asserts `runs` absent; `queued` and `running`
+   - `AdapterContract.compare` splits today's early return: `unknown` asserts no `runs`; `queued` and `running`
      assert no jobs and the expected `runs`; the final verdicts assert jobs and `runs`.
    - `runs` is added to the `expect.json` of the eleven build cases per forge that answer a verdict (`queued`,
      `running`, `passed`, `failed`, `cancelled`, `logs-none`, `logs-failure`, `logs-all`, `log-tail`, `many-jobs`,
      `shared-logs`), read from what the forge recorded. `no-build` stays without; the cases that answer no `Build`
      (`head`, `absent-branch`, the refusals, the pull request cases) are untouched.
    - The suite goes red on both readers.
-2. `GitHubReader`: `runs(found)` maps each listed run to `Run(name, conclusion == null ? status : conclusion)`, the
-   first 50 in GitHub's order, passed into every non-`unknown` answer.
+2. `GitHubReader`: `runs(found)` maps each listed run to `Run(name, conclusion == null ? status : conclusion)` in
+   GitHub's order, passed into every non-`unknown` answer; `Build` keeps the first 50.
 3. `ForgejoReader`: the same from `workflow_id` and `status`.
 4. A `many-runs` case of 51 or more runs with distinct names and results, outstanding so that no job lists are asked:
    GitHub on one page, Forgejo on two (50 a page), generated from one recorded run as `many-jobs` is from one
-   recorded job (`RecordedForge.generatedBody` knows only `github-jobs` today and gains the run lists). The expectation lists every recorded run and the contract keeps
-   the first 50, as `many-jobs` does for jobs; it is seen red with the cap removed and with the order reversed.
+   recorded job (`RecordedForge.generatedBody` gains the kind `workflow-runs` and a `totalCount` for one page of a
+   longer list). The expectation lists every recorded run and the contract keeps the first 50, as `many-jobs` does
+   for jobs; it is seen red with the expectation's cap removed and with the reader's order reversed.
 5. The reader unit tests that compare a whole `Build` (`ForgejoReaderTest.aJobThatNeverExecutedHasNoLog` and the
    like) take `runs`. A changelog entry under `changelog/unreleased/` (`added`), and `doc/` where the answer is
    described.
 
-Files: `contract/.../CaseExpectation.java`, `AdapterContract.java`, `ContractCase.java`, `CaseExpectationTest.java`;
+Files: `contract/.../CaseExpectation.java`, `AdapterContract.java`, `ContractCase.java`, `RecordedForge.java`,
+`CaseExpectationTest.java`;
 `adapters/github/.../GitHubReader.java` and its tests; `adapters/forgejo/.../ForgejoReader.java` and its tests; the
 eleven `expect.json` per forge and the new `many-runs` recordings.
 
 It waits for a `porelo-build-api` snapshot whose `Build` carries `runs`.
+
+Findings of the code's reading declined, each with its reason:
+- Runs of one name are merged, and a run without a name or a result is dropped. Both happen in `Build`'s
+  constructor, which the readers do not own; the readers hand over every run the forge lists.
+- A GitHub run `completed` without a conclusion, or with a conclusion while outstanding: GitHub gives a conclusion
+  exactly when a run is completed, as every recording shows, so the result follows the conclusion's presence.
+- An expectation with no run list, a `nameFrom` of the other forge's field, a recorded name `Build` would change, and a
+  generated body without a name: each fails a case loudly instead of letting it pass, since `AdapterContract` requires
+  recorded runs beside every verdict, the reduced recordings carry only the forge's own name field, and the answer is
+  compared with every recorded run.
 
 ## Acceptance
 
 - The contract suite asserts `runs` on every recorded case of both forges, a queued and a running one included, and was
   seen red against today's readers.
 - A commit with more than 50 runs answers exactly the first 50, in the forge's order.
-- Every `unknown` answer carries no `runs`, `no-build` included; seen red with an empty list in its place.
-
-## To be checked
-
-- Whether a Forgejo rerun stays one entry of the commit's run list, measured with `record-forgejo.sh` against
-  Forgejo 17 in podman.
+- Every `unknown` answer carries no `runs`, `no-build` included; seen red with a run in its place.

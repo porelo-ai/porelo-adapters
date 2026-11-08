@@ -541,5 +541,13 @@
       "resultFrom": "02.json#/jobs/59/conclusion",
       "log": "04.json"
     }
+  ],
+  "runs": [
+    {
+      "name": "Matrix",
+      "result": "failure",
+      "nameFrom": "01.json#/workflow_runs/0/name",
+      "resultFrom": "01.json#/workflow_runs/0/conclusion"
+    }
   ]
 }

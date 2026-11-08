@@ -82,5 +82,13 @@
       ],
       "resultFrom": "02.json#/jobs/8/conclusion"
     }
+  ],
+  "runs": [
+    {
+      "name": "Build",
+      "result": "failure",
+      "nameFrom": "01.json#/workflow_runs/0/name",
+      "resultFrom": "01.json#/workflow_runs/0/conclusion"
+    }
   ]
 }

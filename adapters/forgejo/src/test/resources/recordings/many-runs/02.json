@@ -1,0 +1,20 @@
+{
+  "recorded": false,
+  "why": "The recorded commits have at most three runs; sixty are needed to exercise the fifty-run limit.",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=0123456789abcdef0123456789abcdef01234567&limit=50&page=2",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "bodyGenerated": {
+    "kind": "workflow-runs",
+    "count": 10,
+    "totalCount": 60,
+    "template": {
+      "id": 51,
+      "workflow_id": "workflow-{{id}}.yml",
+      "status": "waiting"
+    }
+  }
+}

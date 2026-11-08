@@ -1,3 +1,11 @@
 {
-  "jobs": []
+  "jobs": [],
+  "runs": [
+    {
+      "name": "Build",
+      "result": "queued",
+      "nameFrom": "01.json#/workflow_runs/0/name",
+      "resultFrom": "01.json#/workflow_runs/0/status"
+    }
+  ]
 }

@@ -177,6 +177,7 @@ public abstract class AdapterContract {
         final Build actual = (Build) answer;
         final ContractCase.Verdict verdict = (ContractCase.Verdict) test.expected();
         assertThat(actual.verdict()).as("%s verdict", test.name()).isEqualTo(verdict.value());
+        compareRuns(test, values, actual);
         if (List.of(Build.QUEUED, Build.RUNNING, Build.UNKNOWN).contains(verdict.value())) {
             assertThat(values.jobs())
                     .as("outstanding or unknown recordings have no expected jobs")
@@ -187,6 +188,24 @@ public abstract class AdapterContract {
             return;
         }
         compareJobs(test, values, actual);
+    }
+
+    private static void compareRuns(
+            final ContractCase test, final CaseExpectation values, final Build actual) {
+        final List<Build.Run> runs = actual.runs();
+        if (Build.UNKNOWN.equals(actual.verdict())) {
+            assertThat(runs).as("%s names no run beside an unknown verdict", test.name()).isEmpty();
+            return;
+        }
+        assertThat(values.runs()).as("%s recorded runs", test.name()).isNotEmpty();
+        assertThat(runs.stream().map(run -> new CaseExpectation.Run(run.name(), run.result())))
+                .as("%s every run of the commit in forge order", test.name())
+                .containsExactlyElementsOf(values.retainedRuns());
+        if (test.name().equals("many-runs")) {
+            assertThat(values.runs().size())
+                    .as("the run recording crosses the run limit")
+                    .isGreaterThan(Build.MOST_RUNS);
+        }
     }
 
     private static void compareJobs(

@@ -10,5 +10,13 @@
       "resultFrom": "02.json#/0/status",
       "log": "03.json"
     }
+  ],
+  "runs": [
+    {
+      "name": "wait.yml",
+      "result": "success",
+      "nameFrom": "01.json#/workflow_runs/0/workflow_id",
+      "resultFrom": "01.json#/workflow_runs/0/status"
+    }
   ]
 }

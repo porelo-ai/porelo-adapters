@@ -85,6 +85,7 @@ record ContractCase(String name, String repository, Question question, Expected 
                 build("log-tail", COMMIT, Build.Logs.FAILURE, Build.FAILURE),
                 build("many-jobs", COMMIT, Build.Logs.FAILURE, Build.FAILURE),
                 build("shared-logs", COMMIT, Build.Logs.ALL, Build.SUCCESS),
+                build("many-runs", COMMIT, Build.Logs.ALL, Build.QUEUED),
                 refusal("rate-limited", BuildRefused.Reason.RATE_LIMITED),
                 refusal("primary-rate-limited", BuildRefused.Reason.RATE_LIMITED),
                 new ContractCase(

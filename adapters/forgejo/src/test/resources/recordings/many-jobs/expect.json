@@ -541,5 +541,13 @@
       "resultFrom": "02.json#/59/status",
       "log": "03.json"
     }
+  ],
+  "runs": [
+    {
+      "name": "matrix.yml",
+      "result": "failure",
+      "nameFrom": "01.json#/workflow_runs/0/workflow_id",
+      "resultFrom": "01.json#/workflow_runs/0/status"
+    }
   ]
 }

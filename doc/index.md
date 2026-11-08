@@ -31,6 +31,8 @@ package needs none.
 - **The head of a branch**: the commit the task last pushed, as GitHub has it.
 - **A commit's build**: queued, running, success, failure, cancelled or unknown, across every workflow run of that
   commit, with the failing job's name and the last 64 KiB of its log.
+- **Each run of that commit**: the workflow's name and its conclusion, or its state while it has none, the first fifty
+  in GitHub's order, also while the build is queued or running.
 - **Why it cannot answer**, as distinct cases: a rate limit, a credential GitHub refused, a repository it cannot see.
 
 ## The token it reads GitHub with
@@ -76,7 +78,8 @@ public certificate roots. An absolute `XDG_CONFIG_HOME` selects that directory i
 The adapter reads each workflow's single status: failure takes precedence over outstanding runs, then
 cancellation, then success. `waiting` and `blocked` are queued, `running` is running, and `success` and `skipped`
 are successful. Unrecognized statuses produce an unknown verdict naming the value. Jobs are named
-`<workflow_id> / <job name>` in Forgejo's order. A job that never executed has no log; this does not make the
+`<workflow_id> / <job name>` in Forgejo's order. Every answer but an unknown one names each run by its
+`workflow_id` with its status, in Forgejo's order. A job that never executed has no log; this does not make the
 repository absent. Log tails, job counts, and the total log budget follow the build API's limits.
 
 See the [contract documentation](contract.md) for recordings and tests.

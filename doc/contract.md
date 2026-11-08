@@ -15,7 +15,7 @@ All scratch files are under `target/` and are removed after each case.
 ## Cases and expectations
 
 Each case has its own directory: `head`, `absent-branch`, `no-build`, `queued`, `running`, `passed`,
-`failed`, `cancelled`, `logs-none`, `logs-failure`, `logs-all`, `log-tail`, `many-jobs`, `shared-logs`,
+`failed`, `cancelled`, `logs-none`, `logs-failure`, `logs-all`, `log-tail`, `many-jobs`, `shared-logs`, `many-runs`,
 `rate-limited`, `primary-rate-limited`, `credential-refused`, `no-repository`, and `unreachable`.
 The questions, verdicts, refusals, and answer rules are fixed in the suite. Each recording directory also has
 `expect.json` for values evidenced by that forge’s answers; it cannot choose the rules.
@@ -28,6 +28,9 @@ The suite compares head and job values with `expect.json` after validating their
 verdict or `BuildRefused.Reason`, and the recorded retry delay for `RATE_LIMITED`. Queued, running, and unknown
 answers have no jobs. Final jobs retain forge order, with failed jobs retained ahead of other jobs when the list
 exceeds `Build.MOST_JOBS`; the returned list still follows the original order.
+Every answer but an unknown one names each run of the commit with its name and result, the first
+`Build.MOST_RUNS` in forge order, also while the build is queued or running; an unknown answer names none.
+`many-runs` lists more runs than that limit, on one GitHub page and on two Forgejo pages.
 
 The subclass declares its exact authorization scheme: GitHub uses `"Bearer"`, Forgejo uses `"token"`. Every API
 request must carry exactly `Authorization: <scheme> <token>`. Every request to another origin must omit
@@ -58,8 +61,12 @@ log policy, size limit, or alternative question cannot be supplied here.
   `{"head":"068ad307633718a7b9fdaf5381f9b8d53c3b87ec","headFrom":"01.json#/object/sha"}`.
   The pointed-to body value must equal the full SHA.
 - Build cases: `jobs` lists **all** recorded jobs, including those beyond the return limit, in forge order.
-  Queued, running, and unknown cases use `{"jobs":[]}`. Each job has `name`, `result`, `nameFrom`, `resultFrom`,
-  and, when the question requests that job's log, `log`.
+  Queued, running, and unknown cases use `[]` for `jobs`. Each job has `name`, `result`, `nameFrom`, `resultFrom`,
+  and, when the question requests that job's log, `log`. Every build case but an unknown one also has `runs`,
+  listing **all** recorded runs of every run list in exchange order; an unknown case has no `runs` field. Each run
+  has `name`, `result`, `nameFrom` and `resultFrom`: `nameFrom` points to the run's `name` (GitHub) or
+  `workflow_id` (Forgejo), and `resultFrom` to a field of the same run, its `conclusion` once it has one and its
+  `status` otherwise; Forgejo's runs have only `status`.
 - Rate-limit refusals: `retryAfter` is a nonnegative integer equal to the recorded `Retry-After` header.
   When that header is absent, the suite checks the 60-second fallback. GitHub's primary-limit recording
   deliberately exercises this fallback; Forgejo records an explicit 60-second header.
@@ -135,7 +142,9 @@ Exactly one body form is required: `body` is UTF-8 text (API JSON is an escaped 
 ```
 
 The generated body has `total_count` and `jobs`. It copies the reduced real job template, increments its
-positive integer `id`, substitutes `{{id}}` in its name, and optionally changes the last conclusion.
+positive integer `id`, substitutes `{{id}}` in its string values, and optionally changes the last conclusion.
+The kind `workflow-runs` builds `workflow_runs` from a run template the same way; `totalCount`, at least
+`count`, sets `total_count` for one page of a longer list.
 Counts are integers from 1 through 256. Unknown kinds and invalid counts fail before the server starts.
 
 A file may instead contain `repeat` and a nonempty `exchanges` array. The server expands the exchanges
@@ -166,6 +175,7 @@ steps, and URLs are omitted because the adapter does not read them; retained fie
 | `unreachable` | A closed transport has no HTTP response to record. |
 | `many-jobs` | The real builds have nine jobs; a generated sixty-job matrix puts the failure beyond the first fifty. |
 | `shared-logs` | Fifty generated logs exceed the 2 MiB total budget; the captures do not supply this boundary case. |
+| `many-runs` | The real commits have at most three runs; sixty generated outstanding runs cross the fifty-run limit. |
 | `log-tail` | A deterministic long log exercises multiple read windows and exposes its retained end. |
 
 Every generated file carries `"recorded": false` and a one-line `why`, including files whose API

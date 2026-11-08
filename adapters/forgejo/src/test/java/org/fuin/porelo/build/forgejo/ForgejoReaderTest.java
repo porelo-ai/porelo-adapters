@@ -85,7 +85,8 @@ class ForgejoReaderTest {
                         new Build(
                                 Build.CANCELLED,
                                 List.of(new Build.Job("check.yml / test", "cancelled")),
-                                ""));
+                                "",
+                                List.of(new Build.Run("check.yml", "cancelled"))));
     }
 
     @Test
@@ -202,6 +203,9 @@ class ForgejoReaderTest {
         assertThat(unknown.detail())
                 .as("the caller can identify the unfamiliar value")
                 .contains("future_state");
+        assertThat(unknown.runs())
+                .as("no run is named beside a verdict Porelo cannot judge")
+                .isEmpty();
     }
 
     @Test

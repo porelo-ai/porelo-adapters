@@ -16,9 +16,9 @@ The contract it builds against, as `porelo-build-api` will state it:
   otherwise the state (`queued`, `waiting`, `in_progress`, ...).
 - One entry per run of the commit at every answer; a rerun replaces its run; at most `Build.MOST_RUNS` (50), in the
   forge's order. `Build.runs()` is never null: a reader that names no run leaves it empty, and the wire then omits
-  `runs`. `Build`'s constructor makes each text one line, lower-cases a result, drops a run without a name or a
-  result, and of several runs of one name keeps the first the reader gave, up to 50 names; since both forges list
-  the newest run first, the newest stand.
+  `runs`. `Build`'s constructor makes each text one line and lower-cases a result; it keeps every run the reader
+  gives, in its order, a repeated or an empty name included, up to the first 50. Both forges list the newest run
+  first, so the newest stand.
 
 Today's code:
 - `GitHubReader.build` lists the commit's runs (`/actions/runs?head_sha=`, 100 a page, up to 10 pages). A failed run
@@ -73,8 +73,6 @@ eleven `expect.json` per forge and the new `many-runs` recordings.
 It waits for a `porelo-build-api` snapshot whose `Build` carries `runs`.
 
 Findings of the code's reading declined, each with its reason:
-- Runs of one name are merged, and a run without a name or a result is dropped. Both happen in `Build`'s
-  constructor, which the readers do not own; the readers hand over every run the forge lists.
 - A GitHub run `completed` without a conclusion, or with a conclusion while outstanding: GitHub gives a conclusion
   exactly when a run is completed, as every recording shows, so the result follows the conclusion's presence.
 - An expectation with no run list, a `nameFrom` of the other forge's field, a recorded name `Build` would change, and a

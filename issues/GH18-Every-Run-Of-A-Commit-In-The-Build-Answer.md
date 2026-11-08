@@ -1,6 +1,6 @@
 # GH18 — Every Run Of A Commit In The Build Answer
 
-**Status:** Idea
+**Status:** Backlog
 **Size:** M - both readers, the published contract suite and its recordings change, against a new field of
 `porelo-build-api`.
 

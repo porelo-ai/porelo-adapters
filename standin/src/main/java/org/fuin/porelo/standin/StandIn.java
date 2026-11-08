@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
@@ -468,12 +469,7 @@ final class StandIn {
             throw failed("No run " + runId + " on " + push.name);
         }
         final Object roundParameter = parameters.get("round");
-        if (roundParameter != null
-                && !(roundParameter instanceof Integer || roundParameter instanceof Long)) {
-            throw invalid("round");
-        }
-        final int round =
-                roundParameter instanceof Number n ? Math.toIntExact(n.longValue()) : push.round();
+        final int round = roundParameter == null ? push.round() : wholeRound(roundParameter);
         if (round != run.round) {
             throw failed("Run " + runId + " is of round " + run.round + ", not " + round);
         }
@@ -971,6 +967,18 @@ final class StandIn {
             throw invalid(name);
         }
         return flag;
+    }
+
+    // The wire hands a number over as any Number type; only its value decides.
+    private static int wholeRound(Object value) {
+        if (!(value instanceof Number number)) {
+            throw invalid("round");
+        }
+        try {
+            return new BigDecimal(number.toString()).intValueExact();
+        } catch (ArithmeticException | NumberFormatException ex) {
+            throw invalid("round");
+        }
     }
 
     private static VarlinkException invalid(String parameter) {

@@ -760,6 +760,34 @@ class StandInTest {
                 .isEqualTo("org.varlink.service.InvalidParameter");
     }
 
+    // Harm: Porelo sends the round as a number, which the wire may hand over in any Number type;
+    // refusing it leaves the review's comments unread, and a round past int must not crash.
+    @Test
+    void aRoundSentAsAWholeNumberIsTakenAndAnyOtherNumberRefused() {
+        final String run = run("fixture-threads", "github.com");
+
+        assertThat(
+                        call("Comments", Map.of("name", "fixture-threads", "run", run, "round", 2))
+                                .get("sarif"))
+                .as("the comments of the run's own round")
+                .isNotNull();
+        assertThat(errorOf("Comments", Map.of("name", "fixture-threads", "run", run, "round", 1.5)))
+                .as("a round with a fraction")
+                .isEqualTo("org.varlink.service.InvalidParameter");
+        assertThat(
+                        errorOf(
+                                "Comments",
+                                Map.of(
+                                        "name",
+                                        "fixture-threads",
+                                        "run",
+                                        run,
+                                        "round",
+                                        4_294_967_297L)))
+                .as("a round past int")
+                .isEqualTo("org.varlink.service.InvalidParameter");
+    }
+
     // Harm: a path git quotes is no path of the push, so a comment on it can never be anchored.
     @Test
     @SuppressWarnings("unchecked")

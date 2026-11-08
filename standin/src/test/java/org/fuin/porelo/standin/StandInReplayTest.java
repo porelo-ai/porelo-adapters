@@ -329,9 +329,13 @@ class StandInReplayTest {
         assertThat(reply.at("/properties/porelo~1threadId").asText())
                 .as("the reply joins the local result's thread")
                 .isEqualTo(sent.get("thread"));
-        assertThat(((Map<String, Object>) push("pr-6").get("review")).get("openThreads"))
+        assertThat(
+                        ((Number)
+                                        ((Map<String, Object>) push("pr-6").get("review"))
+                                                .get("openThreads"))
+                                .intValue())
                 .as("one open thread")
-                .isEqualTo(1.0);
+                .isEqualTo(1);
         final JsonNode local = results("pr-6", run("pr-6", "people here"));
         assertThat(local.findValuesAsText("guid"))
                 .as("the written result stays, once")

@@ -24,9 +24,9 @@ Read in `adapters/github` (`GitHubReader`, its `native` and `dist` profiles), in
 - The store is the adapter's own clone of the planning repository and of each repository a story's issues name, under
   the account's data directory (`$XDG_DATA_HOME/porelo/planning/stories-git/<project>/`), never a person's checkout.
   `revision` names every clone's head commit, so a write can tell when any of them moved.
-- `GetWorkflow` reads the workflow file the planning repository keeps beside its stories (states with kind
-  `waiting`, `working` or `closed` and a working state's `done`, their order, the phases), and refuses a story or issue
-  whose state the file does not name, saying which.
+- `GetWorkflow` reads `stories/workflow.yml` in the planning repository: the states in board order, each
+  `{name, closed: true|false}`, and the phases `{name, states}`. Which states start work and which state ends it are
+  Porelo's, not the file's. A story or issue whose state the file does not name is refused, saying which.
 - `ListStories(states)`, `GetStory`, `ListStoryIssues`, `GetIssue` parse the heads and the indexes; an issue's state
   is its index group, its title the row's text.
 - `native` and `dist` profiles as the GitHub adapter's: `target/porelo-planning-stories-git`, a `.deb` and an `.rpm`
@@ -45,6 +45,6 @@ Read in `adapters/github` (`GitHubReader`, its `native` and `dist` profiles), in
 
 ## To be checked
 
-- The workflow file's name, place and format, agreed with Agent Coordinator for the planning repository and with Agent
-  Machines, whose stories index must read the same file instead of its built-in states.
+- That the stories index of `porelo-release` reads the same `stories/workflow.yml` instead of its built-in states,
+  asked of Agent Machines.
 - Whether reading a private repository's index needs the token too, or the clones of public ones go without it.

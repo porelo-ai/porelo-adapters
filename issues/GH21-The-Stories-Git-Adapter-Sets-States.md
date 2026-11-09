@@ -47,7 +47,7 @@ Read in the stories' heads and the issue indexes as [GH20](README.md#gh20) reads
 
 - The stories index as a library: asked of Agent Machines, so the adapter calls the same code `porelo-release stories
   index` runs instead of keeping a copy.
-- The planning repository's new working states (`In analysis`, `Under estimation`, `Reworking`, `Finishing`) taken by
-  the stories index and `check-citations`.
+- The new states of `stories/workflow.yml` (`In analysis`, `Under estimation`, `Reworking`, `Finishing`) taken by the
+  stories index and `check-citations`.
 - Whether git runs as a program on the host the adapter runs on, or the adapter needs a library for it in its native
   image.

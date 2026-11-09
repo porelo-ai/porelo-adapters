@@ -19,6 +19,8 @@ left out.
 |---|---|---|---|
 | <a id="gh21"></a>[GH21](GH21-The-Stories-Git-Adapter-Sets-States.md) | L | [GH20](README.md#gh20) | `stories-git` sets issue states, and a story's while it has none, all or none against a revision: files, stories index, commit and push with a token lent per call |
 | <a id="gh22"></a>[GH22](GH22-The-Stories-Git-Adapter-Tells-Changes.md) | S | [GH20](README.md#gh20) | `stories-git` streams changes made elsewhere, fetched every few minutes and on demand, and never starts anything |
+| <a id="gh24"></a>[GH24](GH24-Each-Run-Named-By-Its-Trigger-With-Its-Jobs.md) | M | - | Each run of a commit named by its workflow and its trigger (push, pull request), queued, running or finished, every job under its run, and never no run while one is outstanding; needs two optional `Build2` fields |
+| <a id="gh25"></a>[GH25](GH25-A-Failed-Job-Told-By-Its-Failed-Tests.md) | M | - | A failed job answered with its failed tests and a link to its log page instead of the log printed whole; needs two optional `Build2` fields |
 | <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH17](README.md#gh17), [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials |
 
 ## Analyzed

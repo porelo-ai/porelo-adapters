@@ -1,0 +1,50 @@
+# GH20 — The Stories-Git Adapter Reads The Planning
+
+**Status:** Analyzed; blocked by [GH19](README.md#gh19).
+**Size:** M - a new native executable with its packages and the reading half of `Planning1`, over a file format
+another repository writes.
+
+**What must be true.** Porelo, with `stories-git` chosen in a project's file, shows every story with its state,
+priority and issues, every issue with its state, size and blocking issues, and the workflow's states, order and phases
+exactly as the project's planning repository holds them, each with the web link that opens it.
+
+## Plan
+
+Read in `adapters/github` (`GitHubReader`, its `native` and `dist` profiles), in Porelo's `BuildMain`
+(`describe`, `serve <socket>`), in a story file of the planning repository (its `## Data` JSON head: `id`, `title`,
+`state`, `gain`, `test`, `priority`, `issues` as `<repository>#<number>`, `tested`) and in a repository's
+`issues/README.md` (one table per state group, each row opening with `<a id="<number>">`, then size and blocked by).
+
+- `planning/stories-git`, artifact `porelo-planning-stories-git`, depending on Porelo's `planning/api` and `wire`
+  only, with a `main` as `BuildMain` gives one: `describe` prints `protocolVersion`, `name` `stories-git`,
+  `version`, `capabilities` `["write", "watch", "issues"]`; `serve <socket>` answers `Planning1`.
+- Settings, passed through unread by Porelo: the planning repository's clone URL, the stories directory, the link
+  pattern (`https://github.com/porelo-ai/{repository}/blob/main/{path}`) and the owner the issue references resolve
+  in.
+- The store is the adapter's own clone of the planning repository and of each repository a story's issues name, under
+  the account's data directory (`$XDG_DATA_HOME/porelo/planning/stories-git/<project>/`), never a person's checkout.
+  `revision` names every clone's head commit, so a write can tell when any of them moved.
+- `GetWorkflow` reads the workflow file the planning repository keeps beside its stories (states with kind
+  `waiting`, `working` or `closed` and a working state's `done`, their order, the phases), and refuses a story or issue
+  whose state the file does not name, saying which.
+- `ListStories(states)`, `GetStory`, `ListStoryIssues`, `GetIssue` parse the heads and the indexes; an issue's state
+  is its index group, its title the row's text.
+- `native` and `dist` profiles as the GitHub adapter's: `target/porelo-planning-stories-git`, a `.deb` and an `.rpm`
+  installing it as `/usr/libexec/porelo/planning/stories-git`, checked for `x86-64` and its library floors.
+- Its test extends [GH19](README.md#gh19)'s suite with a fixture of bare repositories made from a story and an index
+  as the planning repository writes them. Red first: a story whose state the workflow file lacks is answered instead
+  of refused.
+
+## Acceptance
+
+- The contract suite's read cases green against the native executable, and each seen red once with the parser broken
+  on purpose.
+- Against a clone of the planning repository at a fixed commit, `ListStories` names every story the stories index
+  names, in the same state.
+- `-Pnative,dist verify` builds both packages; `dpkg -c` shows `/usr/libexec/porelo/planning/stories-git`.
+
+## To be checked
+
+- The workflow file's name, place and format, agreed with Agent Coordinator for the planning repository and with Agent
+  Machines, whose stories index must read the same file instead of its built-in states.
+- Whether reading a private repository's index needs the token too, or the clones of public ones go without it.

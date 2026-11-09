@@ -1,6 +1,6 @@
 # GH19 — A Contract Suite For Planning Adapters
 
-**Status:** Implementing.
+**Status:** Review.
 **Size:** L - one new published test module over `org.fuin.porelo.Planning1`, a contract another repository defines,
 with its own loopback git server for the credential, concurrency and failure cases; no adapter code.
 
@@ -77,8 +77,3 @@ each with its brief's text; errors
   repositories) are seen red against `stories-git` broken for each, in [GH20](README.md#gh20) and
   [GH21](README.md#gh21).
 - `porelo-release check-readmes` and `check-releases` accept the module: README present, its pom flattened.
-
-## To be checked
-
-- Planning1's shape as Porelo's `planning/api` defines it once it stands, agreed with Agent Core in the room; the cases
-  follow it.

@@ -1,8 +1,8 @@
 # GH20 — The Stories-Git Adapter Reads The Planning
 
-**Status:** Implementing.
-**Size:** M - a new native executable with its packages and the reading half of `Planning1`, over a file format
-another repository writes.
+**Status:** Review.
+**Size:** L - a new native executable with its packages and the reading half of `Planning1`, over issue indexes
+every Porelo repository writes by hand, each of which it must read.
 
 **What must be true.** Porelo, with `stories-git` chosen in a project's file, shows every story with its state,
 priority and issues, every issue with its state, size and blocking issues, and the workflow's states, order and phases
@@ -42,6 +42,12 @@ Read in `adapters/github` (`GitHubReader`, its `native` and `dist` profiles), in
   name is never delivered, since Porelo starts an agent with whatever brief it gets.
 - `native` and `dist` profiles as the GitHub adapter's: `target/porelo-planning-stories-git`, a `.deb` and an `.rpm`
   installing it as `/usr/libexec/porelo/planning/stories-git`, checked for `x86-64` and its library floors.
+- The issue indexes are read as GitHub renders them and as the shared checks accept them: a state is a heading of
+  level two or three; an issue table opens with `#` and has a title column (`Title`, `What it covers`, `What was
+  built` or `What it covered`, in any case); a row's cells beyond its header are dropped and missing ones are empty;
+  `Blocked by` takes linked IDs and leaves free text aside, but refuses an unlinked ID; a finished or rejected row
+  links its own anchor, an issue without a file; a file beside the linked one is no second issue file; an index
+  reached twice is read once; a README outside `issues/` is never read. A refusal names the index and the issue.
 - Its test extends [GH19](README.md#gh19)'s suite with a fixture of bare repositories made from a story and an index
   as the planning repository writes them. Red first: a story whose state the workflow file lacks is answered instead
   of refused.
@@ -51,11 +57,7 @@ Read in `adapters/github` (`GitHubReader`, its `native` and `dist` profiles), in
 - The contract suite's read cases green against the native executable, and each seen red once with the parser broken
   on purpose.
 - Against a clone of the planning repository at a fixed commit, `ListStories` names every story the stories index
-  names, in the same state.
+  names, in the same state, with the issue repositories cloned from the forge.
+- Every `issues/**/README.md` of the Porelo repositories on `main` is read without a refusal; samples of the forms
+  they differ in are held as fixtures.
 - `-Pnative,dist verify` builds both packages; `dpkg -c` shows `/usr/libexec/porelo/planning/stories-git`.
-
-## To be checked
-
-- That the stories index of `porelo-release` reads the same `stories/workflow.yml` instead of its built-in states,
-  asked of Agent Machines.
-- Whether reading a private repository's index needs the credential too, or the clones of public ones go without it.

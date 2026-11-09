@@ -1,2 +1,2 @@
-title: Stories-git validates complete planning indexes, isolates clones and credentials, bounds Git processes, and honors configured certificate authorities.
+title: Stories-git reads the issue indexes as the Porelo repositories write them, isolates clones and credentials, bounds Git processes, and honors configured certificate authorities.
 type: fixed

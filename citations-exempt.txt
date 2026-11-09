@@ -1,7 +1,15 @@
 # The stories-git parser test reads real story and issue index files, copied unchanged, and asserts the numbers they hold.
 planning/stories-git/src/test/java/org/fuin/porelo/planning/storiesgit/ParserTest.java
+planning/stories-git/src/test/java/org/fuin/porelo/planning/storiesgit/RealIndexTest.java
 planning/stories-git/src/test/resources/samples/GH11-The-Adapters-Agent-Works-In-A-Porelo-Task.md
 planning/stories-git/src/test/resources/samples/issues-README.md
 planning/stories-git/src/test/resources/samples/ST11-Porelo-Adapters-And-Porelo-Ai-Github-Io-Each.md
 planning/stories-git/src/test/resources/samples/ST294-Plan-The-Stories-On-A-Board-In-The-Window.md
 planning/stories-git/src/test/resources/samples/stories-README.md
+planning/stories-git/src/test/resources/samples/index-porelo-agy.md
+planning/stories-git/src/test/resources/samples/index-porelo-base.md
+planning/stories-git/src/test/resources/samples/index-porelo-forge-clients.md
+planning/stories-git/src/test/resources/samples/index-porelo-frontend.md
+planning/stories-git/src/test/resources/samples/index-porelo-intellij.md
+planning/stories-git/src/test/resources/samples/index-porelo-message-matrix.md
+planning/stories-git/src/test/resources/samples/index-porelo-project.md

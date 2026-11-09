@@ -10,13 +10,8 @@ left out.
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
 | <a id="gh18"></a>[GH18](GH18-Every-Run-Of-A-Commit-In-The-Build-Answer.md) | M | - | Every `Build2.Build` answer of the GitHub and Forgejo readers carries `runs`, one name and result per run of the commit, queued and running too, at most 50 in the forge's order; the contract suite and its recordings hold it; waits for `porelo-build-api`'s `runs` |
-
-## Implementing
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
 | <a id="gh19"></a>[GH19](GH19-A-Contract-Suite-For-Planning-Adapters.md) | L | - | `porelo-planning-contract`, a published suite every planning adapter extends over `Planning1`: workflow as stored, stale revisions refused, all or none, unknown items and missing capabilities refused, the token never shown |
-| <a id="gh20"></a>[GH20](GH20-The-Stories-Git-Adapter-Reads-The-Planning.md) | M | - | `stories-git`, a native planning adapter at `/usr/libexec/porelo/planning/stories-git`, reads the workflow, the stories' heads and each repository's issue index from its own clones, with links |
+| <a id="gh20"></a>[GH20](GH20-The-Stories-Git-Adapter-Reads-The-Planning.md) | L | - | `stories-git`, a native planning adapter at `/usr/libexec/porelo/planning/stories-git`, reads the workflow, the stories' heads and each repository's issue index from its own clones, with links |
 
 ## Backlog
 

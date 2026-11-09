@@ -39,7 +39,8 @@ class IndexSafetyTest {
                 "wrong-path",
                 "parent-link",
                 "unlinked",
-                "fragment-link"
+                "fragment-link",
+                "escaping-link"
             })
     void refusesMissingMismatchedOrUnlinkedIssueFiles(String damage) throws Exception {
         write("issues/README.md", HEADER + row("[I1](group/I1-Work.md)", "-"));
@@ -56,6 +57,10 @@ class IndexSafetyTest {
         if (damage.equals("unlinked")) {
             write("issues/README.md", HEADER + row("I1", "-"));
             write("issues/I1-Work.md", ISSUE);
+        }
+        if (damage.equals("escaping-link")) {
+            write("issues/README.md", HEADER + row("[I1](../docs/I1-Work.md)", "-"));
+            write("docs/I1-Work.md", ISSUE);
         }
         if (damage.equals("fragment-link"))
             write("issues/README.md", HEADER + row("[I1](I1-Work.md#acceptance)", "-"));
@@ -129,20 +134,25 @@ class IndexSafetyTest {
                 .isEqualTo("https://example.org/one/issues/base/README.md#i2");
     }
 
-    // Harm: repeated indexes or duplicate IDs make the selected work ambiguous.
-    @ParameterizedTest
-    @ValueSource(strings = {"cycle", "duplicate-id", "duplicate-index"})
-    void refusesCyclesAndDuplicatesAcrossIndexes(String damage) throws Exception {
-        write("issues/README.md", "[Base](base/README.md)\n");
+    // Harm: one issue in two indexes makes the selected work ambiguous.
+    @Test
+    void refusesTheSameIssueInTwoIndexes() throws Exception {
+        write("issues/README.md", "[Base](base/README.md)\n" + HEADER + row("I1", "-"));
         write("issues/base/README.md", HEADER + row("I1", "-"));
-        if (damage.equals("cycle")) {
-            write("issues/base/README.md", "[Self](README.md)\n" + HEADER + row("I1", "-"));
-        } else if (damage.equals("duplicate-index")) {
-            write("issues/README.md", "[Base](base/README.md)\n[Again](base/README.md)\n");
-        } else {
-            write("issues/README.md", "[Base](base/README.md)\n" + HEADER + row("I1", "-"));
-        }
-        refused(() -> read(), "index traversal refuses repeated paths and IDs");
+        refused(() -> read(), "index traversal refuses duplicate IDs");
+    }
+
+    // Harm: an index reached twice must neither loop, count its issues twice nor fail the board.
+    @ParameterizedTest
+    @ValueSource(strings = {"cycle", "duplicate-index"})
+    void readsAnIndexReachedTwiceOnce(String damage) throws Exception {
+        write("issues/README.md", "[Base](base/README.md)\n[Again](base/README.md)\n");
+        write("issues/base/README.md", HEADER + row("I1", "-"));
+        if (damage.equals("cycle"))
+            write(
+                    "issues/base/README.md",
+                    "[Up](../README.md) [Self](README.md)\n" + HEADER + row("I1", "-"));
+        assertThat(read().keySet()).as("the index is read once").containsExactly("I1");
     }
 
     // Harm: malformed agent fields yield an invalid wire answer and terminate the adapter.
@@ -212,6 +222,38 @@ class IndexSafetyTest {
         refused(
                 () -> IssueIndex.full(read().get("I1"), new SafeFiles(root)),
                 "existing issue files require acceptance");
+    }
+
+    // Harm: a README outside the issues must neither be read as an index nor fail the board.
+    @Test
+    void neverFollowsAReadmeOutsideTheIssues() throws Exception {
+        write(
+                "issues/README.md",
+                "[Stories](../stories/README.md) [Root](../../README.md)\n"
+                        + HEADER
+                        + row("I1", "-"));
+        write("stories/README.md", HEADER + row("I9", "-"));
+        assertThat(read().keySet()).as("only the issues' own index is read").containsExactly("I1");
+    }
+
+    // Harm: a subgroup index linking its sibling must not make its repository unreadable.
+    @Test
+    void followsASiblingSubgroupIndexLinkedThroughItsParent() throws Exception {
+        write("issues/README.md", "# Issues\n\n[Providers](providers/README.md)\n");
+        write("issues/providers/README.md", "See [Base](../base/README.md).\n");
+        write("issues/base/README.md", HEADER + row("I2", "-"));
+        assertThat(read().keySet()).as("the sibling subgroup is read").containsExactly("I2");
+    }
+
+    // Harm: a document kept beside a linked issue file must not make its repository unreadable.
+    @Test
+    void readsTheLinkedIssueFileBesideACompanionDocument() throws Exception {
+        write("issues/README.md", HEADER + row("[I1](I1-Work.md)", "-"));
+        write("issues/I1-Work.md", ISSUE);
+        write("issues/I1-Work_design.md", "# Design\n");
+        assertThat(read().get("I1").path())
+                .as("the row's own link names the issue file")
+                .contains("issues/I1-Work.md");
     }
 
     private Map<String, IssueIndex.Entry> read() {

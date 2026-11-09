@@ -20,6 +20,9 @@ Read in the stories' heads and the issue indexes as [GH20](README.md#gh20) reads
   one commit per repository.
 - `SetStoryState(story, state, revision)`: only for a story whose `issues` is empty; otherwise `StateNotAllowed`.
 - A commit's message is one line saying what moved, with `[skip ci]`, and carries only Porelo's own trailers.
+- An issue's state is written in the issue's own repository, and its format stays as it is. So the adapter has one
+  token of its own with contents write on every repository of the project and nothing else (no administration, no
+  workflows), signed in once and kept in the vault.
 - The push goes over https with the token from the call on standard input to a credential helper, never in a URL,
   an argument, `.git/config` or a log. A push refused because the remote moved is `StaleRevision`; the local commit is
   dropped, so the clone equals the remote again.
@@ -35,13 +38,6 @@ Read in the stories' heads and the issue indexes as [GH20](README.md#gh20) reads
   found in `.git/config` or a log after the call.
 - In the fixture, after a move, the issue file's `**Status:**` line, its index row's group and the stories index
   agree, and `porelo-release check-citations` accepts the planning repository.
-
-## Open questions
-
-- Setting an issue's state writes in the issue's own repository, not in the planning repository, so a token scoped to
-  the planning repository alone cannot do it. Which: one token with contents write on every repository of the project;
-  the issue states kept in the planning repository instead, a format change for every repository; or the board sets
-  only states of stories without issues, issues' states staying with their agents?
 
 ## To be checked
 

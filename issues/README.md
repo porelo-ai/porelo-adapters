@@ -15,7 +15,7 @@ left out.
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
-| <a id="gh19"></a>[GH19](GH19-A-Contract-Suite-For-Planning-Adapters.md) | M | - | `porelo-planning-contract`, a published suite every planning adapter extends over `Planning1`: workflow as stored, stale revisions refused, all or none, unknown items and missing capabilities refused, the token never shown |
+| <a id="gh19"></a>[GH19](GH19-A-Contract-Suite-For-Planning-Adapters.md) | L | - | `porelo-planning-contract`, a published suite every planning adapter extends over `Planning1`: workflow as stored, stale revisions refused, all or none, unknown items and missing capabilities refused, the token never shown |
 
 ## Backlog
 

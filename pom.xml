@@ -70,6 +70,7 @@
     <modules>
         <module>contract</module>
         <module>adapters</module>
+        <module>planning</module>
         <module>standin</module>
     </modules>
 

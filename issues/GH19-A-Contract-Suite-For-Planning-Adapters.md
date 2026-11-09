@@ -12,8 +12,10 @@ a change, takes a stale revision, sets a state the workflow does not have or sho
 
 Read in today's `contract/` (`AdapterContract`, `JavaExecutable`, `ContractCase`, `CaseExpectation`), which does the
 same for `Build2`, and in the interface as agreed for Planning1: `describe` with `protocolVersion`, `name`, `version`,
-`capabilities` (`write`, `watch`, `issues`); `GetWorkflow`, `ListStories`, `GetStory`, `ListStoryIssues`, `GetIssue`,
-`SetStoryState` (a story without issues only), `SetIssueStates` (all or none), `WatchChanges`; errors
+`capabilities` (`write`, `watch`, `issues`) and `credentials`, the credential kinds it takes (`github-app`, `token`);
+`GetWorkflow`, `ListStories`, `GetStory`, `ListStoryIssues`, `GetIssue`,
+`SetStoryState` (a story without issues only), `SetIssueStates` (all or none), `WatchChanges`, `Refresh` (a fetch
+at once); an issue carries `whatMustBeTrue`; errors
 `StaleRevision`, `NoSuchStory`, `NoSuchIssue`, `StateNotAllowed`, `NotSupported`.
 
 - A grouping module `planning/` beside `adapters/`, its first part `planning/contract`, artifact
@@ -29,6 +31,8 @@ same for `Build2`, and in the interface as agreed for Planning1: `describe` with
   - `SetIssueStates` with one change the workflow refuses writes none of the others;
   - an unknown story or issue is `NoSuchStory` / `NoSuchIssue`, never an empty answer;
   - a capability `describe` does not name is refused with `NotSupported`, never done silently;
+  - a call whose credential is of a kind `describe` does not name is refused with `NotSupported` before anything is
+    read or written;
   - the token a call carries appears in no answer, error, log line, argument list or file the fixture can read
     afterward;
   - `WatchChanges` reports a change made behind the adapter's back, and a read after it shows that change.
@@ -47,4 +51,3 @@ same for `Build2`, and in the interface as agreed for Planning1: `describe` with
 
 - Planning1's shape as Porelo's `planning/api` defines it once it stands, agreed with Agent Core in the room; the cases
   follow it.
-- How a call carries the adapter's settings and token: per call, as `Build2` does, so the adapter holds no secret.

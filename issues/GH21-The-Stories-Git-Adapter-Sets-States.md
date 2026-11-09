@@ -2,7 +2,7 @@
 
 **Status:** Analyzed; blocked by [GH20](README.md#gh20).
 **Size:** L - writes into the planning repository and into the repositories that hold the issues, needs the stories
-index as a library from another repository, and pushes with a token lent per call.
+index as a library from another repository, and pushes with a credential lent per call.
 
 **What must be true.** A state set on Porelo's board - an issue's, or a story's while it has no issue - stands in the
 planning repository's files, its stories index and each changed issue's file and index, committed and pushed, all of
@@ -20,9 +20,11 @@ Read in the stories' heads and the issue indexes as [GH20](README.md#gh20) reads
   one commit per repository.
 - `SetStoryState(story, state, revision)`: only for a story whose `issues` is empty; otherwise `StateNotAllowed`.
 - A commit's message is one line saying what moved, with `[skip ci]`, and carries only Porelo's own trailers.
-- An issue's state is written in the issue's own repository, and its format stays as it is. So the adapter has one
-  token of its own with contents write on every repository of the project and nothing else (no administration, no
-  workflows), signed in once and kept in the vault.
+- An issue's state is written in the issue's own repository, and its format stays as it is. So the adapter's
+  credential has contents write on every repository of the project and nothing else (no administration, no
+  workflows). It takes two kinds, named in `describe` and chosen in the project's file: `github-app`, an installation
+  token of the GitHub App Porelo Planning (Contents read and write only), which Porelo mints for one hour and passes
+  per call; and `token`, a token kept in the vault, for Forgejo or GitHub.
 - The push goes over https with the token from the call on standard input to a credential helper, never in a URL,
   an argument, `.git/config` or a log. A push refused because the remote moved is `StaleRevision`; the local commit is
   dropped, so the clone equals the remote again.

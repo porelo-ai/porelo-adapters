@@ -11,8 +11,8 @@ Porelo's board within a few minutes, or at once when the board asks, without the
 Read in [GH20](README.md#gh20)'s clones and revision and in Planning1's `WatchChanges`, a stream of
 `(kind: STORY | ISSUE | WORKFLOW, id, revision)`.
 
-- `WatchChanges` fetches every clone at an interval from the settings, a few minutes by default, and at once on a
-  call that asks for it; it compares the heads with the last revision it told and replies once per changed story,
+- `WatchChanges` fetches every clone at an interval from the settings, a few minutes by default, and at once on
+  `Refresh`; it compares the heads with the last revision it told and replies once per changed story,
   issue or workflow file, with the new revision.
 - A fetch that fails is told as an error on the stream naming the repository, never skipped silently; the stream
   stays open and tries again at the next interval.

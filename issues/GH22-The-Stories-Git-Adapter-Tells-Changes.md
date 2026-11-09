@@ -1,6 +1,6 @@
 # GH22 — The Stories-Git Adapter Tells Changes
 
-**Status:** Backlog, on the operator's word of 2026-11-09; blocked by [GH20](README.md#gh20).
+**Status:** Backlog; blocked by [GH20](README.md#gh20).
 **Size:** S - one streaming method in the adapter and its contract case.
 
 **What must be true.** A state, story or workflow changed elsewhere - by an agent's push, on another machine - shows on

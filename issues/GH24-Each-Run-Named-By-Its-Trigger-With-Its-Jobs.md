@@ -15,10 +15,10 @@ log)` names no run, so the five jobs of `build.yml` built once for the push and 
 twice with nothing telling them apart.
 
 The contract this builds against, agreed with `porelo-build-api`'s owner and added there first, both fields optional
-so a reader from before still answers; Porelo refuses a reply that breaks a bound:
+so a reader from before still answers; Porelo keeps an answer to these bounds, so the readers answer within them:
 - `Run` gains `event: ?string`, the forge's trigger in lower case as it spells it (`push`, `pull_request`, ...), and
-  `id: ?string`, the forge's run id as text; each one line of printable text, at most 64 characters.
-- `Job` gains `run: ?string`, the id of the run it belongs to, which must be one of the reply's `Run.id`.
+  `id: ?string`, the forge's run id as text; each one line of at most 64 code points, absent when blank.
+- `Job` gains `run: ?string`, the id of the run it belongs to; Porelo drops one that names no `Run.id` of the reply.
 
 Today's code:
 - `ForgejoReader.build` reads `/actions/runs?head_sha=` and answers `named(runs)` - the run's `workflow_id` and

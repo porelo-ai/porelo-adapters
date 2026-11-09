@@ -13,10 +13,10 @@ The contract today (`Build2`): a failed `Job (name, result, log)` carries the la
 status prints it whole, once per run that built the job.
 
 The contract this builds against, agreed with `porelo-build-api`'s owner and added there first, both fields optional
-so a reader from before still answers; Porelo refuses a reply that breaks a bound:
+so a reader from before still answers; Porelo keeps an answer to these bounds, so the readers answer within them:
 - `Job` gains `failedTests: ?[]string`, each `<class>.<method>` as the test runner names it, at most 50 entries, each
   one line of printable text of at most 200 characters, absent rather than empty; and `url: ?string`, the forge's web
-  page of the job, an https URL on the same host as the build's forge address, at most 2048 characters.
+  page of the job, an https URL with a host, no user part, no space or control character, at most 2048 characters.
 
 Today's code: `GitHubReader` and `ForgejoReader` already download a failed job's log (`logs: "failure"`) and keep its
 end; the recordings keep only the fields read today, so they hold no job page.

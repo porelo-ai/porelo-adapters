@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -23,8 +22,11 @@ import java.util.concurrent.TimeUnit;
 import org.fuin.porelo.planning.api.PlanningRefused.Reason;
 
 /** Used under the adapter monitor; processes have independent credentials and bounded lifetimes. */
-final class GitStore {
+final class GitStore implements AutoCloseable {
     private static final Duration CALL_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration CLONE_TIMEOUT = Duration.ofSeconds(60);
+    private static final Duration SNAPSHOT_TIMEOUT = Duration.ofSeconds(110);
+    private static final long CLEANUP_NANOS = TimeUnit.SECONDS.toNanos(3);
     private static final int MAX_OUTPUT = 64 * 1024;
     private static final String ASKPASS =
             """
@@ -45,19 +47,32 @@ final class GitStore {
     private final Path helper;
     private final Path executable;
     private final Duration timeout;
-    private final Map<String, String> urls = new TreeMap<>();
+    private final Duration cloneTimeout;
+    private final StoreLock lock;
+    private final @org.jspecify.annotations.Nullable Path certificates;
+    private final Map<String, Path> clones = new TreeMap<>();
     private long deadline;
 
     GitStore(Path directory) {
-        this(directory, Path.of("/usr/bin/git"), CALL_TIMEOUT);
+        this(directory, Path.of("/usr/bin/git"));
+    }
+
+    GitStore(Path directory, Path executable) {
+        this(directory, executable, CALL_TIMEOUT, CLONE_TIMEOUT);
     }
 
     GitStore(Path directory, Path executable, Duration timeout) {
+        this(directory, executable, timeout, timeout);
+    }
+
+    private GitStore(Path directory, Path executable, Duration timeout, Duration cloneTimeout) {
         this.directory = directory;
         this.executable = executable;
         this.timeout = timeout;
+        this.cloneTimeout = cloneTimeout;
         repositories = directory.resolve("repositories");
         helper = directory.resolve("git-askpass");
+        lock = new StoreLock(directory);
         try {
             for (final String child : List.of("repositories", "home", "tmp", "template")) {
                 final Path path = directory.resolve(child);
@@ -74,36 +89,74 @@ final class GitStore {
                                     + child
                                     + "; got a link or non-directory");
             }
-            if (!Files.exists(helper, LinkOption.NOFOLLOW_LINKS))
-                Files.writeString(
-                        helper, ASKPASS, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW);
+            sweep(directory.resolve("tmp"), "credential-*");
+            sweep(repositories, "*.pending-*");
+            sweep(directory, "planning.pending-*");
+            sweep(directory.resolve("tmp"), "askpass-*");
+            sweep(directory.resolve("tmp"), "certificates-*");
+            certificates = GitCertificates.prepare(directory, System.getenv());
+            if (!Files.exists(helper, LinkOption.NOFOLLOW_LINKS)) {
+                final Path pending =
+                        Files.createTempFile(
+                                directory.resolve("tmp"),
+                                "askpass-",
+                                ".sh",
+                                PosixFilePermissions.asFileAttribute(
+                                        PosixFilePermissions.fromString("rwx------")));
+                try {
+                    Files.writeString(pending, ASKPASS, StandardCharsets.UTF_8);
+                    Files.move(pending, helper, StandardCopyOption.ATOMIC_MOVE);
+                } finally {
+                    Files.deleteIfExists(pending);
+                }
+            }
             if (!new SafeFiles(directory).read("git-askpass").equals(ASKPASS))
                 throw Refusals.failed(
                         "Expected credential-free askpass helper; got unexpected helper text");
             Files.setPosixFilePermissions(helper, PosixFilePermissions.fromString("rwx------"));
         } catch (IOException ex) {
+            lock.close();
             throw Refusals.failed(
                     "Expected writable adapter storage; got a directory or helper creation"
                             + " failure");
+        } catch (RuntimeException ex) {
+            lock.close();
+            throw ex;
         }
     }
 
     void begin() {
-        deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(60);
+        deadline = System.nanoTime() + SNAPSHOT_TIMEOUT.toNanos();
+        clones.clear();
+    }
+
+    void checkDeadline() {
+        if (System.nanoTime() - deadline >= 0)
+            throw Refusals.store(
+                    Reason.UNREACHABLE,
+                    "Expected the Git snapshot within 110 seconds; got a timeout");
+    }
+
+    Path planning(String url, String token) {
+        return cloneAt("planning", directory.resolve("planning"), url, token);
     }
 
     Path clone(String key, String url, String token) {
         Settings.repositoryKey(key);
-        if (urls.containsKey(key) && !urls.get(key).equals(url))
-            throw Refusals.invalid(
-                    "Expected one clone URL per repository key; got conflicting URLs");
-        final Path clone = repositories.resolve(key + ".git-or-worktree");
+        return cloneAt(
+                "repositories/" + key, repositories.resolve(key + ".git-or-worktree"), url, token);
+    }
+
+    private Path cloneAt(String key, Path clone, String url, String token) {
+        final Path parent = clone.getParent();
+        if (parent == null)
+            throw Refusals.failed("Expected a clone inside adapter storage; got " + key);
         if (!Files.exists(clone, LinkOption.NOFOLLOW_LINKS)) {
             Path staging = null;
             try {
-                staging = Files.createTempDirectory(repositories, key + ".pending-");
+                staging = Files.createTempDirectory(parent, clone.getFileName() + ".pending-");
                 git(
-                        repositories,
+                        parent,
                         token,
                         "clone",
                         "--quiet",
@@ -113,7 +166,11 @@ final class GitStore {
                         "--",
                         url,
                         staging.toString());
-                Files.move(staging, clone, StandardCopyOption.ATOMIC_MOVE);
+                try {
+                    Files.move(staging, clone, StandardCopyOption.ATOMIC_MOVE);
+                } catch (IOException appeared) {
+                    if (!Files.exists(clone, LinkOption.NOFOLLOW_LINKS)) throw appeared;
+                }
             } catch (IOException ex) {
                 throw Refusals.failed(
                         "Expected an isolated clone for "
@@ -134,21 +191,15 @@ final class GitStore {
         if (!origin.equals(url))
             throw Refusals.invalid(
                     "Expected the configured repository for the stored clone; got another origin");
-        urls.put(key, url);
+        clones.put(key, clone);
         return clone;
     }
 
     String revision() {
         final StringBuilder heads = new StringBuilder();
-        for (final String key : urls.keySet()) {
-            final String head =
-                    git(
-                                    repositories.resolve(key + ".git-or-worktree"),
-                                    "",
-                                    "rev-parse",
-                                    "--verify",
-                                    "HEAD")
-                            .strip();
+        for (final var clone : clones.entrySet()) {
+            final String key = clone.getKey();
+            final String head = git(clone.getValue(), "", "rev-parse", "--verify", "HEAD").strip();
             if (!head.matches("[0-9a-f]{40}|[0-9a-f]{64}"))
                 throw Refusals.failed(
                         "Expected a full clone head for " + key + "; got another git answer");
@@ -165,9 +216,20 @@ final class GitStore {
     }
 
     String git(Path work, String token, String... arguments) {
+        final long remaining = deadline - System.nanoTime() - CLEANUP_NANOS;
+        if (remaining <= 0)
+            throw Refusals.store(
+                    Reason.UNREACHABLE,
+                    "Expected the Git snapshot within 110 seconds; got a timeout");
+        final Duration bound =
+                arguments.length > 0 && arguments[0].equals("clone") ? cloneTimeout : timeout;
+        long budget = Math.min(remaining, bound.toNanos());
         final List<String> command =
                 new ArrayList<>(
                         List.of(
+                                "/usr/bin/timeout",
+                                "--kill-after=1s",
+                                seconds(budget),
                                 executable.toString(),
                                 "-c",
                                 "core.hooksPath=/dev/null",
@@ -187,6 +249,7 @@ final class GitStore {
                                 "maintenance.auto=false",
                                 "-c",
                                 "gc.auto=0"));
+        if (certificates != null) command.addAll(List.of("-c", "http.sslCAInfo=" + certificates));
         command.addAll(List.of(arguments));
         final ProcessBuilder builder = new ProcessBuilder(command).directory(work.toFile());
         final Map<String, String> environment = builder.environment();
@@ -211,11 +274,6 @@ final class GitStore {
                         helper.toString(),
                         "LC_ALL",
                         "C"));
-        final long remaining = deadline - System.nanoTime();
-        if (remaining <= 0)
-            throw Refusals.store(
-                    Reason.UNREACHABLE,
-                    "Expected the Git snapshot within 60 seconds; got a timeout");
         Process process = null;
         try (CredentialPipe credential =
                 token.isEmpty()
@@ -223,6 +281,12 @@ final class GitStore {
                         : new CredentialPipe(directory.resolve("tmp"), token, environment)) {
             if (credential != null)
                 environment.put("PORELO_GIT_CREDENTIAL_PIPE", credential.path().toString());
+            budget = Math.min(budget, deadline - System.nanoTime() - CLEANUP_NANOS);
+            if (budget <= 0)
+                throw Refusals.store(
+                        Reason.UNREACHABLE,
+                        "Expected the Git snapshot within 110 seconds; got a timeout");
+            builder.command().set(2, seconds(budget));
             process = builder.start();
             process.getOutputStream().close();
             final Capture output = new Capture(process.getInputStream());
@@ -230,17 +294,20 @@ final class GitStore {
             final Thread stdout = Thread.ofVirtual().start(output);
             final Thread stderr = Thread.ofVirtual().start(error);
             try {
-                if (!process.waitFor(Math.min(remaining, timeout.toNanos()), TimeUnit.NANOSECONDS))
+                if (!process.waitFor(budget + TimeUnit.SECONDS.toNanos(1), TimeUnit.NANOSECONDS))
                     throw Refusals.store(
                             Reason.UNREACHABLE,
                             "Expected Git to answer within "
-                                    + timeout.toMillis()
+                                    + TimeUnit.NANOSECONDS.toMillis(budget)
                                     + " milliseconds; got a timeout");
                 stdout.join(1000);
                 stderr.join(1000);
                 if (stdout.isAlive() || stderr.isAlive() || output.failed || error.failed)
                     throw Refusals.failed(
                             "Expected complete Git output; got an unreadable or unfinished stream");
+                if (process.exitValue() == 124 || process.exitValue() == 137)
+                    throw Refusals.store(
+                            Reason.UNREACHABLE, "Expected bounded Git completion; got a timeout");
                 if (process.exitValue() != 0) throw gitFailure(error.text());
                 if (output.overflow)
                     throw Refusals.failed(
@@ -265,19 +332,27 @@ final class GitStore {
         }
     }
 
+    private static String seconds(long nanos) {
+        return java.math.BigDecimal.valueOf(nanos, 9).stripTrailingZeros().toPlainString() + "s";
+    }
+
     private static org.fuin.porelo.planning.api.PlanningRefused gitFailure(String diagnostic) {
         // Remote output is used only for classification, never copied into an error or log.
-        final String text = diagnostic.toLowerCase(Locale.ROOT);
+        final String text =
+                diagnostic.toLowerCase(Locale.ROOT).replaceAll("https?://[^\\s'\"]+", "[url]");
+        if (text.contains("returned error: 429") || text.contains("too many requests"))
+            return Refusals.store(
+                    Reason.RATE_LIMITED, "Expected repository capacity; got too many requests");
         if (text.contains("authentication failed")
-                || text.contains("401")
-                || text.contains("403")
+                || text.contains("returned error: 401")
+                || text.contains("returned error: 403")
                 || text.contains("could not read password"))
             return Refusals.store(
                     Reason.CREDENTIAL_REFUSED,
                     "Expected repository access with this call's credential; got an authentication"
                             + " refusal");
         if (text.contains("not found")
-                || text.contains("404")
+                || text.contains("returned error: 404")
                 || text.contains("does not appear to be a git repository"))
             return Refusals.store(
                     Reason.NO_SUCH_STORE,
@@ -321,6 +396,17 @@ final class GitStore {
             throw Refusals.failed(
                     "Expected temporary clone cleanup; got leftover " + staging.getFileName());
         }
+    }
+
+    private static void sweep(Path parent, String pattern) throws IOException {
+        try (var entries = Files.newDirectoryStream(parent, pattern)) {
+            for (final Path entry : entries) remove(entry);
+        }
+    }
+
+    @Override
+    public void close() {
+        lock.close();
     }
 
     private static final class Capture implements Runnable {

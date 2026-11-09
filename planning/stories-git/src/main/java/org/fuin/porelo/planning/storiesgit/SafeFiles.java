@@ -12,6 +12,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -22,8 +24,14 @@ final class SafeFiles {
     private static final int MAX_BYTES = 4 * 1024 * 1024;
     private static final int MAX_ENTRIES = 10000;
     private final Path root;
+    private final Runnable checkDeadline;
 
     SafeFiles(Path root) {
+        this(root, () -> {});
+    }
+
+    SafeFiles(Path root, Runnable checkDeadline) {
+        this.checkDeadline = checkDeadline;
         try {
             if (Files.isSymbolicLink(root))
                 throw Refusals.failed("Expected a regular clone directory; got a symbolic link");
@@ -55,6 +63,7 @@ final class SafeFiles {
     }
 
     Optional<String> optional(String name) {
+        checkDeadline.run();
         final Path relative = relative(name);
         try (DirectoryStream<Path> opened = Files.newDirectoryStream(root)) {
             // Directory descriptors keep parent replacements from redirecting an open to the host.
@@ -82,9 +91,14 @@ final class SafeFiles {
                 return readAt(child, path, index + 1);
             }
         }
-        final Path full = root.resolve(path);
-        if (!full.toRealPath().startsWith(root)
-                || !Files.isRegularFile(full, LinkOption.NOFOLLOW_LINKS))
+        final BasicFileAttributes attributes =
+                directory
+                        .getFileAttributeView(
+                                path.getName(index),
+                                BasicFileAttributeView.class,
+                                LinkOption.NOFOLLOW_LINKS)
+                        .readAttributes();
+        if (attributes.isSymbolicLink() || !attributes.isRegularFile())
             throw Refusals.failed(
                     "Expected contained regular file " + path + "; got a link or non-file");
         try (SeekableByteChannel channel =
@@ -94,6 +108,7 @@ final class SafeFiles {
             final ByteArrayOutputStream output = new ByteArrayOutputStream();
             final ByteBuffer chunk = ByteBuffer.allocate(8192);
             while (channel.read(chunk) != -1) {
+                checkDeadline.run();
                 if (output.size() + chunk.position() > MAX_BYTES)
                     throw Refusals.failed(
                             "Expected file at most "
@@ -137,16 +152,28 @@ final class SafeFiles {
             return;
         }
         for (final Path entry : parent) {
+            checkDeadline.run();
             if (++count[0] > MAX_ENTRIES)
                 throw Refusals.failed(
                         "Expected at most "
                                 + MAX_ENTRIES
                                 + " store entries; got a larger directory");
             final String name = entry.getFileName().toString();
+            final BasicFileAttributes attributes =
+                    parent.getFileAttributeView(
+                                    entry.getFileName(),
+                                    BasicFileAttributeView.class,
+                                    LinkOption.NOFOLLOW_LINKS)
+                            .readAttributes();
+            if (attributes.isSymbolicLink())
+                throw Refusals.failed(
+                        "Expected regular store entries; got symbolic link " + path.resolve(name));
             if (name.equals(".git") || name.endsWith(".sub")) continue;
+            if (!attributes.isDirectory() && !(attributes.isRegularFile() && name.endsWith(".md")))
+                continue;
             final Path nested = path.resolve(name);
             relative(nested.toString());
-            if (Files.isDirectory(root.resolve(nested), LinkOption.NOFOLLOW_LINKS)) {
+            if (attributes.isDirectory()) {
                 if (nested.getNameCount() > 12)
                     throw Refusals.failed("Expected shallow store directories; got " + nested);
                 try (SecureDirectoryStream<Path> child =

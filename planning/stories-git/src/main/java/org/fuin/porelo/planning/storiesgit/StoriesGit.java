@@ -26,10 +26,9 @@ import org.jspecify.annotations.Nullable;
  * Reads stories and issues from owned clones. The monitor serializes clone creation and snapshot
  * reads; immutable answers escape it, and no token is retained between calls.
  */
-public final class StoriesGit implements PlanningAdapter {
+public final class StoriesGit implements PlanningAdapter, AutoCloseable {
     private @Nullable Path directory;
     private @Nullable GitStore store;
-    private @Nullable Settings configured;
 
     /** Creates an adapter whose storage is supplied by initialize. */
     public StoriesGit() {}
@@ -70,7 +69,7 @@ public final class StoriesGit implements PlanningAdapter {
         return List.of("github-app", "token");
     }
 
-    /** Keeps the existing project directory; creates storage only on the first data read. */
+    /** Exclusively owns the project directory and cleans abandoned temporary storage. */
     @Override
     public synchronized void initialize(Path directory) {
         if (this.directory != null)
@@ -81,9 +80,19 @@ public final class StoriesGit implements PlanningAdapter {
                 throw Refusals.failed(
                         "Expected an existing project directory; got a link or non-directory");
             this.directory = directory.toRealPath();
+            store = new GitStore(this.directory);
         } catch (IOException ex) {
             throw Refusals.failed(
                     "Expected an accessible project directory; got an unreadable directory");
+        }
+    }
+
+    /** Releases the project directory after all calls have completed. */
+    @Override
+    public synchronized void close() {
+        if (store != null) {
+            store.close();
+            store = null;
         }
     }
 
@@ -188,7 +197,9 @@ public final class StoriesGit implements PlanningAdapter {
     private <T> T read(Map<String, Object> values, String token, Function<Snapshot, T> operation) {
         try {
             final Settings settings = settings(values, token);
-            return operation.apply(snapshot(settings, token));
+            final T result = operation.apply(snapshot(settings, token));
+            java.util.Objects.requireNonNull(store).checkDeadline();
+            return result;
         } catch (PlanningRefused refused) {
             throw Refusals.safe(refused, token);
         }
@@ -196,23 +207,18 @@ public final class StoriesGit implements PlanningAdapter {
 
     private Settings settings(Map<String, Object> values, String token) {
         final Settings settings = Settings.read(values, token);
-        if (configured != null && !configured.equals(settings))
-            throw Refusals.invalid(
-                    "Expected unchanged settings for this project directory; got a different store"
-                            + " configuration");
         if (directory == null)
             throw Refusals.failed(
                     "Expected initialize before a data call; got no project directory");
-        if (store == null) store = new GitStore(directory);
-        configured = settings;
+        if (store == null)
+            throw Refusals.failed("Expected an open adapter; got a closed directory store");
         store.begin();
         return settings;
     }
 
     private SafeFiles planning(Settings settings, String token) {
-        return new SafeFiles(
-                java.util.Objects.requireNonNull(store)
-                        .clone(settings.planningKey(), settings.repository(), token));
+        final GitStore active = java.util.Objects.requireNonNull(store);
+        return new SafeFiles(active.planning(settings.repository(), token), active::checkDeadline);
     }
 
     private Workflow workflow(SafeFiles files, Settings settings) {
@@ -269,10 +275,11 @@ public final class StoriesGit implements PlanningAdapter {
             for (final StoryFile.Reference reference : story.issues()) {
                 if (!repositories.containsKey(reference.repository())) {
                     final String key = reference.repository();
+                    final GitStore active = java.util.Objects.requireNonNull(store);
                     final SafeFiles files =
                             new SafeFiles(
-                                    java.util.Objects.requireNonNull(store)
-                                            .clone(key, settings.cloneUrl(key), token));
+                                    active.clone(key, settings.cloneUrl(key), token),
+                                    active::checkDeadline);
                     repositories.put(key, files);
                     IssueIndex.read(files, key, settings, workflow)
                             .forEach(
@@ -289,8 +296,13 @@ public final class StoriesGit implements PlanningAdapter {
                 final StoredIssue issue = issues.get(reference.id());
                 if (issue == null
                         || !issue.entry().summary().repository().equals(reference.repository()))
-                    throw new PlanningRefused(
-                            Reason.NO_SUCH_ISSUE, Map.of("issue", reference.id()));
+                    throw Refusals.failed(
+                            "Expected indexed issue for story "
+                                    + story.story().id()
+                                    + "; got missing "
+                                    + reference.repository()
+                                    + "#"
+                                    + reference.id());
             }
         }
         return new Snapshot(

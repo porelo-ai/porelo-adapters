@@ -16,7 +16,7 @@ import org.fuin.porelo.planning.api.SubAgent;
 import org.fuin.porelo.planning.api.Workflow;
 
 final class IssueIndex {
-    private static final Pattern ANCHOR = Pattern.compile("<a id=\"([a-zA-Z0-9_-]+)\"></a>");
+    private static final Pattern ANCHOR = Pattern.compile("<a id=\"([^\"]*)\"></a>");
 
     private IssueIndex() {}
 
@@ -24,9 +24,33 @@ final class IssueIndex {
 
     static Map<String, Entry> read(
             SafeFiles files, String repository, Settings settings, Workflow workflow) {
-        final String text = files.read("issues/README.md");
         final List<String> paths = files.markdown("issues");
         final Map<String, Entry> entries = new LinkedHashMap<>();
+        readIndex(
+                files,
+                repository,
+                settings,
+                workflow,
+                "issues/README.md",
+                paths,
+                entries,
+                new HashSet<>());
+        return java.util.Collections.unmodifiableMap(entries);
+    }
+
+    private static void readIndex(
+            SafeFiles files,
+            String repository,
+            Settings settings,
+            Workflow workflow,
+            String index,
+            List<String> paths,
+            Map<String, Entry> entries,
+            Set<String> visited) {
+        if (!visited.add(index) || visited.size() > 1000 || Path.of(index).getNameCount() > 12)
+            throw Refusals.failed(
+                    "Expected unique bounded issue indexes; got repeated or nested " + index);
+        final String text = files.read(index);
         for (final Entry entry : parse(text)) {
             final IssueSummary row = entry.summary();
             final Pattern filename = Pattern.compile(Pattern.quote(row.id()) + "(?:-.*)?\\.md");
@@ -40,12 +64,22 @@ final class IssueIndex {
             if (candidates.size() > 1)
                 throw Refusals.failed(
                         "Expected one issue file for " + row.id() + "; got multiple files");
-            final Optional<String> path = candidates.stream().findFirst();
+            final Optional<String> path =
+                    entry.path().map(target -> folder(index).resolve(target).toString());
+            if (path.isPresent()) {
+                final Path linked = SafeFiles.relative(path.orElseThrow());
+                if (!filename.matcher(linked.getFileName().toString()).matches())
+                    throw Refusals.failed(
+                            "Expected issue filename matching " + row.id() + "; got " + linked);
+                files.read(linked.toString());
+            } else if (!candidates.isEmpty()) {
+                throw Refusals.failed(
+                        "Expected a linked issue file for " + row.id() + "; got an unlinked file");
+            }
             final String title =
                     path.flatMap(p -> Markdown.title(files.read(p), row.id())).orElse(row.title());
             StoryFile.checkState(workflow, row.id(), row.state(), false);
-            final String linkPath =
-                    path.orElse("issues/README.md#" + row.id().toLowerCase(Locale.ROOT));
+            final String linkPath = path.orElse(index + "#" + row.id().toLowerCase(Locale.ROOT));
             final IssueSummary summary =
                     new IssueSummary(
                             row.id(),
@@ -55,11 +89,29 @@ final class IssueIndex {
                             row.size(),
                             row.blockedBy(),
                             settings.link(repository, linkPath));
-            if (entries.putIfAbsent(row.id(), new Entry(summary, path)) != null)
+            if (entries.keySet().stream().anyMatch(id -> id.equalsIgnoreCase(row.id())))
                 throw Refusals.failed(
                         "Expected unique issue " + row.id() + "; got duplicate index rows");
+            entries.put(row.id(), new Entry(summary, path));
         }
-        return java.util.Collections.unmodifiableMap(entries);
+        for (final Markdown.Link link : Markdown.links(text)) {
+            final String target = link.target().split("#", 2)[0];
+            if (target.contains(":")
+                    || !(target.equals("README.md") || target.endsWith("/README.md"))) continue;
+            final Path nested = SafeFiles.relative(folder(index).resolve(target).toString());
+            if (nested.toString().equals(index) && link.target().contains("#")) continue;
+            if (!nested.startsWith("issues"))
+                throw Refusals.failed("Expected contained issue index; got " + target);
+            readIndex(
+                    files,
+                    repository,
+                    settings,
+                    workflow,
+                    nested.toString(),
+                    paths,
+                    entries,
+                    visited);
+        }
     }
 
     static List<Entry> parse(String text) {
@@ -72,33 +124,44 @@ final class IssueIndex {
                 header = List.of();
                 continue;
             }
-            if (!line.startsWith("|")) continue;
+            if (!line.startsWith("|")) {
+                header = List.of();
+                continue;
+            }
             final List<String> cells = Markdown.cells(line);
+            if (cells.getFirst().equals("#")
+                    && (cells.contains("Title") || cells.contains("What it covers"))) {
+                header = cells;
+                continue;
+            }
+            if (cells.stream().allMatch(cell -> cell.matches(":?-+:?"))) continue;
             final var anchor = ANCHOR.matcher(cells.getFirst());
             if (!anchor.find()) {
-                if (cells.getFirst().equals("#")
-                        && (cells.contains("Title") || cells.contains("What it covers")))
-                    header = cells;
-                continue;
+                if (header.isEmpty()) continue;
+                throw Refusals.failed(
+                        "Expected an issue anchor on every data row; got a missing anchor");
             }
             if (state.isBlank() || header.isEmpty() || header.size() != cells.size())
                 throw Refusals.failed(
                         "Expected an issue row under a state and matching table header; got an"
                                 + " ungrouped or malformed row");
-            final String id = Settings.id(anchor.group(1).toUpperCase(Locale.ROOT));
+            Settings.id(anchor.group(1));
             final List<Markdown.Link> ownLinks = Markdown.links(cells.getFirst());
-            if (!ownLinks.isEmpty() && !ownLinks.getFirst().text().equalsIgnoreCase(id))
+            final String id =
+                    Settings.id(
+                            ownLinks.isEmpty()
+                                    ? cells.getFirst()
+                                            .substring(anchor.end())
+                                            .strip()
+                                            .split("\\s+", 2)[0]
+                                    : ownLinks.getFirst().text());
+            if (!id.equalsIgnoreCase(anchor.group(1)) || ownLinks.size() > 1)
                 throw Refusals.failed(
-                        "Expected index link matching anchor "
-                                + id
-                                + "; got "
-                                + ownLinks.getFirst().text());
+                        "Expected index link matching anchor " + id + "; got " + cells.getFirst());
             final String size = header.contains("Size") ? cells.get(header.indexOf("Size")) : "";
             final List<String> blocked =
                     header.contains("Blocked by")
-                            ? Markdown.links(cells.get(header.indexOf("Blocked by"))).stream()
-                                    .map(link -> Settings.id(link.text()))
-                                    .toList()
+                            ? blockers(cells.get(header.indexOf("Blocked by")))
                             : List.of();
             final int titleColumn =
                     header.contains("Title")
@@ -108,6 +171,11 @@ final class IssueIndex {
                 throw Refusals.failed(
                         "Expected issue table Title or What it covers column; got neither");
             final String title = Markdown.plain(cells.get(titleColumn));
+            if (!ownLinks.isEmpty()
+                    && (ownLinks.getFirst().target().contains("#")
+                            || !ownLinks.getFirst().target().endsWith(".md")))
+                throw Refusals.failed(
+                        "Expected a direct issue file link for " + id + "; got another target");
             final Optional<String> path =
                     ownLinks.stream()
                             .map(Markdown.Link::target)
@@ -129,9 +197,30 @@ final class IssueIndex {
         return List.copyOf(rows);
     }
 
+    private static Path folder(String index) {
+        final Path parent = Path.of(index).getParent();
+        if (parent == null)
+            throw Refusals.failed("Expected an issue index inside a directory; got " + index);
+        return parent;
+    }
+
+    private static List<String> blockers(String cell) {
+        if (cell.isBlank() || cell.equals("-")) return List.of();
+        final String residue = Markdown.withoutLinks(cell);
+        if (!residue.matches("[,\\s]*") || Markdown.links(cell).isEmpty())
+            throw Refusals.failed("Expected linked blocking issue IDs; got unlinked text");
+        return Markdown.links(cell).stream().map(link -> Settings.id(link.text())).toList();
+    }
+
     static Issue full(Entry entry, SafeFiles files) {
         final IssueSummary summary = entry.summary();
         final String markdown = entry.path().map(files::read).orElse("");
+        final String acceptance = Markdown.acceptance(markdown);
+        if (entry.path().isPresent() && acceptance.isBlank())
+            throw Refusals.failed(
+                    "Expected acceptance text for "
+                            + summary.id()
+                            + "; got no What must be true paragraph");
         final List<SubAgent> agents =
                 entry.path()
                         .map(path -> agents(markdown, path, summary.id(), files))
@@ -144,7 +233,7 @@ final class IssueIndex {
                 summary.size(),
                 summary.blockedBy(),
                 summary.link(),
-                Markdown.acceptance(markdown),
+                acceptance,
                 agents);
     }
 
@@ -168,6 +257,16 @@ final class IssueIndex {
                                 + id
                                 + "; got malformed table");
             final String name = Settings.id(cells.getFirst());
+            for (int column = 1; column <= 3; column++) {
+                final String value = Markdown.plain(cells.get(column));
+                if (value.isBlank() || value.codePoints().anyMatch(Character::isISOControl))
+                    throw Refusals.failed(
+                            "Expected nonblank kind, agent and model for "
+                                    + id
+                                    + " "
+                                    + name
+                                    + "; got a blank or control character");
+            }
             if (!names.add(name))
                 throw Refusals.failed(
                         "Expected unique sub-agent names for " + id + "; got " + name + " twice");

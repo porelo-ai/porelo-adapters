@@ -17,10 +17,6 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    <properties>
-        <maven.deploy.skip>false</maven.deploy.skip>
-        <skipPublishing>false</skipPublishing>
-    </properties>
     <dependencies>
         <dependency>
             <groupId>org.fuin.porelo</groupId>

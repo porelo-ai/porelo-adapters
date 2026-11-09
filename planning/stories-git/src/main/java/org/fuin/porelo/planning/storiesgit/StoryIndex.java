@@ -7,18 +7,33 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 final class StoryIndex {
-    private static final Pattern ANCHOR = Pattern.compile("<a id=\"([A-Za-z0-9_-]+)\"></a>");
+    private static final Pattern ANCHOR = Pattern.compile("<a id=\"([^\"]*)\"></a>");
 
     private StoryIndex() {}
 
     static List<String> files(String index) {
         final List<String> paths = new ArrayList<>();
         final Set<String> ids = new HashSet<>();
+        boolean table = false;
         for (final String line : index.lines().toList()) {
-            if (!line.startsWith("|")) continue;
-            final String first = Markdown.cells(line).getFirst();
+            if (!line.startsWith("|")) {
+                table = false;
+                continue;
+            }
+            final List<String> cells = Markdown.cells(line);
+            final String first = cells.getFirst();
+            if (first.equals("Story")) {
+                table = true;
+                continue;
+            }
+            if (cells.stream().allMatch(cell -> cell.matches(":?-+:?"))) continue;
             final var anchor = ANCHOR.matcher(first);
-            if (!anchor.find()) continue;
+            if (!anchor.find()) {
+                if (!table) continue;
+                throw Refusals.failed(
+                        "Expected a story anchor on every data row; got a missing anchor");
+            }
+            Settings.id(anchor.group(1));
             final List<Markdown.Link> links = Markdown.links(first);
             if (links.isEmpty())
                 throw Refusals.failed(

@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 final class Markdown {
     private static final Pattern LINK = Pattern.compile("\\[([^]\\n]+)]\\(([^)\\s]+)\\)");
+    private static final Pattern FENCE = Pattern.compile("^(`{3,}|~{3,})(.*)$");
 
     private Markdown() {}
 
@@ -21,6 +22,10 @@ final class Markdown {
 
     static String plain(String text) {
         return LINK.matcher(text).replaceAll("$1").strip();
+    }
+
+    static String withoutLinks(String text) {
+        return LINK.matcher(text).replaceAll("");
     }
 
     static List<String> cells(String row) {
@@ -50,8 +55,21 @@ final class Markdown {
     static String section(String markdown, String heading) {
         final StringBuilder section = new StringBuilder();
         boolean inside = false;
+        char fence = 0;
+        int length = 0;
         for (final String line : markdown.split("\\R", -1)) {
-            if (line.startsWith("## ")) {
+            final String trimmed = line.stripLeading();
+            final var marker = FENCE.matcher(trimmed);
+            if (marker.matches()) {
+                final String run = marker.group(1);
+                if (fence == 0) {
+                    fence = run.charAt(0);
+                    length = run.length();
+                } else if (run.charAt(0) == fence
+                        && run.length() >= length
+                        && marker.group(2).isBlank()) fence = 0;
+                if (inside) section.append(line).append('\n');
+            } else if (fence == 0 && line.startsWith("## ")) {
                 if (inside) break;
                 inside = line.equals("## " + heading);
             } else if (inside) section.append(line).append('\n');
@@ -77,8 +95,10 @@ final class Markdown {
             if (!lines.get(index).startsWith(label)) continue;
             final StringBuilder paragraph =
                     new StringBuilder(lines.get(index).substring(label.length()).stripLeading());
-            for (int next = index + 1; next < lines.size() && !lines.get(next).isBlank(); next++)
-                paragraph.append('\n').append(lines.get(next));
+            for (int next = index + 1; next < lines.size() && !lines.get(next).isBlank(); next++) {
+                if (!paragraph.isEmpty()) paragraph.append('\n');
+                paragraph.append(lines.get(next));
+            }
             return paragraph.toString() + "\n";
         }
         return "";

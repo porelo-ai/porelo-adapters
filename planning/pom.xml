@@ -16,5 +16,6 @@
     </properties>
     <modules>
         <module>contract</module>
+        <module>stories-git</module>
     </modules>
 </project>

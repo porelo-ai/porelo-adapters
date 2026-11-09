@@ -29,7 +29,7 @@ final class ContractSession {
     final Path runtime;
     final Canary canary;
     final Fixture fixture;
-    final Board board = Board.standard();
+    final Board board;
     final InstalledPlanning client;
     final ExecutorService workers =
             Executors.newCachedThreadPool(
@@ -42,8 +42,15 @@ final class ContractSession {
 
     ContractSession(Path root, Fixture fixture, Class<?> main, Map<String, String> properties)
             throws Exception {
+        this(root, fixture, main, properties, Board.standard());
+    }
+
+    ContractSession(
+            Path root, Fixture fixture, Class<?> main, Map<String, String> properties, Board board)
+            throws Exception {
         this.root = root;
         this.fixture = fixture;
+        this.board = board;
         directory = Files.createDirectory(root.resolve("directory"));
         temporary = Files.createDirectory(root.resolve("temporary"));
         runtime = Files.createDirectory(root.resolve("runtime"));

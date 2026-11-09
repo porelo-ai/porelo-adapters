@@ -225,7 +225,8 @@ public abstract class GitHttpFixture implements Fixture {
      */
     @Override
     public final String damage(Damage damage, Path outside) throws Exception {
-        final Location issue = issueFile();
+        final var issueLocation = issueLocation();
+        final Location issue = new Location(issueLocation.getKey(), issueLocation.getValue());
         final Location brief = briefFile();
         switch (damage) {
             case issueSymlink -> {
@@ -280,6 +281,15 @@ public abstract class GitHttpFixture implements Fixture {
      */
     protected String briefReference(String path) {
         return Path.of(path).getFileName().toString();
+    }
+
+    /**
+     * Names I1's repository and issue file for damage tests when its state is held in a separate
+     * index. The default infers the location from the one file changed by an issue transition.
+     */
+    protected Map.Entry<String, String> issueLocation() {
+        final Location location = issueFile();
+        return Map.entry(location.repository(), location.path());
     }
 
     private record Location(String repository, String path) {}

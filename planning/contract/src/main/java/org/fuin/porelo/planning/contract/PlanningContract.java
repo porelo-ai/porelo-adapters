@@ -48,6 +48,11 @@ public abstract class PlanningContract {
     /** Creates a fresh owned store beneath the supplied directory, without seeding it yet. */
     protected abstract Fixture fixture(Path root) throws Exception;
 
+    /** Supplies the same test scenarios using the adapter's representable kinds and web links. */
+    protected Board board() {
+        return Board.standard();
+    }
+
     /**
      * Supplies nonsecret JVM fault switches for a test adapter; production adapter tests use none.
      */
@@ -62,7 +67,8 @@ public abstract class PlanningContract {
                         scratch,
                         fixture(Files.createDirectory(scratch.resolve("fixture"))),
                         main,
-                        adapterProperties());
+                        adapterProperties(),
+                        board());
     }
 
     @AfterEach

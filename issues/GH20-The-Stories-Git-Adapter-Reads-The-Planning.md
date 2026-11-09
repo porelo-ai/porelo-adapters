@@ -30,6 +30,11 @@ Read in `adapters/github` (`GitHubReader`, its `native` and `dist` profiles), in
   Porelo's, not the file's. A story or issue whose state the file does not name is refused, saying which.
 - `ListStories(states)`, `GetStory`, `ListStoryIssues`, `GetIssue` parse the heads and the indexes; an issue's state
   is its index group, its title the row's text, its `whatMustBeTrue` the issue file's paragraph of that name.
+- `GetIssue` also gives `subAgents[]`: each entry of the issue's `## Sub-agents` list (name, kind `builder`, `tester`
+  or `reader`, proposed agent and model) with the text of its brief, `issues/<ID>.sub/<name>.md` beside the issue
+  (`issues/<group>/<ID>.sub/` where a repository groups its issues). A listed brief that is missing, or that is a
+  symbolic link or lies outside `<ID>.sub/`, makes `GetIssue` fail naming it; a file in `<ID>.sub/` the list does not
+  name is never delivered, since Porelo starts an agent with whatever brief it gets.
 - `native` and `dist` profiles as the GitHub adapter's: `target/porelo-planning-stories-git`, a `.deb` and an `.rpm`
   installing it as `/usr/libexec/porelo/planning/stories-git`, checked for `x86-64` and its library floors.
 - Its test extends [GH19](README.md#gh19)'s suite with a fixture of bare repositories made from a story and an index

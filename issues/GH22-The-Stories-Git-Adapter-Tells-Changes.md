@@ -13,7 +13,8 @@ Read in [GH20](README.md#gh20)'s clones and revision and in Planning1's `WatchCh
 
 - `WatchChanges` fetches every clone at an interval from the settings, a few minutes by default, and at once on
   `Refresh`; it compares the heads with the last revision it told and replies once per changed story,
-  issue or workflow file, with the new revision.
+  issue or workflow file, with the new revision; a changed brief under an issue's `.sub` directory is a change of
+  that issue.
 - A fetch that fails is told as an error on the stream naming the repository, never skipped silently; the stream
   stays open and tries again at the next interval.
 - It only reads: no write, no commit, no task.

@@ -15,7 +15,8 @@ same for `Build2`, and in the interface as agreed for Planning1: `describe` with
 `capabilities` (`write`, `watch`, `issues`) and `credentials`, the credential kinds it takes (`github-app`, `token`);
 `GetWorkflow`, `ListStories`, `GetStory`, `ListStoryIssues`, `GetIssue`,
 `SetStoryState` (a story without issues only), `SetIssueStates` (all or none), `WatchChanges`, `Refresh` (a fetch
-at once); an issue carries `whatMustBeTrue`; errors
+at once); an issue carries `whatMustBeTrue` and `subAgents`,
+each with its brief's text; errors
 `StaleRevision`, `NoSuchStory`, `NoSuchIssue`, `StateNotAllowed`, `NotSupported`.
 
 - A grouping module `planning/` beside `adapters/`, its first part `planning/contract`, artifact
@@ -51,6 +52,9 @@ at once); an issue carries `whatMustBeTrue`; errors
     host git configuration or hook ran;
   - no hang: a refused credential and a stalled remote end a write, a `Refresh` and a fetch of `WatchChanges` within
     a bounded time, as a refusal or an error on the stream, which stays open;
+  - sub-agent briefs: an issue's listed briefs come with `GetIssue`, each with its file's text; a listed brief that
+    is missing, a symbolic link or outside the issue's `.sub` directory fails the call naming it; a brief file the
+    list does not name is never delivered;
   - `WatchChanges` reports a change made behind the adapter's back, at once on `Refresh`, and while it is open every
     other call is answered.
 - The suite owns its questions and answer rules; an adapter supplies only its main class, its fixture and its

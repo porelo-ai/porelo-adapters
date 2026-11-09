@@ -108,7 +108,9 @@ public interface Fixture extends AutoCloseable {
         throw unavailable(Ability.redirect);
     }
 
-    /** Verifies that the redirect target was reached and received no Authorization header. */
+    /**
+     * Verifies that a redirect was issued and any target requests carry no Authorization header.
+     */
     default void verifyRedirect() throws Exception {
         throw unavailable(Ability.redirect);
     }
@@ -134,6 +136,16 @@ public interface Fixture extends AutoCloseable {
      */
     default List<Map<String, String>> childEnvironments() {
         return List.of();
+    }
+
+    /** Samples the adapter tree while a store request is blocked awaiting its response. */
+    default void observeProcesses(Runnable sample) {}
+
+    /**
+     * Writes a valid readable document for an id traversal attempt outside the adapter directory.
+     */
+    default void decoy(Path target, boolean issue, Board board) throws Exception {
+        throw new UnsupportedOperationException("Expected fixture traversal decoy mapping");
     }
 
     /** Checks asynchronous fixture failures after the adapter has stopped. */

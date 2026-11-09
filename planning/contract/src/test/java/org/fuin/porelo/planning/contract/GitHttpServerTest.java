@@ -75,6 +75,33 @@ class GitHttpServerTest {
         }
     }
 
+    // Harm: post-call scans miss Git helpers that exit before an RPC returns.
+    @Test
+    void samplesTheRequestingProcessTreeBeforeReplying() throws Exception {
+        final String token = UUID.randomUUID().toString();
+        final Path pid = directory.resolve("pid");
+        Files.writeString(pid, Long.toString(ProcessHandle.current().pid()));
+        final ProcessSamples samples = new ProcessSamples(pid);
+        try (GitRepositories repositories = new GitRepositories(directory.resolve("forge"));
+                GitHttpServer server = new GitHttpServer(directory.resolve("forge"));
+                GitClient git = new GitClient(directory.resolve("client"))) {
+            repositories.create(REPOSITORY, Map.of("story.md", "Ready\n"));
+            server.accept(token);
+            server.observeProcesses(samples::sample);
+            git.run(
+                    directory,
+                    token,
+                    "clone",
+                    userUrl(server),
+                    directory.resolve("clone").toString());
+            assertThatThrownBy(() -> samples.noSecret(token))
+                    .as("in-flight sampling retains the ended Git client's credential environment")
+                    .isInstanceOf(AssertionError.class)
+                    .hasMessageContaining("captured child environment");
+            server.verify();
+        }
+    }
+
     // Harm: refusing a fixed repository can miss a partial write when an adapter pushes in reverse.
     @Test
     void theSecondPushIsRefusedRegardlessOfRepositoryOrder() throws Exception {
@@ -368,6 +395,120 @@ class GitHttpServerTest {
                                             && request.path().endsWith("/git-receive-pack"));
             server.verify();
         }
+    }
+
+    // Harm: refusing a concurrent second push before the first CGI finishes races rollback.
+    @Test
+    void waitsForTheFirstBackendBeforeRefusingAConcurrentSecondPush() throws Exception {
+        final Path root = directory.resolve("forge");
+        final String token = UUID.randomUUID().toString();
+        final Path started = directory.resolve("first-started");
+        final Path release = directory.resolve("release-first");
+        try (GitRepositories repositories = new GitRepositories(root);
+                GitHttpServer server = new GitHttpServer(root);
+                GitClient git = new GitClient(directory.resolve("client"));
+                var callers = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
+            server.accept(token);
+            for (final String name : List.of("one.git", "two.git")) {
+                repositories.create(name, Map.of("issue.md", "Queued\n"));
+                final Path clone = directory.resolve(name);
+                git.run(
+                        directory,
+                        token,
+                        "clone",
+                        server.uri(name).toString().replace("http://", "http://fixture@"),
+                        clone.toString());
+                Files.writeString(clone.resolve("issue.md"), "Closed\n");
+                git.run(clone, null, "add", "issue.md");
+                git.run(clone, null, "commit", "-m", "Change issue state");
+            }
+            final Path hook =
+                    Files.createDirectories(root.resolve("one.git/hooks")).resolve("pre-receive");
+            Files.writeString(
+                    hook,
+                    "#!/bin/sh\ntouch "
+                            + shellQuote(started)
+                            + "\nwhile [ ! -e "
+                            + shellQuote(release)
+                            + " ]; do sleep 0.01; done\n");
+            Files.setPosixFilePermissions(
+                    hook, java.nio.file.attribute.PosixFilePermissions.fromString("rwx------"));
+            server.refuseSecondPush();
+            final var first =
+                    callers.submit(
+                            () ->
+                                    git.run(
+                                            directory.resolve("one.git"),
+                                            token,
+                                            "push",
+                                            "origin",
+                                            "HEAD:main"));
+            try {
+                final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (!Files.exists(started) && System.nanoTime() < deadline) Thread.sleep(10);
+                assertThat(started)
+                        .as("the first push is blocked inside its real receive hook")
+                        .exists();
+                final var second =
+                        callers.submit(
+                                () -> {
+                                    try {
+                                        git.run(
+                                                directory.resolve("two.git"),
+                                                token,
+                                                "push",
+                                                "origin",
+                                                "HEAD:main");
+                                        return "accepted";
+                                    } catch (IOException refusal) {
+                                        return "refused";
+                                    }
+                                });
+                final long arrivalDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+                while (server.requests().stream()
+                                        .filter(
+                                                r ->
+                                                        r.method().equals("POST")
+                                                                && r.path()
+                                                                        .endsWith(
+                                                                                "/git-receive-pack"))
+                                        .count()
+                                < 2
+                        && System.nanoTime() < arrivalDeadline) Thread.sleep(10);
+                assertThat(
+                                server.requests().stream()
+                                        .filter(
+                                                r ->
+                                                        r.method().equals("POST")
+                                                                && r.path()
+                                                                        .endsWith(
+                                                                                "/git-receive-pack"))
+                                        .count())
+                        .as("both pushes reached the server before testing the ordering")
+                        .isEqualTo(2);
+                assertThatThrownBy(() -> second.get(250, TimeUnit.MILLISECONDS))
+                        .as("second refusal waits while the first backend is still blocked")
+                        .isInstanceOf(java.util.concurrent.TimeoutException.class);
+                Files.writeString(release, "continue");
+                first.get(5, TimeUnit.SECONDS);
+                assertThat(second.get(5, TimeUnit.SECONDS))
+                        .as("second publication is refused after the first completes")
+                        .isEqualTo("refused");
+                assertThat(repositories.file("one.git", "issue.md"))
+                        .as("first remote is final before rollback can begin")
+                        .isEqualTo("Closed\n");
+                assertThat(repositories.file("two.git", "issue.md"))
+                        .as("second remote receives no update")
+                        .isEqualTo("Queued\n");
+                server.verify();
+            } finally {
+                Files.writeString(release, "continue");
+            }
+        }
+    }
+
+    private static String shellQuote(Path path) {
+        return "'" + path.toString().replace("'", "'\"'\"'") + "'";
     }
 
     @Test

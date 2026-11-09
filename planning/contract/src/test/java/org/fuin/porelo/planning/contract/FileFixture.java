@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.fuin.porelo.planning.api.Issue;
 
-final class FileFixture implements Fixture {
+class FileFixture implements Fixture {
     private final String token = UUID.randomUUID().toString();
     private Path directory;
 
@@ -44,6 +44,9 @@ final class FileFixture implements Fixture {
         document.put("issues", issues);
         FileBoard.write(directory, document);
         Files.writeString(directory.resolve("accesses"), "0");
+        Files.writeString(
+                directory.resolve("I1.md"),
+                org.fuin.porelo.wire.Json.write(board.issue("I1").asMap()));
     }
 
     /** {@inheritDoc} */
@@ -66,6 +69,7 @@ final class FileFixture implements Fixture {
                 Ability.refuseCredential,
                 Ability.refusePush,
                 Ability.credentialKind,
+                Ability.issueSymlink,
                 Ability.missingBrief,
                 Ability.symlinkBrief,
                 Ability.outsideBrief,
@@ -120,6 +124,14 @@ final class FileFixture implements Fixture {
         Files.writeString(directory.resolve("refuse-push"), repository);
     }
 
+    @Override
+    public void decoy(Path target, boolean issue, Board board) throws Exception {
+        Files.writeString(
+                target,
+                org.fuin.porelo.wire.Json.write(
+                        issue ? board.issue("I1").asMap() : board.stories().get(1).asMap()));
+    }
+
     /** {@inheritDoc} */
     @Override
     public String damage(Damage damage, Path outside) throws Exception {
@@ -150,8 +162,12 @@ final class FileFixture implements Fixture {
                         directory.resolve("I1.sub/unlisted.md"), "Unlisted private brief.\n");
                 return "I1.sub/unlisted.md";
             }
-            case issueSymlink ->
-                    throw new UnsupportedOperationException("Missing fixture ability issueSymlink");
+            case issueSymlink -> {
+                Files.writeString(outside, Files.readString(directory.resolve("I1.md")));
+                Files.delete(directory.resolve("I1.md"));
+                Files.createSymbolicLink(directory.resolve("I1.md"), outside);
+                return "I1.md";
+            }
         }
         return listed;
     }

@@ -83,11 +83,14 @@ public final class GitHttpServer implements AutoCloseable {
     private final List<String> failures = new CopyOnWriteArrayList<>();
     private final Set<String> refusedPushes = ConcurrentHashMap.newKeySet();
     private final AtomicInteger pushesUntilRefusal = new AtomicInteger(-1);
+    private final AtomicInteger redirectsSent = new AtomicInteger();
     private final Set<String> stalled = ConcurrentHashMap.newKeySet();
     private final Map<String, URI> redirects = new ConcurrentHashMap<>();
     private final Set<HttpExchange> exchanges = new HashSet<>();
     private final CountDownLatch closing = new CountDownLatch(1);
+    private final CountDownLatch firstPushFinished = new CountDownLatch(1);
     private boolean closed;
+    private volatile Runnable sampleProcesses = () -> {};
 
     /**
      * Starts an authenticated forge on 127.0.0.1 and an ephemeral port, refusing every token
@@ -231,6 +234,13 @@ public final class GitHttpServer implements AutoCloseable {
         redirects.put(FixturePaths.repository(repository), target.origin());
     }
 
+    /** {@return the number of authenticated requests answered with a cross-host redirect} */
+    public int redirectsSent() {
+        synchronized (redirectsSent) {
+            return redirectsSent.get();
+        }
+    }
+
     /** {@return an immutable arrival-ordered snapshot, including unauthenticated requests} */
     public List<Request> requests() {
         return List.copyOf(requests);
@@ -246,6 +256,11 @@ public final class GitHttpServer implements AutoCloseable {
             throw new IOException("Expected successful Git CGI handling; got " + failures);
     }
 
+    /** Installs a sampler invoked before any response can release the requesting Git helper. */
+    public void observeProcesses(Runnable sample) {
+        sampleProcesses = java.util.Objects.requireNonNull(sample);
+    }
+
     private void serve(final HttpExchange exchange) throws IOException {
         synchronized (this) {
             if (closed) {
@@ -255,6 +270,7 @@ public final class GitHttpServer implements AutoCloseable {
             exchanges.add(exchange);
         }
         try (exchange) {
+            sampleProcesses.run();
             final List<String> authorization =
                     exchange.getRequestHeaders().getOrDefault("Authorization", List.of());
             final Credential credential = credential(authorization);
@@ -296,19 +312,35 @@ public final class GitHttpServer implements AutoCloseable {
         final boolean push =
                 exchange.getRequestMethod().equals("POST")
                         && exchange.getRequestURI().getRawPath().endsWith("/git-receive-pack");
-        if (push && pushesUntilRefusal.getAndUpdate(left -> left > 0 ? left - 1 : left) == 1)
+        final int publication =
+                push ? pushesUntilRefusal.getAndUpdate(left -> left > 0 ? left - 1 : left) : -1;
+        if (publication == 1) {
+            // A concurrent adapter must see the first remote's completed state before rollback.
+            if (!firstPushFinished.await(
+                    GitProcesses.TIMEOUT.toMillis() + 5000, TimeUnit.MILLISECONDS))
+                throw new IOException(
+                        "Expected first publication to finish before refusing second; got a"
+                                + " timeout");
             refusedPushes.add(repository);
-        final URI redirect = redirects.get(repository);
-        if (redirect != null) {
-            exchange.getResponseHeaders()
-                    .set("Location", redirect + exchange.getRequestURI().toASCIIString());
-            exchange.sendResponseHeaders(307, -1);
-        } else if (stalled.contains(repository)) {
-            closing.await();
-        } else if (refusedPushes.contains(repository) && push) {
-            exchange.sendResponseHeaders(403, -1);
-        } else {
-            backend(exchange, credential);
+        }
+        try {
+            final URI redirect = redirects.get(repository);
+            if (redirect != null) {
+                exchange.getResponseHeaders()
+                        .set("Location", redirect + exchange.getRequestURI().toASCIIString());
+                synchronized (redirectsSent) {
+                    exchange.sendResponseHeaders(307, -1);
+                    redirectsSent.incrementAndGet();
+                }
+            } else if (stalled.contains(repository)) {
+                closing.await();
+            } else if (refusedPushes.contains(repository) && push) {
+                exchange.sendResponseHeaders(403, -1);
+            } else {
+                backend(exchange, credential);
+            }
+        } finally {
+            if (publication == 2) firstPushFinished.countDown();
         }
     }
 
@@ -368,27 +400,40 @@ public final class GitHttpServer implements AutoCloseable {
                         });
         final Future<byte[]> errors = workers.submit(() -> process.getErrorStream().readAllBytes());
         try (InputStream stdout = process.getInputStream()) {
-            final CgiHeaders headers = headers(stdout);
+            final CgiHeaders headers;
+            try {
+                headers = headers(stdout);
+            } catch (IOException ex) {
+                if (closing.getCount() != 0)
+                    failures.add("Git HTTP backend produced invalid CGI headers");
+                throw ex;
+            }
             headers.values()
                     .forEach((name, values) -> exchange.getResponseHeaders().put(name, values));
-            exchange.sendResponseHeaders(headers.status(), 0);
-            stdout.transferTo(exchange.getResponseBody());
-            await(input);
+            try {
+                exchange.sendResponseHeaders(headers.status(), 0);
+                stdout.transferTo(exchange.getResponseBody());
+            } catch (IOException clientClosed) {
+                // A canceled client is not a CGI failure; drain so its ref update finishes first.
+                stdout.transferTo(OutputStream.nullOutputStream());
+            }
+            try {
+                await(input);
+            } catch (IOException clientClosed) {
+                // The backend exit status decides whether truncated input was a backend failure.
+                process.getOutputStream().close();
+            }
             if (!process.waitFor(GitProcesses.TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
+                failures.add("Git HTTP backend did not exit within its bound");
                 throw new IOException("Expected Git HTTP backend to exit; got a timeout");
             }
-            final String error = new String(await(errors), StandardCharsets.UTF_8);
-            if (process.exitValue() != 0) {
-                throw new IOException(
-                        "Expected Git HTTP backend exit 0; got "
-                                + process.exitValue()
-                                + ": "
-                                + error);
+            await(errors);
+            if (process.exitValue() != 0 && closing.getCount() != 0) {
+                final String failure =
+                        "Expected Git HTTP backend exit 0; got " + process.exitValue();
+                failures.add(failure);
+                throw new IOException(failure);
             }
-        } catch (IOException ex) {
-            if (closing.getCount() != 0)
-                failures.add(ex.getMessage() == null ? ex.getClass().getName() : ex.getMessage());
-            throw ex;
         } finally {
             deadline.cancel(false);
             try {
@@ -489,6 +534,7 @@ public final class GitHttpServer implements AutoCloseable {
             if (closed) return;
             closed = true;
             closing.countDown();
+            firstPushFinished.countDown();
             server.stop(0);
             exchanges.forEach(HttpExchange::close);
         }

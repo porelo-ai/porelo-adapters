@@ -204,15 +204,16 @@ public abstract class GitHttpFixture implements Fixture {
         for (final String repository : files.keySet()) server.redirect(repository, redirected);
     }
 
-    /** Requires actual redirected traffic and refuses any forwarded Authorization header. */
+    /** Requires an issued redirect and rejects any Authorization that reaches the other host. */
     @Override
     public final void verifyRedirect() throws Exception {
         final GitHttpServer target =
                 java.util.Objects.requireNonNull(
                         redirected, "Expected an enabled redirect recorder");
-        assertThat(target.requests())
-                .as("redirect target must actually receive a request")
-                .isNotEmpty();
+        // Refusing to follow a redirect also contains the credential, but must exercise the remote.
+        assertThat(server.redirectsSent())
+                .as("source must actually issue a cross-host redirect")
+                .isPositive();
         assertThat(target.requests())
                 .as("Authorization must never follow a cross-host redirect")
                 .noneMatch(GitHttpServer.Request::authorizationPresent);
@@ -352,6 +353,38 @@ public abstract class GitHttpFixture implements Fixture {
             throw new IllegalArgumentException(
                     "Expected one listed .sub brief with complete text; got " + matches);
         return matches.getFirst();
+    }
+
+    /** Captures children while Git is waiting for the forge response. */
+    @Override
+    public final void observeProcesses(Runnable sample) {
+        server.observeProcesses(sample);
+    }
+
+    /** Seeds the exact mapped issue or story document, so unguarded traversal can succeed. */
+    @Override
+    public final void decoy(Path target, boolean issue, Board board) throws Exception {
+        final Location location =
+                issue
+                        ? new Location(issueLocation().getKey(), issueLocation().getValue())
+                        : files.entrySet().stream()
+                                .filter(entry -> entry.getKey().equals("planning.git"))
+                                .flatMap(
+                                        entry ->
+                                                entry.getValue().entrySet().stream()
+                                                        .filter(
+                                                                file ->
+                                                                        file.getKey()
+                                                                                .matches(
+                                                                                        "(?:.*/)?S2(?:-.*)?\\.md"))
+                                                        .map(
+                                                                file ->
+                                                                        new Location(
+                                                                                entry.getKey(),
+                                                                                file.getKey())))
+                                .findFirst()
+                                .orElseThrow();
+        Files.writeString(target, text(location));
     }
 
     /** Reports unexpected CGI/backend failures. */

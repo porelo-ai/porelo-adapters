@@ -73,7 +73,8 @@ class FixtureMappingTest {
                                     expected.title(),
                                     expected.state(),
                                     expected.link(),
-                                    actualIssues.stream().map(Issue::summary).toList()))
+                                    actualIssues.stream().map(Issue::summary).toList(),
+                                    file.story().priority()))
                     .as("the mapping preserves complete listing snapshots")
                     .isEqualTo(
                             board.summaries().stream()

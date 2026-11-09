@@ -14,7 +14,7 @@ Read in today's `contract/` (`AdapterContract`, `JavaExecutable`, `ContractCase`
 same for `Build2`, and in the interface as agreed for Planning1: `describe` with `protocolVersion`, `name`, `version`,
 `capabilities` (`write`, `watch`, `issues`) and `credentials`, the credential kinds it takes (`github-app`, `token`);
 `GetWorkflow`, `ListStories`, `GetStory`, `ListStoryIssues`, `GetIssue`,
-`SetStoryState` (a story without issues only), `SetIssueStates` (all or none), `WatchChanges`, `Refresh` (a fetch
+`SetStates` (stories and issues together, all or none, one new revision), `WatchChanges`, `Refresh` (a fetch
 at once); an issue carries `whatMustBeTrue` and `subAgents`,
 each with its brief's text; errors
 `StaleRevision`, `NoSuchStory`, `NoSuchIssue`, `StateNotAllowed`, `NotSupported`.
@@ -30,6 +30,7 @@ each with its brief's text; errors
   `GitHttpFixture`, part of the suite, does it for a git-based adapter: bare repositories served on loopback by git's
   own smart HTTP backend, which checks every request's `Authorization` and records it.
 - The cases, each with the harm it prevents:
+  - story priorities retain the store's own text, with null for absence;
   - the workflow's states, order and phases are answered as the fixture holds them, a renamed state included;
   - an unknown story or issue is `NoSuchStory` / `NoSuchIssue`, never an empty answer;
   - a capability or credential kind `describe` does not name is refused with `NotSupported` before anything is read
@@ -37,26 +38,28 @@ each with its brief's text; errors
   - stale state: a write with an old revision, and a write after a commit pushed behind the adapter's back to the
     repository written and to another of the project, are each refused with `StaleRevision`, every remote and the
     adapter's reads unchanged;
-  - all or none: `SetIssueStates` with one change the workflow refuses, with one unknown issue, and with the same
-    issue twice changes no remote; `SetStoryState` on a story with issues is `StateNotAllowed`; a valid change over
+  - all or none: `SetStates` with one change the workflow refuses, with one unknown issue, a mixed story and issue
+    batch, or the same story or issue twice changes no remote; a story with issues is `StoryHasIssues`;
+    both or neither selector is `InvalidParameter(changes)`; an empty batch checks and keeps its revision;
+    a valid change over
     two repositories whose second push is refused leaves the first remote as it was, and no read shows the
     unpushed commit;
-  - two `SetIssueStates` at the same revision in parallel, beside a `Refresh`: exactly one wins, the other is
+  - two `SetStates` at the same revision in parallel, beside a `Refresh`: exactly one wins, the other is
     `StaleRevision`, and the remotes hold only the winner's change;
   - credentials: each request carries the credential of its own call - a second call with a token the remote refuses
     fails, never succeeding with the first call's - and `Authorization` never follows a redirect to another host;
-  - the token appears in no answer, error, log line, argument list, child environment, nor in any file under the
-    directory, the home or the temporary directory, after a push that succeeds and after one refused;
+  - the raw token and its three Base64 alignments appear in no answer, error, log line, argument list, child environment, nor in any file under the
+    directory, the home, the runtime or the temporary directory, including file and link names, after a push that succeeds and after one refused;
   - containment: a story or issue name with `..` or `/`, and an issue file that is a symbolic link to the canary, are
     refused; nothing outside the directory and the remotes changes, and the canary is never read or created, so no
     host git configuration or hook ran;
-  - no hang: a refused credential and a stalled remote end a write, a `Refresh` and a fetch of `WatchChanges` within
-    a bounded time, as a refusal or an error on the stream, which stays open;
+  - no hang: a refused credential ends a watch with `CredentialRefused` and no baseline; a stalled remote ends
+    a write, a `Refresh` or a watch fetch within a bound; a watch that does not fetch may deliver its cached baseline;
   - sub-agent briefs: an issue's listed briefs come with `GetIssue`, each with its file's text; a listed brief that
     is missing, a symbolic link or outside the issue's `.sub` directory fails the call naming it; a brief file the
     list does not name is never delivered;
-  - `WatchChanges` reports a change made behind the adapter's back, at once on `Refresh`, and while it is open every
-    other call is answered.
+  - `WatchChanges` reports each write's final revision and a change made behind the adapter's back at once on
+    `Refresh`, stays open, and permits every other call; shutdown reaps the adapter and all observed descendants.
 - The suite owns its questions and answer rules; an adapter supplies only its main class, its fixture and its
   capabilities.
 - Red first: the stale-revision case against a stand-in adapter that ignores the revision.
@@ -67,7 +70,9 @@ each with its brief's text; errors
   passes every case its store can serve, and the cases that need a git store are skipped naming the missing ability.
 - Each case is seen red once against a stand-in adapter broken for it. The reference adapter's switchable faults
   prove a stale revision taken, half a batch written, the token echoed in a refusal, an unlisted brief delivered and
-  a refresh blocked behind a watch. The cases that need a git store (the token left in a file, the first call's token
+  a refresh blocked behind a watch. Additional faults prove process and encoded credential scans, readable
+  traversal decoys, symlink writes, refused and stalled watches, capability checks before store access, no-watch
+  writers and redirects, write notifications, full-board freshness and shutdown cleanup. The cases that need a git store (the token left in a file, the first call's token
   reused, a path outside the directory written, a host hook run, a remote waited on without end, a half push over two
   repositories) are seen red against `stories-git` broken for each, in [GH20](README.md#gh20) and
   [GH21](README.md#gh21).

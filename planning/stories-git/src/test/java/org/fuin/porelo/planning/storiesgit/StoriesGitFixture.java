@@ -59,7 +59,9 @@ final class StoriesGitFixture extends GitHttpFixture {
                     .append(path)
                     .append(") ")
                     .append(story.title())
-                    .append(" | Highest | - | ")
+                    .append(" | ")
+                    .append(story.priority() == null ? "-" : cell(story.priority()))
+                    .append(" | - | ")
                     .append(cell(story.description()))
                     .append(" |\n\n");
             planning.put(
@@ -164,7 +166,7 @@ final class StoriesGitFixture extends GitHttpFixture {
         data.put("state", story.state());
         data.put("gain", story.description());
         data.put("test", "");
-        data.put("priority", "Highest");
+        data.put("priority", story.priority());
         data.put(
                 "issues",
                 issues.stream().map(issue -> issue.repository() + "#" + issue.id()).toList());
@@ -173,7 +175,9 @@ final class StoriesGitFixture extends GitHttpFixture {
                 + story.id()
                 + " — "
                 + story.title()
-                + "\n\n**Priority:** ⏫ Highest · **State:** "
+                + "\n\n**Priority:** "
+                + (story.priority() == null ? "-" : story.priority())
+                + " · **State:** "
                 + story.state()
                 + "\n\n**What a user gains.** "
                 + story.description()

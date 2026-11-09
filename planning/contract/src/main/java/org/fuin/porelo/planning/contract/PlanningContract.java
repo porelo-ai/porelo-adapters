@@ -15,7 +15,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.fuin.porelo.planning.api.Change;
 import org.fuin.porelo.planning.api.PlanningAdapter;
 import org.fuin.porelo.planning.api.PlanningProtocol;
@@ -90,12 +89,26 @@ public abstract class PlanningContract {
         final var stories = call(() -> session.client.listStories(settings(), token(), null));
         assertThat(
                         stories.value().stream()
-                                .map(s -> List.of(s.id(), s.title(), s.state(), s.link()))
+                                .map(
+                                        s ->
+                                                java.util.Arrays.asList(
+                                                        s.id(),
+                                                        s.title(),
+                                                        s.state(),
+                                                        s.link(),
+                                                        s.priority()))
                                 .toList())
                 .as("all listed stories retain their stored states")
                 .containsExactlyInAnyOrderElementsOf(
                         session.board.stories().stream()
-                                .map(s -> List.of(s.id(), s.title(), s.state(), s.link()))
+                                .map(
+                                        s ->
+                                                java.util.Arrays.asList(
+                                                        s.id(),
+                                                        s.title(),
+                                                        s.state(),
+                                                        s.link(),
+                                                        s.priority()))
                                 .toList());
         for (final var expected : session.board.stories())
             assertThat(call(() -> session.client.getStory(settings(), token(), expected.id())))
@@ -173,12 +186,12 @@ public abstract class PlanningContract {
     @Test
     protected final void refusesUndeclaredCapabilitiesBeforeStoreAccess() throws Exception {
         ability(Fixture.Ability.credentialKind);
-        final var capabilities = session.client.describe().capabilities();
+        final var capabilities = call(() -> session.client.describe()).capabilities();
         assumeTrue(
                 !capabilities.containsAll(List.of("issues", "write", "watch")),
                 "Missing ability undeclaredCapability: Describe declares all optional"
                         + " capabilities");
-        final String current = revision();
+        final String current = "initial";
         final long before = session.fixture.accesses();
         if (!capabilities.contains("issues")) {
             unsupported("issues", () -> session.client.getIssue(settings(), token(), "I1"));
@@ -187,21 +200,25 @@ public abstract class PlanningContract {
                 unsupported(
                         "issues",
                         () ->
-                                session.client.setIssueStates(
-                                        settings(), token(), List.of(), current));
+                                session.client.setStates(
+                                        settings(),
+                                        token(),
+                                        List.of(new StateChange(null, "I1", "Closed")),
+                                        current));
         }
         if (!capabilities.contains("write")) {
             unsupported(
                     "write",
                     () ->
-                            session.client.setStoryState(
-                                    settings(), token(), "S2", "Closed", current));
+                            session.client.setStates(
+                                    settings(),
+                                    token(),
+                                    List.of(new StateChange("S2", null, "Closed")),
+                                    current));
             if (capabilities.contains("issues"))
                 unsupported(
                         "write",
-                        () ->
-                                session.client.setIssueStates(
-                                        settings(), token(), List.of(), current));
+                        () -> session.client.setStates(settings(), token(), List.of(), current));
         }
         if (!capabilities.contains("watch")) {
             unsupported("watch", () -> session.client.refresh(settings(), token()));
@@ -222,10 +239,9 @@ public abstract class PlanningContract {
     protected final void refusesAnUndeclaredCredentialKindBeforeStoreAccess() throws Exception {
         ability(Fixture.Ability.credentialKind);
         final String kind = "unsupported-credential";
-        assertThat(session.client.describe().credentials())
+        assertThat(call(() -> session.client.describe()).credentials())
                 .as("the negative credential kind is absent from Describe")
                 .doesNotContain(kind);
-        revision();
         final long before = session.fixture.accesses();
         final var settings = session.fixture.settingsForCredentialKind(kind);
         refused(Reason.NOT_SUPPORTED, () -> session.client.getWorkflow(settings, token()));
@@ -239,7 +255,7 @@ public abstract class PlanningContract {
     protected final void refusesAnOldRevisionWithoutChangingAnything() throws Exception {
         writableIssues();
         final String old = revision();
-        final String current = write(List.of(new StateChange("I1", "Building renamed")), old);
+        final String current = write(List.of(new StateChange(null, "I1", "Building renamed")), old);
         assertThat(current)
                 .as("a successful state change publishes a new revision")
                 .isNotEqualTo(old);
@@ -249,10 +265,10 @@ public abstract class PlanningContract {
                 refused(
                         Reason.STALE_REVISION,
                         () ->
-                                session.client.setIssueStates(
+                                session.client.setStates(
                                         settings(),
                                         token(),
-                                        List.of(new StateChange("I2", "Closed")),
+                                        List.of(new StateChange(null, "I2", "Closed")),
                                         old));
         assertThat(error.parameters())
                 .as("stale revision refusal carries the current revision")
@@ -268,8 +284,11 @@ public abstract class PlanningContract {
         final String current =
                 call(
                         () ->
-                                session.client.setStoryState(
-                                        settings(), token(), "S2", "Building renamed", old));
+                                session.client.setStates(
+                                        settings(),
+                                        token(),
+                                        List.of(new StateChange("S2", null, "Building renamed")),
+                                        old));
         assertThat(current)
                 .as("an independent story write advances the board revision")
                 .isNotEqualTo(old);
@@ -282,8 +301,13 @@ public abstract class PlanningContract {
                         refused(
                                         Reason.STALE_REVISION,
                                         () ->
-                                                session.client.setStoryState(
-                                                        settings(), token(), "S2", "Closed", old))
+                                                session.client.setStates(
+                                                        settings(),
+                                                        token(),
+                                                        List.of(
+                                                                new StateChange(
+                                                                        "S2", null, "Closed")),
+                                                        old))
                                 .parameters())
                 .as("stale story writes carry the current revision")
                 .containsEntry("revision", current);
@@ -313,12 +337,13 @@ public abstract class PlanningContract {
                 refused(
                         Reason.STATE_NOT_ALLOWED,
                         () ->
-                                session.client.setIssueStates(
+                                session.client.setStates(
                                         settings(),
                                         token(),
                                         List.of(
-                                                new StateChange("I1", "Closed"),
-                                                new StateChange("I2", "not-a-workflow-state")),
+                                                new StateChange(null, "I1", "Closed"),
+                                                new StateChange(
+                                                        null, "I2", "not-a-workflow-state")),
                                         reads.revision()));
         assertThat(error.parameters())
                 .as("state refusal identifies the invalid second item and target")
@@ -344,12 +369,12 @@ public abstract class PlanningContract {
         refused(
                 Reason.NO_SUCH_ISSUE,
                 () ->
-                        session.client.setIssueStates(
+                        session.client.setStates(
                                 settings(),
                                 token(),
                                 List.of(
-                                        new StateChange("I1", "Closed"),
-                                        new StateChange("absent-issue", "Closed")),
+                                        new StateChange(null, "I1", "Closed"),
+                                        new StateChange(null, "absent-issue", "Closed")),
                                 reads.revision()));
         unchanged(before, reads);
     }
@@ -364,12 +389,12 @@ public abstract class PlanningContract {
                 refused(
                         Reason.STATE_NOT_ALLOWED,
                         () ->
-                                session.client.setIssueStates(
+                                session.client.setStates(
                                         settings(),
                                         token(),
                                         List.of(
-                                                new StateChange("I1", "Closed"),
-                                                new StateChange("I1", "Building renamed")),
+                                                new StateChange(null, "I1", "Closed"),
+                                                new StateChange(null, "I1", "Building renamed")),
                                         reads.revision()));
         assertThat(error.parameters())
                 .as("duplicate refusal identifies the issue and the specified reason")
@@ -388,11 +413,12 @@ public abstract class PlanningContract {
                         refused(
                                         Reason.STORY_HAS_ISSUES,
                                         () ->
-                                                session.client.setStoryState(
+                                                session.client.setStates(
                                                         settings(),
                                                         token(),
-                                                        "S1",
-                                                        "Closed",
+                                                        List.of(
+                                                                new StateChange(
+                                                                        "S1", null, "Closed")),
                                                         reads.revision()))
                                 .parameters())
                 .as("a story with issues has no independently writable state")
@@ -403,19 +429,19 @@ public abstract class PlanningContract {
     // Harm: an empty batch can create a spurious revision or bypass stale revision validation.
     @Test
     protected final void keepsTheRevisionAndStoreForAnEmptyBatch() throws Exception {
-        writableIssues();
+        requires("write");
         final var before = snapshot();
         final String current = revision();
         assertThat(write(List.of(), current))
                 .as("empty batch keeps the current revision")
                 .isEqualTo(current);
         assertThat(snapshot()).as("empty batch writes no store object or commit").isEqualTo(before);
-        final String next = write(List.of(new StateChange("I1", "Closed")), current);
+        final String next = write(List.of(new StateChange("S2", null, "Closed")), current);
         assertThat(
                         refused(
                                         Reason.STALE_REVISION,
                                         () ->
-                                                session.client.setIssueStates(
+                                                session.client.setStates(
                                                         settings(), token(), List.of(), current))
                                 .parameters())
                 .as("even empty batches validate the revision")
@@ -433,17 +459,16 @@ public abstract class PlanningContract {
         refused(
                 Reason.CREDENTIAL_REFUSED,
                 () ->
-                        session.client.setIssueStates(
+                        session.client.setStates(
                                 settings(),
                                 token(),
                                 List.of(
-                                        new StateChange("I1", "Closed"),
-                                        new StateChange("I2", "Closed")),
+                                        new StateChange(null, "I1", "Closed"),
+                                        new StateChange(null, "I2", "Closed")),
                                 reads.revision()));
         session.fixture.verifySecondPushRefused();
         unchanged(before, reads);
-        requires("watch");
-        call(() -> session.client.refresh(settings(), token()));
+        refreshIfSupported();
         unchanged(before, reads);
     }
 
@@ -451,30 +476,33 @@ public abstract class PlanningContract {
     @Test
     protected final void allowsExactlyOneParallelWriteBesideARefresh() throws Exception {
         writableIssues();
-        requires("watch");
+        final boolean watching = supports("watch");
         final String current = revision();
         final VarlinkClient first = session.connection();
         final VarlinkClient second = session.connection();
-        final VarlinkClient refreshing = session.connection();
-        final CountDownLatch ready = new CountDownLatch(3);
+        final VarlinkClient refreshing = watching ? session.connection() : null;
+        final CountDownLatch ready = new CountDownLatch(watching ? 3 : 2);
         final CountDownLatch go = new CountDownLatch(1);
         final Future<Object> a = session.submit(() -> racedWrite(first, "I1", current, ready, go));
         final Future<Object> b = session.submit(() -> racedWrite(second, "I2", current, ready, go));
         final Future<?> refresh =
-                session.submit(
-                        () -> {
-                            startTogether(ready, go);
-                            return refreshing.call(PlanningProtocol.REFRESH, parameters());
-                        });
+                !watching
+                        ? null
+                        : session.submit(
+                                () -> {
+                                    startTogether(ready, go);
+                                    return java.util.Objects.requireNonNull(refreshing)
+                                            .call(PlanningProtocol.REFRESH, parameters());
+                                });
         assertThat(ready.await(ContractSession.BOUND_SECONDS, TimeUnit.SECONDS))
-                .as("all three independent callers reach the start barrier")
+                .as("all independent callers reach the start barrier")
                 .isTrue();
         go.countDown();
         final List<Object> outcomes =
                 List.of(
                         ContractSession.await("first parallel write", a),
                         ContractSession.await("second parallel write", b));
-        ContractSession.await("parallel Refresh", refresh);
+        if (refresh != null) ContractSession.await("parallel Refresh", refresh);
         assertThat(outcomes.stream().filter(String.class::isInstance).count())
                 .as("exactly one parallel write wins")
                 .isEqualTo(1);
@@ -504,7 +532,7 @@ public abstract class PlanningContract {
                 .as("only the winning change is visible")
                 .containsExactlyInAnyOrderElementsOf(
                         session.board.withIssueState(winningIssue, "Closed").summaries());
-        call(() -> session.client.refresh(settings(), token()));
+        refreshIfSupported();
         assertThat(listing().value())
                 .as("authoritative remotes also contain only the winning change")
                 .containsExactlyInAnyOrderElementsOf(
@@ -517,7 +545,7 @@ public abstract class PlanningContract {
         writableIssues();
         ability(Fixture.Ability.refuseCredential);
         final String current =
-                write(List.of(new StateChange("I1", "Building renamed")), revision());
+                write(List.of(new StateChange(null, "I1", "Building renamed")), revision());
         final var before = snapshot();
         final var reads = listing();
         final String rejected = rejectedToken();
@@ -525,10 +553,10 @@ public abstract class PlanningContract {
                 refused(
                         Reason.CREDENTIAL_REFUSED,
                         () ->
-                                session.client.setIssueStates(
+                                session.client.setStates(
                                         settings(),
                                         rejected,
-                                        List.of(new StateChange("I2", "Closed")),
+                                        List.of(new StateChange(null, "I2", "Closed")),
                                         current));
         session.noSecret(refusal.parameters(), rejected);
         unchanged(before, reads);
@@ -537,11 +565,9 @@ public abstract class PlanningContract {
     // Harm: forwarding Authorization on a redirect discloses a credential to a different host.
     @Test
     protected final void neverForwardsAuthorizationToAnotherHost() throws Exception {
-        requires("watch");
         ability(Fixture.Ability.redirect);
-        revision();
         session.fixture.redirect();
-        fails(() -> session.client.refresh(settings(), token()));
+        fails(() -> session.client.getWorkflow(settings(), token()));
         session.fixture.verifyRedirect();
     }
 
@@ -549,7 +575,7 @@ public abstract class PlanningContract {
     @Test
     protected final void keepsTheTokenOutOfSuccessfulAnswersAndFiles() throws Exception {
         writableIssues();
-        final String current = write(List.of(new StateChange("I1", "Closed")), revision());
+        final String current = write(List.of(new StateChange(null, "I1", "Closed")), revision());
         final List<Object> answers = new ArrayList<>();
         answers.add(current);
         answers.add(call(() -> session.client.getWorkflow(settings(), token())));
@@ -557,7 +583,7 @@ public abstract class PlanningContract {
         answers.add(call(() -> session.client.getStory(settings(), token(), "S1")));
         answers.add(call(() -> session.client.listStoryIssues(settings(), token(), "S1")));
         answers.add(call(() -> session.client.getIssue(settings(), token(), "I1")));
-        if (session.client.describe().capabilities().contains("watch")) {
+        if (call(() -> session.client.describe()).capabilities().contains("watch")) {
             answers.add(call(() -> session.client.refresh(settings(), token())));
             final Watch watch = watch(token());
             answers.add(take(watch.changes));
@@ -577,10 +603,10 @@ public abstract class PlanningContract {
                 refused(
                         Reason.CREDENTIAL_REFUSED,
                         () ->
-                                session.client.setIssueStates(
+                                session.client.setStates(
                                         settings(),
                                         token(),
-                                        List.of(new StateChange("I1", "Closed")),
+                                        List.of(new StateChange(null, "I1", "Closed")),
                                         current));
         session.noSecret(refusal.parameters(), token());
         assertThat(snapshot()).as("a refused push must not publish a change").isEqualTo(before);
@@ -591,21 +617,34 @@ public abstract class PlanningContract {
     protected final void refusesUnsafeStoryIdsWithoutTouchingTheCanary() throws Exception {
         final var before = snapshot();
         final String current = revision();
-        for (final String id : List.of("..", "S1/child", "../canary", "S1/../../canary")) {
-            assertThat(
-                            fails(() -> session.client.getStory(settings(), token(), id))
-                                    .parameters()
-                                    .toString())
-                    .as("unsafe story refusal names the requested id")
-                    .contains(id);
-            if (session.client.describe().capabilities().contains("write"))
-                fails(
-                        () ->
-                                session.client.setStoryState(
-                                        settings(), token(), id, "Closed", current));
+        try (ContainmentGuard guard = new ContainmentGuard(session, false)) {
+            for (final String id :
+                    List.of(
+                            "..",
+                            "S1/child",
+                            "../canary",
+                            "S1/../../canary",
+                            "../home/canary",
+                            "../../home/canary")) {
+                assertThat(
+                                fails(() -> session.client.getStory(settings(), token(), id))
+                                        .parameters()
+                                        .toString())
+                        .as("unsafe story refusal names the requested id")
+                        .contains(id);
+                if (call(() -> session.client.describe()).capabilities().contains("write"))
+                    fails(
+                            () ->
+                                    session.client.setStates(
+                                            settings(),
+                                            token(),
+                                            List.of(new StateChange(id, null, "Closed")),
+                                            current));
+            }
+            assertThat(snapshot()).as("unsafe story ids change no remote").isEqualTo(before);
+            guard.verify();
+            session.canary.verifyUntouched();
         }
-        assertThat(snapshot()).as("unsafe story ids change no remote").isEqualTo(before);
-        session.canary.verifyUntouched();
     }
 
     // Harm: path traversal in issue ids can read or overwrite files outside the project store.
@@ -614,30 +653,65 @@ public abstract class PlanningContract {
         requires("issues");
         final var before = snapshot();
         final String current = revision();
-        for (final String id : List.of("..", "I1/child", "../canary", "I1/../../canary")) {
-            assertThat(
-                            fails(() -> session.client.getIssue(settings(), token(), id))
-                                    .parameters()
-                                    .toString())
-                    .as("unsafe issue refusal names the requested id")
-                    .contains(id);
-            if (session.client.describe().capabilities().contains("write"))
-                fails(
-                        () ->
-                                session.client.setIssueStates(
-                                        settings(),
-                                        token(),
-                                        List.of(new StateChange(id, "Closed")),
-                                        current));
+        try (ContainmentGuard guard = new ContainmentGuard(session, true)) {
+            for (final String id :
+                    List.of(
+                            "..",
+                            "I1/child",
+                            "../canary",
+                            "I1/../../canary",
+                            "../home/issue",
+                            "../../home/issue")) {
+                assertThat(
+                                fails(() -> session.client.getIssue(settings(), token(), id))
+                                        .parameters()
+                                        .toString())
+                        .as("unsafe issue refusal names the requested id")
+                        .contains(id);
+                if (call(() -> session.client.describe()).capabilities().contains("write"))
+                    fails(
+                            () ->
+                                    session.client.setStates(
+                                            settings(),
+                                            token(),
+                                            List.of(new StateChange(null, id, "Closed")),
+                                            current));
+            }
+            assertThat(snapshot()).as("unsafe issue ids change no remote").isEqualTo(before);
+            guard.verify();
+            session.canary.verifyUntouched();
         }
-        assertThat(snapshot()).as("unsafe issue ids change no remote").isEqualTo(before);
-        session.canary.verifyUntouched();
     }
 
     // Harm: following an issue symlink can expose or overwrite a host file.
     @Test
     protected final void refusesAnIssueFileThatIsASymbolicLink() throws Exception {
         damaged(Fixture.Damage.issueSymlink);
+    }
+
+    // Harm: refusing a symlink read alone cannot prevent writes through that same link.
+    @Test
+    protected final void refusesWritingThroughAnIssueSymbolicLink() throws Exception {
+        writableIssues();
+        ability(Fixture.Ability.issueSymlink);
+        final String current = revision();
+        final Path outside = scratch.resolve("outside-canary");
+        session.fixture.damage(Fixture.Damage.issueSymlink, outside);
+        final String original = Files.readString(outside);
+        final var remotes = snapshot();
+        fails(
+                () ->
+                        session.client.setStates(
+                                settings(),
+                                token(),
+                                List.of(new StateChange(null, "I1", "Closed")),
+                                current));
+        assertThat(snapshot()).as("refusing a symlink write changes no remote").isEqualTo(remotes);
+        session.noSecrets(Files.readString(outside));
+        assertThat(Files.readString(outside))
+                .as("the readable canary outside the adapter directory stays unchanged")
+                .isEqualTo(original);
+        session.canary.verifyUntouched();
     }
 
     // Harm: a missing listed brief can start a sub-agent without its instructions.
@@ -694,10 +768,10 @@ public abstract class PlanningContract {
         refused(
                 Reason.CREDENTIAL_REFUSED,
                 () ->
-                        session.client.setIssueStates(
+                        session.client.setStates(
                                 settings(),
                                 rejectedToken(),
-                                List.of(new StateChange("I1", "Closed")),
+                                List.of(new StateChange(null, "I1", "Closed")),
                                 current));
     }
 
@@ -721,10 +795,10 @@ public abstract class PlanningContract {
         session.fixture.stall();
         fails(
                 () ->
-                        session.client.setIssueStates(
+                        session.client.setStates(
                                 settings(),
                                 token(),
-                                List.of(new StateChange("I1", "Closed")),
+                                List.of(new StateChange(null, "I1", "Closed")),
                                 current));
     }
 
@@ -745,13 +819,18 @@ public abstract class PlanningContract {
         ability(Fixture.Ability.refuseCredential);
         revision();
         final Watch watch = watch(rejectedToken());
-        observeWaitingOrFailure(watch, PlanningRefused.class);
-        call(() -> session.client.getWorkflow(settings(), token()));
-        if (watch.finished.isDone()) {
-            assertThat(ContractSession.await("refused watch", watch.finished))
-                    .as("a watch that ends with a refused credential reports an error")
-                    .isInstanceOf(PlanningRefused.class);
-        }
+        final Future<?> reading =
+                session.submit(() -> session.client.getWorkflow(settings(), token()));
+        final Object outcome = ContractSession.await("refused watch", watch.finished);
+        session.noSecrets(outcome);
+        assertThat(outcome instanceof PlanningRefused)
+                .as("a refused watch must end with a named credential refusal")
+                .isTrue();
+        assertThat(((PlanningRefused) outcome).reason())
+                .as("refused watch reports CredentialRefused")
+                .isEqualTo(Reason.CREDENTIAL_REFUSED);
+        assertThat(watch.changes).as("refused watch discloses no board changes").isEmpty();
+        ContractSession.await("read beside refused watch", reading);
     }
 
     // Harm: a stalled watch fetch must not prevent cached reads or lifecycle operations.
@@ -762,7 +841,23 @@ public abstract class PlanningContract {
         revision();
         session.fixture.stall();
         final Watch watch = watch(token());
-        observeWaitingOrFailure(watch, RuntimeException.class);
+        // A cached baseline is valid without fetching; a fetching watch must fail within the bound.
+        final Object first =
+                ContractSession.await(
+                        "stalled watch baseline or refusal",
+                        session.submit(
+                                () -> {
+                                    while (!watch.finished.isDone()) {
+                                        final Change change =
+                                                watch.changes.poll(10, TimeUnit.MILLISECONDS);
+                                        if (change != null) return change;
+                                    }
+                                    return ContractSession.await("stalled watch", watch.finished);
+                                }));
+        session.noSecrets(first);
+        assertThat(first instanceof Change || first instanceof RuntimeException)
+                .as("stalled watch delivers a cached baseline or a bounded error")
+                .isTrue();
         assertThat(call(() -> session.client.getWorkflow(settings(), token())).value())
                 .as("cached reads remain available while remote watch traffic stalls")
                 .isEqualTo(session.board.workflow());
@@ -821,29 +916,246 @@ public abstract class PlanningContract {
         assertThat(take(watch.changes).revision())
                 .as("watch is open before other calls start")
                 .isEqualTo(current);
-        assertThat(session.client.describe().name())
+        assertThat(call(() -> session.client.describe()).name())
                 .as("Describe remains available beside a watch")
                 .isNotBlank();
         call(() -> session.client.getWorkflow(settings(), token()));
         listing();
         call(() -> session.client.getStory(settings(), token(), "S2"));
-        if (session.client.describe().capabilities().contains("issues")) {
+        if (call(() -> session.client.describe()).capabilities().contains("issues")) {
             call(() -> session.client.listStoryIssues(settings(), token(), "S1"));
             call(() -> session.client.getIssue(settings(), token(), "I1"));
         }
         call(() -> session.client.refresh(settings(), token()));
-        if (session.client.describe().capabilities().contains("write")) {
+        assertThat(watch.finished).as("watch remains open while other calls complete").isNotDone();
+        if (call(() -> session.client.describe()).capabilities().contains("write")) {
             final String next =
                     call(
                             () ->
-                                    session.client.setStoryState(
+                                    session.client.setStates(
                                             settings(),
                                             token(),
-                                            "S2",
-                                            "Building renamed",
+                                            List.of(
+                                                    new StateChange(
+                                                            "S2", null, "Building renamed")),
                                             current));
-            if (session.client.describe().capabilities().contains("issues"))
-                write(List.of(new StateChange("I1", "Closed")), next);
+            assertThat(take(watch.changes).revision())
+                    .as("story write notifies an existing watch at its new revision")
+                    .isEqualTo(next);
+            if (supports("issues")) {
+                final String latest = write(List.of(new StateChange(null, "I1", "Closed")), next);
+                assertThat(take(watch.changes).revision())
+                        .as("issue write notifies an existing watch at its new revision")
+                        .isEqualTo(latest);
+            }
+        }
+        assertThat(watch.finished).as("watch remains open while other calls complete").isNotDone();
+    }
+
+    // Harm: limiting freshness to the written resource can overwrite another repository's work.
+    @Test
+    protected final void refusesAnIssueWriteAfterAnExternalStoryChange() throws Exception {
+        writableIssues();
+        staleExternal(true, false);
+    }
+
+    // Harm: story-only writes still depend on the full board revision.
+    @Test
+    protected final void refusesAStoryWriteAfterAnExternalStoryChange() throws Exception {
+        requires("write");
+        staleExternal(true, true);
+    }
+
+    // Harm: omitting issue repositories from a story write's fetch permits lost updates.
+    @Test
+    protected final void refusesAStoryWriteAfterAnExternalIssueChange() throws Exception {
+        writableIssues();
+        staleExternal(false, true);
+    }
+
+    private void staleExternal(boolean storyChanged, boolean storyWritten) throws Exception {
+        ability(Fixture.Ability.changeBehindTheBack);
+        final String old = revision();
+        if (storyChanged) session.fixture.changeStory("S2", "Building renamed");
+        else session.fixture.changeIssue("I1", "Building renamed");
+        final var before = snapshot();
+        final var error =
+                refused(
+                        Reason.STALE_REVISION,
+                        () ->
+                                session.client.setStates(
+                                        settings(),
+                                        token(),
+                                        List.of(
+                                                storyWritten
+                                                        ? new StateChange("S2", null, "Closed")
+                                                        : new StateChange(null, "I1", "Closed")),
+                                        old));
+        final String current = revision();
+        assertThat(current)
+                .as("external change advances the complete board revision")
+                .isNotEqualTo(old);
+        assertThat(error.parameters())
+                .as("stale refusal carries the refreshed board revision")
+                .containsEntry("revision", current);
+        assertThat(snapshot()).as("stale write changes no authoritative store").isEqualTo(before);
+        final Board expected =
+                storyChanged
+                        ? session.board.withStoryState("S2", "Building renamed")
+                        : session.board.withIssueState("I1", "Building renamed");
+        if (supports("issues"))
+            assertThat(listing().value())
+                    .as("only the external change becomes visible")
+                    .containsExactlyInAnyOrderElementsOf(expected.summaries());
+        else
+            assertThat(
+                            listing().value().stream()
+                                    .map(
+                                            story ->
+                                                    java.util.Arrays.asList(
+                                                            story.id(),
+                                                            story.title(),
+                                                            story.state(),
+                                                            story.link(),
+                                                            story.priority()))
+                                    .toList())
+                    .as("only the external story change becomes visible without issue support")
+                    .containsExactlyInAnyOrderElementsOf(
+                            expected.stories().stream()
+                                    .map(
+                                            story ->
+                                                    java.util.Arrays.asList(
+                                                            story.id(),
+                                                            story.title(),
+                                                            story.state(),
+                                                            story.link(),
+                                                            story.priority()))
+                                    .toList());
+    }
+
+    // Harm: separate story and issue commits can leave a board only partly changed.
+    @Test
+    protected final void writesStoriesAndIssuesInOneAtomicBatch() throws Exception {
+        writableIssues();
+        final var before = snapshot();
+        final var reads = listing();
+        refused(
+                Reason.NO_SUCH_ISSUE,
+                () ->
+                        session.client.setStates(
+                                settings(),
+                                token(),
+                                List.of(
+                                        new StateChange("S2", null, "Closed"),
+                                        new StateChange(null, "absent-issue", "Closed")),
+                                reads.revision()));
+        unchanged(before, reads);
+        refused(
+                Reason.STATE_NOT_ALLOWED,
+                () ->
+                        session.client.setStates(
+                                settings(),
+                                token(),
+                                List.of(
+                                        new StateChange(null, "I1", "Closed"),
+                                        new StateChange("S2", null, "unknown-state")),
+                                reads.revision()));
+        unchanged(before, reads);
+        final Watch watch = supports("watch") ? watch(token()) : null;
+        if (watch != null) take(watch.changes);
+        final String next =
+                write(
+                        List.of(
+                                new StateChange("S2", null, "Closed"),
+                                new StateChange(null, "I1", "Closed")),
+                        reads.revision());
+        assertThat(next)
+                .as("mixed batch advances the board revision once")
+                .isNotEqualTo(reads.revision());
+        final Board expected =
+                session.board.withStoryState("S2", "Closed").withIssueState("I1", "Closed");
+        final var changed = listing();
+        assertThat(changed.revision())
+                .as("both resource kinds become visible at the same revision")
+                .isEqualTo(next);
+        assertThat(changed.value())
+                .as("mixed batch preserves the complete story and issue snapshot")
+                .containsExactlyInAnyOrderElementsOf(expected.summaries());
+        assertThat(call(() -> session.client.getStory(settings(), token(), "S2")))
+                .as("story belongs to the batch revision")
+                .isEqualTo(new PlanningAdapter.Result<>(expected.stories().get(1), next));
+        assertThat(call(() -> session.client.getIssue(settings(), token(), "I1")))
+                .as("issue belongs to the batch revision")
+                .isEqualTo(new PlanningAdapter.Result<>(expected.issue("I1"), next));
+        if (watch != null) {
+            assertThat(take(watch.changes).revision())
+                    .as("mixed batch publishes its single final revision")
+                    .isEqualTo(next);
+            assertThat(watch.changes.poll(200, TimeUnit.MILLISECONDS))
+                    .as("mixed batch publishes no intermediate change")
+                    .isNull();
+        }
+    }
+
+    // Harm: a duplicate story can overwrite an earlier move within a supposedly atomic batch.
+    @Test
+    protected final void refusesDuplicateStoryIdsWithoutWriting() throws Exception {
+        requires("write");
+        final var before = snapshot();
+        final var reads = listing();
+        assertThat(
+                        refused(
+                                        Reason.STATE_NOT_ALLOWED,
+                                        () ->
+                                                session.client.setStates(
+                                                        settings(),
+                                                        token(),
+                                                        List.of(
+                                                                new StateChange(
+                                                                        "S2", null, "Closed"),
+                                                                new StateChange(
+                                                                        "S2",
+                                                                        null,
+                                                                        "Building renamed")),
+                                                        reads.revision()))
+                                .parameters())
+                .as("duplicate story refusal identifies the item and exact reason")
+                .containsEntry("item", "S2")
+                .containsEntry("reason", "Duplicate story");
+        unchanged(before, reads);
+    }
+
+    // Harm: ambiguous selectors can write the wrong resource or publish a preceding valid change.
+    @Test
+    protected final void refusesAmbiguousOrMissingStateChangeSelectorsWithoutWriting()
+            throws Exception {
+        writableIssues();
+        final var before = snapshot();
+        final var reads = listing();
+        final VarlinkClient client = session.connection();
+        for (final Map<String, Object> malformed :
+                List.of(
+                        Map.<String, Object>of("story", "S2", "issue", "I1", "to", "Closed"),
+                        Map.<String, Object>of("to", "Closed"))) {
+            final Map<String, Object> request = new java.util.LinkedHashMap<>(parameters());
+            request.put("revision", reads.revision());
+            request.put(
+                    "changes", List.of(new StateChange("S2", null, "Closed").asMap(), malformed));
+            final Throwable thrown =
+                    catchThrowable(
+                            () -> call(() -> client.call(PlanningProtocol.SET_STATES, request)));
+            session.noSecrets(thrown);
+            assertThat(thrown instanceof VarlinkException)
+                    .as("invalid selectors require the wire InvalidParameter refusal")
+                    .isTrue();
+            final VarlinkException refusal = (VarlinkException) thrown;
+            assertThat(refusal.getErrorName())
+                    .as("both and neither selectors are InvalidParameter")
+                    .isEqualTo("org.varlink.service.InvalidParameter");
+            assertThat(refusal.getParameters())
+                    .as("invalid selector refusal identifies changes")
+                    .containsEntry("parameter", "changes");
+            unchanged(before, reads);
         }
     }
 
@@ -857,10 +1169,10 @@ public abstract class PlanningContract {
                 refused(
                         Reason.STALE_REVISION,
                         () ->
-                                session.client.setIssueStates(
+                                session.client.setStates(
                                         settings(),
                                         token(),
-                                        List.of(new StateChange("I1", "Closed")),
+                                        List.of(new StateChange(null, "I1", "Closed")),
                                         old));
         final String current = revision();
         assertThat(current)
@@ -896,10 +1208,12 @@ public abstract class PlanningContract {
         assertThat(snapshot())
                 .as("refusing a damaged store must not write to a remote")
                 .isEqualTo(remotes);
-        if (Files.exists(outside))
+        if (Files.exists(outside)) {
+            session.noSecrets(Files.readString(outside));
             assertThat(Files.readString(outside))
                     .as("the readable canary outside the adapter directory stays unchanged")
                     .isEqualTo(original);
+        }
         session.canary.verifyUntouched();
     }
 
@@ -912,11 +1226,11 @@ public abstract class PlanningContract {
             throws Exception {
         startTogether(ready, go);
         final Map<String, Object> parameters = new java.util.LinkedHashMap<>(parameters());
-        parameters.put("changes", List.of(new StateChange(issue, "Closed").asMap()));
+        parameters.put("changes", List.of(new StateChange(null, issue, "Closed").asMap()));
         parameters.put("revision", revision);
         try {
             final Object answer =
-                    client.call(PlanningProtocol.SET_ISSUE_STATES, parameters).get("revision");
+                    client.call(PlanningProtocol.SET_STATES, parameters).get("revision");
             if (!(answer instanceof String current))
                 throw new AssertionError(
                         "Expected parallel write's string revision; got a missing or mistyped"
@@ -974,20 +1288,8 @@ public abstract class PlanningContract {
         return change;
     }
 
-    private static void observeWaitingOrFailure(
-            Watch watch, Class<? extends RuntimeException> error) throws Exception {
-        // Give the watch a bounded opportunity to finish before probing another connection.
-        try {
-            assertThat(watch.finished.get(250, TimeUnit.MILLISECONDS))
-                    .as("a watch that ends during a store failure reports an error")
-                    .isInstanceOf(error);
-        } catch (TimeoutException waiting) {
-            // Remaining subscribed is allowed; ordinary calls must still make progress.
-        }
-    }
-
     private void refreshIfSupported() throws Exception {
-        if (session.client.describe().capabilities().contains("watch"))
+        if (call(() -> session.client.describe()).capabilities().contains("watch"))
             call(() -> session.client.refresh(settings(), token()));
     }
 
@@ -1039,23 +1341,28 @@ public abstract class PlanningContract {
     private PlanningRefused fails(java.util.concurrent.Callable<?> call) throws Exception {
         // catchThrowable keeps the description when the adapter answers instead of refusing.
         final Throwable thrown = catchThrowable(() -> session.within("adapter refusal", call));
-        assertThat(thrown)
+        session.noSecrets(thrown);
+        assertThat(thrown instanceof PlanningRefused)
                 .as(
                         "asked for a named adapter refusal; successful answers and timeouts are"
                                 + " failures; got %s",
-                        thrown == null ? "an answer" : thrown)
-                .isInstanceOf(PlanningRefused.class);
+                        thrown == null ? "an answer" : thrown.getClass().getName())
+                .isTrue();
         return (PlanningRefused) java.util.Objects.requireNonNull(thrown);
     }
 
-    private void writableIssues() {
+    private void writableIssues() throws Exception {
         requires("write");
         requires("issues");
     }
 
-    private void requires(String capability) {
+    private boolean supports(String capability) throws Exception {
+        return call(() -> session.client.describe()).capabilities().contains(capability);
+    }
+
+    private void requires(String capability) throws Exception {
         assumeTrue(
-                session.client.describe().capabilities().contains(capability),
+                call(() -> session.client.describe()).capabilities().contains(capability),
                 "Missing adapter capability " + capability);
     }
 
@@ -1078,8 +1385,10 @@ public abstract class PlanningContract {
         return session.fixture.token();
     }
 
-    private static String rejectedToken() {
-        return "refused-" + UUID.randomUUID();
+    private String rejectedToken() {
+        final String rejected = "refused-" + UUID.randomUUID();
+        session.rememberSecret(rejected);
+        return rejected;
     }
 
     private String revision() throws Exception {
@@ -1095,7 +1404,7 @@ public abstract class PlanningContract {
     }
 
     private String write(List<StateChange> changes, String revision) throws Exception {
-        return call(() -> session.client.setIssueStates(settings(), token(), changes, revision));
+        return call(() -> session.client.setStates(settings(), token(), changes, revision));
     }
 
     private <T> T call(java.util.concurrent.Callable<T> call) throws Exception {

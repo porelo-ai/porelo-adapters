@@ -13,6 +13,7 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /** A hostile Git home whose hooks, credential helper, and fsmonitor leave an observable marker. */
@@ -29,10 +30,15 @@ public final class Canary implements AutoCloseable {
      * @throws IOException If the home, executable hooks, or write watcher cannot be created.
      */
     public Canary(final Path directory) throws IOException {
+        this(directory, Map.of());
+    }
+
+    Canary(final Path directory, java.util.Map<String, String> decoys) throws IOException {
         home = Files.createDirectory(directory).toRealPath();
         marker = home.resolve("canary");
         final Path hooks = Files.createDirectory(home.resolve("hooks"));
-        for (final String name : List.of("pre-commit", "post-checkout", "pre-push")) {
+        for (final String name :
+                List.of("pre-commit", "post-checkout", "pre-push", "reference-transaction")) {
             executable(
                     hooks.resolve(name), "#!/bin/sh\ntouch -- " + quote(marker.toString()) + "\n");
         }
@@ -51,6 +57,8 @@ public final class Canary implements AutoCloseable {
                         + "\n\tfsmonitorHookVersion = 2\n[credential]\n\thelper = "
                         + configCommand(helper)
                         + "\n");
+        for (final var decoy : decoys.entrySet())
+            Files.writeString(home.resolve(decoy.getKey()), decoy.getValue());
         writes = home.getFileSystem().newWatchService();
         try {
             home.register(
@@ -108,8 +116,8 @@ public final class Canary implements AutoCloseable {
         }
         while (key != null) {
             for (final WatchEvent<?> event : key.pollEvents()) {
-                changes.add(
-                        event.kind().name() + " in " + key.watchable() + ": " + event.context());
+                // A malicious filename may itself contain the credential.
+                changes.add(event.kind().name());
             }
             if (!key.reset())
                 throw new IOException(

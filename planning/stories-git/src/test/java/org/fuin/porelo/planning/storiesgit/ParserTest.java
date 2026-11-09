@@ -56,7 +56,9 @@ class ParserTest {
                 .as("the complete sample title survives")
                 .isEqualTo("porelo-adapters and porelo-ai.github.io each in its own task");
         assertThat(file.story().state()).as("the stored state is preserved").isEqualTo("Idea");
-        assertThat(file.priority()).as("the real priority is read from Data").isEqualTo("Highest");
+        assertThat(file.story().priority())
+                .as("the real priority is read from Data")
+                .isEqualTo("Highest");
         assertThat(file.issues())
                 .as("every real repository reference survives unchanged")
                 .containsExactly(
@@ -81,11 +83,33 @@ class ParserTest {
         assertThat(file.story().state())
                 .as("the second sample's stored state")
                 .isEqualTo("Accepted");
-        assertThat(file.priority()).as("the second sample's Data priority").isEqualTo("High");
+        assertThat(file.story().priority())
+                .as("the second sample's Data priority")
+                .isEqualTo("High");
         assertThat(file.issues()).as("the real empty references array stays empty").isEmpty();
         assertThat(file.story().description())
                 .as("the full test text is retained")
                 .endsWith("Rename a state in the configuration and the board shows it.");
+    }
+
+    // Harm: inventing or dropping a priority changes the order in which people choose work.
+    @Test
+    void preservesFreeTextPriorityAndAbsence() throws Exception {
+        final String original = sample(SECOND_STORY);
+        final String freeText =
+                original.replace(
+                        "\"priority\": \"High\"", "\"priority\": \"Next after the release\"");
+        assertThat(StoryFile.parse(freeText, "", WORKFLOW).story().priority())
+                .as("priority remains the story file's own word")
+                .isEqualTo("Next after the release");
+        final String absent = original.replace("\"priority\": \"High\"", "\"priority\": null");
+        assertThat(StoryFile.parse(absent, "", WORKFLOW).story().priority())
+                .as("a null priority means none")
+                .isNull();
+        final String missing = original.replace("\"priority\": \"High\",", "");
+        assertThat(StoryFile.parse(missing, "", WORKFLOW).story().priority())
+                .as("an absent priority means none")
+                .isNull();
     }
 
     // Harm: dropping or adding indexed stories silently changes the board's reference set.

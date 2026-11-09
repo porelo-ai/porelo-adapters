@@ -36,8 +36,8 @@ class GitStoreTest {
                                 + "printf 'prompt=%s\\n"
                                 + "' \"$GIT_TERMINAL_PROMPT\"\n"
                                 + "password=$(\"$GIT_ASKPASS\" 'Password for remote:')\n"
-                                + "[ \"$password\" = \"$PORELO_GIT_TOKEN\" ] && printf"
-                                + " 'credential-match\\n"
+                                + "again=$(\"$GIT_ASKPASS\" 'Password for remote:')\n"
+                                + "[ \"$password\" = \"$again\" ] && printf 'repeat-match\\n"
                                 + "'\n"
                                 + "digest=$(printf '%s' \"$password\" | sha256sum | cut -d' ' -f1)\n"
                                 + "printf 'credential-digest=%s\\n"
@@ -65,7 +65,7 @@ class GitStoreTest {
                             "HOME",
                             "LC_ALL",
                             "PATH",
-                            "PORELO_GIT_TOKEN",
+                            "PORELO_GIT_CREDENTIAL_PIPE",
                             "PWD",
                             "TMPDIR",
                             "XDG_CONFIG_HOME");
@@ -79,13 +79,18 @@ class GitStoreTest {
                             "global=/dev/null",
                             "system=1",
                             "prompt=0",
-                            "credential-match",
                             "username-match",
+                            "repeat-match",
                             "argument=core.hooksPath=/dev/null",
                             "argument=core.fsmonitor=false",
                             "argument=credential.helper=",
                             "argument=http.followRedirects=false")
                     .doesNotContain(token);
+            try (var temporary = Files.list(root.resolve("tmp"))) {
+                assertThat(temporary.toList())
+                        .as("completed credential transports leave no pipe or lock files")
+                        .isEmpty();
+            }
             final String digest =
                     java.util.HexFormat.of()
                             .formatHex(
@@ -125,7 +130,7 @@ class GitStoreTest {
                     program,
                     "#!/bin/sh\nprintf '%s credential=%s\\n' '"
                             + failure.getKey()
-                            + "' \"$PORELO_GIT_TOKEN\" >&2\nexit 1\n");
+                            + "' \"$(\"$GIT_ASKPASS\" 'Password for remote:')\" >&2\nexit 1\n");
             Files.setPosixFilePermissions(program, PosixFilePermissions.fromString("rwx------"));
             final GitStore store = new GitStore(directory, program, Duration.ofSeconds(5));
             store.begin();

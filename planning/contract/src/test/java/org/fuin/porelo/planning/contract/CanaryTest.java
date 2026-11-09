@@ -15,7 +15,7 @@ class CanaryTest {
     @TempDir Path directory;
 
     @ParameterizedTest
-    @ValueSource(strings = {"hook", "helper", "fsmonitor"})
+    @ValueSource(strings = {"hook", "helper", "fsmonitor", "reference-transaction"})
     void hostGitConfigurationLeavesEvidenceWhenItIsAllowedToRun(final String mechanism)
             throws Exception {
         // An inert canary could let host hooks, credential helpers, or monitors execute unnoticed.
@@ -23,6 +23,8 @@ class CanaryTest {
                 GitClient git = new GitClient(directory.resolve("client"))) {
             final Path work = directory.resolve("work");
             git.run(directory, null, "init", "--initial-branch=main", work.toString());
+            if (mechanism.equals("reference-transaction"))
+                git.run(work, null, "commit", "--allow-empty", "-m", "Seed reference transaction");
             final ProcessBuilder builder =
                     switch (mechanism) {
                         case "hook" ->
@@ -36,6 +38,15 @@ class CanaryTest {
                                         "-m",
                                         "Exercise hook");
                         case "helper" -> git.command(work, null, "credential", "reject");
+                        case "reference-transaction" ->
+                                git.command(
+                                        work,
+                                        null,
+                                        "-c",
+                                        "core.fsmonitor=false",
+                                        "update-ref",
+                                        "refs/heads/ref-check",
+                                        "HEAD");
                         case "fsmonitor" -> git.command(work, null, "status", "--porcelain");
                         default ->
                                 throw new AssertionError("Unknown canary mechanism: " + mechanism);

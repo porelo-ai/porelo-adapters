@@ -45,6 +45,57 @@ class SecretScanTest {
                 .containsExactly("PREFIX_<redacted>");
     }
 
+    // Harm: Basic authentication encodes the token at an alignment chosen by the username.
+    @Test
+    void findsEveryBase64AlignmentInFilesAndEnvironments() throws Exception {
+        final String secret = UUID.randomUUID().toString();
+        for (final String user : java.util.List.of("a", "ab", "abc")) {
+            final String header =
+                    "Basic "
+                            + java.util.Base64.getEncoder()
+                                    .encodeToString(
+                                            (user + ":" + secret).getBytes(StandardCharsets.UTF_8));
+            final Path config = directory.resolve("config-" + user);
+            Files.writeString(config, "[http]\nextraHeader = Authorization: " + header);
+            assertThat(SecretScan.files(secret, directory))
+                    .as("each Basic alignment is found in hidden store configuration")
+                    .contains(config);
+            assertThat(SecretScan.environment(secret, Map.of("HEADER", header)))
+                    .as("each encoded environment value is found")
+                    .containsExactly("HEADER");
+        }
+    }
+
+    // Harm: credentials in names and link targets persist even when regular file contents are
+    // clean.
+    @Test
+    void findsNamesAndLinkTargetsWithoutEchoingTheCredential() throws Exception {
+        final String secret = UUID.randomUUID().toString();
+        final Path nested = Files.createDirectory(directory.resolve(secret));
+        Files.writeString(nested.resolve("clean"), "safe");
+        Files.writeString(directory.resolve("file-" + secret), "safe");
+        Files.createSymbolicLink(directory.resolve("link-" + secret), Path.of("missing"));
+        Files.createSymbolicLink(directory.resolve("link-target"), Path.of(secret));
+        final var found = SecretScan.files(secret, directory);
+        assertThat(found)
+                .as("directory, nested file, filename, link name and link target are all inspected")
+                .hasSize(5);
+        assertThat(found.stream().anyMatch(path -> path.toString().contains(secret)))
+                .as("finding paths redact every credential-bearing name")
+                .isFalse();
+        final String encoded =
+                java.util.Base64.getEncoder()
+                        .encodeToString(("git:" + secret).getBytes(StandardCharsets.UTF_8));
+        Files.writeString(directory.resolve(encoded), "safe");
+        final var encodedNames = SecretScan.files(secret, directory);
+        assertThat(encodedNames).as("encoded filenames are also found").hasSize(6);
+        assertThat(
+                        encodedNames.stream()
+                                .anyMatch(path -> SecretScan.contains(secret, path.toString())))
+                .as("encoded names are redacted before returning diagnostics")
+                .isFalse();
+    }
+
     @Test
     void cleanTreesAndEnvironmentsHaveNoFindings() throws Exception {
         // A scan that always reports a leak would make every adapter fail the credential contract.

@@ -17,19 +17,24 @@ Read in `adapters/github` (`GitHubReader`, its `native` and `dist` profiles), in
 
 - `planning/stories-git`, artifact `porelo-planning-stories-git`, depending on Porelo's `planning/api` and `wire`
   only, with a `main` as `BuildMain` gives one: `describe` prints `protocolVersion`, `name` `stories-git`,
-  `version`, `capabilities` `["write", "watch", "issues"]`, `credentials` `["github-app", "token"]`;
+  `version`, `capabilities` `["issues"]`, `credentials` `["github-app", "token"]`;
   `serve <socket> <directory>` answers `Planning1`, in porelod's environment.
 - Settings, passed through unread by Porelo: the planning repository's clone URL, the stories directory, the link
   pattern (`https://github.com/porelo-ai/{repository}/blob/main/{path}`) and the owner the issue references resolve
   in.
+- Credentials reach askpass through an owner-only FIFO kept in kernel memory, never a child environment or
+  regular file; the packages require coreutils to create it, and Git refuses redirects.
 - The store is the adapter's own clone of the planning repository and of each repository a story's issues name, under
   the directory `serve` names, its own per project; it writes nowhere else, never in a person's checkout.
   `revision` names every clone's head commit, so a write can tell when any of them moved.
 - `GetWorkflow` reads `stories/workflow.yml` in the planning repository: the states in board order, each
   `{name, closed: true|false}`, and the phases `{name, states}`. Which states start work and which state ends it are
   Porelo's, not the file's. A story or issue whose state the file does not name is refused, saying which.
+- `SetStates` refuses `NotSupported("write")` before accessing a store; `Refresh` and `WatchChanges` refuse
+  `NotSupported("watch")` until those capabilities are implemented.
 - `ListStories(states)`, `GetStory`, `ListStoryIssues`, `GetIssue` parse the heads and the indexes; an issue's state
   is its index group, its title the row's text, its `whatMustBeTrue` the issue file's paragraph of that name.
+- `Story` and `StorySummary` return the Data block's priority text unchanged, or null when absent.
 - `GetIssue` also gives `subAgents[]`: each entry of the issue's `## Sub-agents` list (name, kind `builder`, `tester`
   or `reader`, proposed agent and model) with the text of its brief, `issues/<ID>.sub/<name>.md` beside the issue
   (`issues/<group>/<ID>.sub/` where a repository groups its issues). A listed brief that is missing, or that is a

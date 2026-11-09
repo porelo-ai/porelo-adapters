@@ -31,7 +31,12 @@ final class GitStore {
             #!/bin/sh
             case "$1" in
               *Username*) printf '%s\\n' x-access-token ;;
-              *Password*) printf '%s\\n' "$PORELO_GIT_TOKEN" ;;
+              *Password*)
+                IFS= read -r password < "$PORELO_GIT_CREDENTIAL_PIPE" || exit 1
+                # Restore the line for a later prompt in this same Git call, without exporting it.
+                printf '%s\\n' "$password" > "$PORELO_GIT_CREDENTIAL_PIPE" || exit 1
+                printf '%s\\n' "$password" ;;
+
               *) exit 1 ;;
             esac
             """;
@@ -206,14 +211,18 @@ final class GitStore {
                         helper.toString(),
                         "LC_ALL",
                         "C"));
-        if (!token.isEmpty()) environment.put("PORELO_GIT_TOKEN", token);
         final long remaining = deadline - System.nanoTime();
         if (remaining <= 0)
             throw Refusals.store(
                     Reason.UNREACHABLE,
                     "Expected the Git snapshot within 60 seconds; got a timeout");
         Process process = null;
-        try {
+        try (CredentialPipe credential =
+                token.isEmpty()
+                        ? null
+                        : new CredentialPipe(directory.resolve("tmp"), token, environment)) {
+            if (credential != null)
+                environment.put("PORELO_GIT_CREDENTIAL_PIPE", credential.path().toString());
             process = builder.start();
             process.getOutputStream().close();
             final Capture output = new Capture(process.getInputStream());

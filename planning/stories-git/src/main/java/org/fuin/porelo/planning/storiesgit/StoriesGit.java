@@ -118,7 +118,8 @@ public final class StoriesGit implements PlanningAdapter {
                                                                 file.story().title(),
                                                                 file.story().state(),
                                                                 file.story().link(),
-                                                                snapshot.summaries(file)))
+                                                                snapshot.summaries(file),
+                                                                file.story().priority()))
                                         .toList(),
                                 snapshot.revision()));
     }
@@ -162,43 +163,26 @@ public final class StoriesGit implements PlanningAdapter {
                 });
     }
 
-    /** Refuses story writes after checking the required workflow. */
+    /** Refuses writes before store access because write support is not declared. */
     @Override
-    public synchronized String setStoryState(
-            Map<String, Object> settings, String token, String story, String to, String revision) {
-        return unsupported(settings, token, "write");
-    }
-
-    /** Refuses batch writes after checking the required workflow. */
-    @Override
-    public synchronized String setIssueStates(
+    public synchronized String setStates(
             Map<String, Object> settings,
             String token,
             List<StateChange> changes,
             String revision) {
-        return unsupported(settings, token, "write");
+        throw PlanningRefused.notSupported("write");
     }
 
     /** Refuses refresh because watch and fetch support is not declared. */
     @Override
     public synchronized String refresh(Map<String, Object> settings, String token) {
-        return unsupported(settings, token, "watch");
+        throw PlanningRefused.notSupported("watch");
     }
 
     /** Refuses subscriptions because watch support is not declared. */
     @Override
     public synchronized Watch watchChanges(Map<String, Object> settings, String token) {
-        return unsupported(settings, token, "watch");
-    }
-
-    private <T> T unsupported(Map<String, Object> values, String token, String capability) {
-        try {
-            final Settings settings = settings(values, token);
-            workflow(planning(settings, token), settings);
-            throw PlanningRefused.notSupported(capability);
-        } catch (PlanningRefused refused) {
-            throw Refusals.safe(refused, token);
-        }
+        throw PlanningRefused.notSupported("watch");
     }
 
     private <T> T read(Map<String, Object> values, String token, Function<Snapshot, T> operation) {

@@ -82,13 +82,15 @@ public record Board(Workflow workflow, List<Story> stories, Map<String, List<Iss
                                 "Story with issues",
                                 "",
                                 "https://example.org/S1",
-                                "Stored description.\n"),
+                                "Stored description.\n",
+                                "Highest"),
                         new Story(
                                 "S2",
                                 "Independent story",
                                 "Queued",
                                 "https://example.org/S2",
-                                "No issues.\n")),
+                                "No issues.\n",
+                                null)),
                 Map.of("S1", List.of(first, second), "S2", List.of()));
     }
 
@@ -114,7 +116,8 @@ public record Board(Workflow workflow, List<Story> stories, Map<String, List<Iss
                                         s.link(),
                                         issues.getOrDefault(s.id(), List.of()).stream()
                                                 .map(Issue::summary)
-                                                .toList()))
+                                                .toList(),
+                                        s.priority()))
                 .toList();
     }
 
@@ -160,7 +163,8 @@ public record Board(Workflow workflow, List<Story> stories, Map<String, List<Iss
                                                         s.title(),
                                                         state,
                                                         s.link(),
-                                                        s.description())
+                                                        s.description(),
+                                                        s.priority())
                                                 : s)
                         .toList(),
                 issues);

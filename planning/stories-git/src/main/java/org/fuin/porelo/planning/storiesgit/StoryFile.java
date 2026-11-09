@@ -8,7 +8,7 @@ import org.fuin.porelo.planning.api.Workflow;
 import org.fuin.porelo.wire.Json;
 import org.fuin.porelo.wire.JsonException;
 
-record StoryFile(Story story, String priority, List<Reference> issues) {
+record StoryFile(Story story, List<Reference> issues) {
     record Reference(String repository, String id) {
         static Reference parse(String value) {
             final String[] parts = value.split("#", -1);
@@ -50,7 +50,8 @@ record StoryFile(Story story, String priority, List<Reference> issues) {
                         text(data, "title"),
                         state,
                         link,
-                        description(text(data, "gain"), text(data, "test")));
+                        description(text(data, "gain"), text(data, "test")),
+                        priority(data));
         if (!(data.get("issues") instanceof List<?> references))
             throw Refusals.failed(
                     "Expected issues array in story " + id + "; got missing or another JSON type");
@@ -72,7 +73,7 @@ record StoryFile(Story story, String priority, List<Reference> issues) {
             issues.add(parsed);
         }
         checkState(workflow, id, state, !issues.isEmpty());
-        return new StoryFile(story, text(data, "priority"), List.copyOf(issues));
+        return new StoryFile(story, List.copyOf(issues));
     }
 
     static String description(String gain, String test) {
@@ -86,6 +87,10 @@ record StoryFile(Story story, String priority, List<Reference> issues) {
         if (workflow.states().stream().noneMatch(s -> s.name().equals(state)))
             throw Refusals.failed(
                     "Expected a workflow state for " + id + "; got unknown state " + state);
+    }
+
+    private static @org.jspecify.annotations.Nullable String priority(Map<?, ?> data) {
+        return data.get("priority") == null ? null : text(data, "priority");
     }
 
     private static String text(Map<?, ?> object, String field) {

@@ -49,7 +49,8 @@ abstract class StoriesGitContract extends PlanningContract {
                                                 "https://example.org/planning/stories/"
                                                         + story.id()
                                                         + "-Story.md",
-                                                story.description()))
+                                                story.description(),
+                                                story.priority()))
                         .toList();
         final Map<String, List<Issue>> issues = new LinkedHashMap<>();
         source.issues()

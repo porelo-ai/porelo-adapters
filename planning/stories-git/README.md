@@ -1,5 +1,5 @@
 # Stories-git
 
-The `stories-git` planning adapter reads workflows, stories, issues and listed sub-agent briefs from its own Git clones, using the `issues` capability.
+The `stories-git` planning adapter reads workflows, stories, issues and listed sub-agent briefs from its own Git clones, using the `issues` capability. Story and summary priorities preserve the Data block's text, or null when absent. `SetStates` refuses `NotSupported("write")`; refresh and watch calls refuse `NotSupported("watch")`.
 Settings are a JSON object with `repository` (the planning repository's HTTP or HTTPS clone URL), `storiesDirectory` (default `stories`), `issueRepositoryPattern` (a clone URL containing `{repository}`), and `linkPattern` (a web URL containing `{repository}` and `{path}`); `credentialKind` defaults to `token` and also accepts `github-app`.
-It runs Git with an isolated home and per-call credentials, refuses symbolic links, and installs as `/usr/libexec/porelo/planning/stories-git` through the `native,dist` profiles.
+It requires Git and coreutils, delivers per-call credentials through a private FIFO without putting them in child environments or disk files, refuses cross-host redirects, runs Git with an isolated home, refuses symbolic links, and installs as `/usr/libexec/porelo/planning/stories-git` through the `native,dist` profiles.

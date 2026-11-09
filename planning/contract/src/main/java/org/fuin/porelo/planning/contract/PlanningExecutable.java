@@ -40,6 +40,8 @@ final class PlanningExecutable {
                         .append(' ')
                         .append(quote("XDG_RUNTIME_DIR=" + temporary))
                         .append(' ')
+                        .append(quote("PORELO_TEST_RUNTIME=" + root.resolve("runtime")))
+                        .append(' ')
                         .append(
                                 quote(
                                         Path.of(System.getProperty("java.home"), "bin", "java")
@@ -61,7 +63,9 @@ final class PlanningExecutable {
                 .append(quote(root.resolve("pid").toString()))
                 .append(' ')
                 .append(quote(main.getName()))
-                .append(" \"$@\"\n");
+                .append(" \"$@\" 2>>")
+                .append(quote(root.resolve("output").toString()))
+                .append("\n");
         Files.writeString(executable, command.toString());
         Files.setPosixFilePermissions(executable, PosixFilePermissions.fromString("rwx------"));
         final Path description = root.resolve("description");

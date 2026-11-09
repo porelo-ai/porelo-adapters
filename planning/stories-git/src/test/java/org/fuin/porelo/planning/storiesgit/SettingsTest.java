@@ -56,6 +56,32 @@ class SettingsTest {
                 .isEqualTo(Reason.NOT_SUPPORTED);
     }
 
+    // Harm: undeclared writes or watches must not initialize a store using unvalidated settings.
+    @Test
+    void refusesOptionalCapabilitiesBeforeStorageInitialization() {
+        final StoriesGit adapter = new StoriesGit();
+        for (final java.util.concurrent.Callable<?> call :
+                List.<java.util.concurrent.Callable<?>>of(
+                        () ->
+                                adapter.setStates(
+                                        Map.of(),
+                                        "secret-value",
+                                        List.of(
+                                                new org.fuin.porelo.planning.api.StateChange(
+                                                        "S2", null, "Closed")),
+                                        "initial"),
+                        () -> adapter.refresh(Map.of(), "secret-value"),
+                        () -> adapter.watchChanges(Map.of(), "secret-value"))) {
+            final Throwable failure = catchThrowable(call::call);
+            assertThat(failure)
+                    .as("undeclared capability is refused before settings and storage are read")
+                    .isInstanceOf(PlanningRefused.class);
+            assertThat(((PlanningRefused) failure).reason())
+                    .as("the refusal is NotSupported")
+                    .isEqualTo(Reason.NOT_SUPPORTED);
+        }
+    }
+
     private static Map<String, Object> changed(String key, Object value) {
         final Map<String, Object> settings =
                 new LinkedHashMap<>(

@@ -216,6 +216,7 @@
                             <requires>
                                 <require>porelo</require>
                                 <require>git</require>
+                                <require>coreutils</require>
                                 <!-- The names rpmbuild itself generates for these libraries. -->
                                 <require>libc.so.6(GLIBC_${package.glibc.floor})(64bit)</require>
                                 <require>libz.so.1(ZLIB_${package.zlib.floor})(64bit)</require>

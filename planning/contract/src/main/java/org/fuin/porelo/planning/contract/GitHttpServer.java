@@ -28,6 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.jspecify.annotations.Nullable;
 
 /** A loopback smart HTTP forge backed by Git, with per-request credentials and failure controls. */
@@ -81,6 +82,7 @@ public final class GitHttpServer implements AutoCloseable {
     private final List<Request> requests = new CopyOnWriteArrayList<>();
     private final List<String> failures = new CopyOnWriteArrayList<>();
     private final Set<String> refusedPushes = ConcurrentHashMap.newKeySet();
+    private final AtomicInteger pushesUntilRefusal = new AtomicInteger(-1);
     private final Set<String> stalled = ConcurrentHashMap.newKeySet();
     private final Map<String, URI> redirects = new ConcurrentHashMap<>();
     private final Set<HttpExchange> exchanges = new HashSet<>();
@@ -197,6 +199,16 @@ public final class GitHttpServer implements AutoCloseable {
     }
 
     /**
+     * Refuses the second subsequent receive-pack POST and later pushes to that repository. The
+     * first repository remains writable so an adapter can undo its first publication.
+     */
+    public void refuseSecondPush() {
+        if (!pushesUntilRefusal.compareAndSet(-1, 2))
+            throw new IllegalStateException(
+                    "Expected a fresh second-push control; got an already enabled control");
+    }
+
+    /**
      * Holds authenticated requests without a response until the server closes.
      *
      * @param repository Bare repository to stall.
@@ -281,6 +293,11 @@ public final class GitHttpServer implements AutoCloseable {
     private void authenticated(
             final HttpExchange exchange, final String repository, final Credential credential)
             throws IOException, InterruptedException {
+        final boolean push =
+                exchange.getRequestMethod().equals("POST")
+                        && exchange.getRequestURI().getRawPath().endsWith("/git-receive-pack");
+        if (push && pushesUntilRefusal.getAndUpdate(left -> left > 0 ? left - 1 : left) == 1)
+            refusedPushes.add(repository);
         final URI redirect = redirects.get(repository);
         if (redirect != null) {
             exchange.getResponseHeaders()
@@ -288,9 +305,7 @@ public final class GitHttpServer implements AutoCloseable {
             exchange.sendResponseHeaders(307, -1);
         } else if (stalled.contains(repository)) {
             closing.await();
-        } else if (refusedPushes.contains(repository)
-                && exchange.getRequestMethod().equals("POST")
-                && exchange.getRequestURI().getRawPath().endsWith("/git-receive-pack")) {
+        } else if (refusedPushes.contains(repository) && push) {
             exchange.sendResponseHeaders(403, -1);
         } else {
             backend(exchange, credential);

@@ -9,7 +9,7 @@
     </parent>
     <artifactId>porelo-planning-contract</artifactId>
     <name>Porelo Planning Contract</name>
-    <description>Isolated Git and credential fixtures for Porelo planning adapter contracts</description>
+    <description>Published behavioral contract and isolated fixtures for Porelo planning adapters</description>
     <licenses>
         <license>
             <name>Apache-2.0</name>
@@ -23,6 +23,16 @@
     </properties>
     <dependencies>
         <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-planning-api</artifactId>
+            <version>${porelo.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-wire</artifactId>
+            <version>${porelo.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
         </dependency>
@@ -33,6 +43,11 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>

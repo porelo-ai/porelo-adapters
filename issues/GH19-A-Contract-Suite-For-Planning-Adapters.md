@@ -63,10 +63,14 @@ each with its brief's text; errors
 
 ## Acceptance
 
-- `./mvnw -B -s settings.xml -pl planning/contract -am verify` green, and every case seen red once against a stand-in
-  adapter broken for it: half a change written, a stale revision taken, an unknown state set, the token echoed in an
-  error or left in a file, the first call's token reused, a path outside its directory written, a host hook run, a
-  remote waited on without end.
+- `./mvnw -B -s settings.xml -pl planning/contract -am verify` green. A test-only reference adapter over one file
+  passes every case its store can serve, and the cases that need a git store are skipped naming the missing ability.
+- Each case is seen red once against a stand-in adapter broken for it. The reference adapter's switchable faults
+  prove a stale revision taken, half a batch written, the token echoed in a refusal, an unlisted brief delivered and
+  a refresh blocked behind a watch. The cases that need a git store (the token left in a file, the first call's token
+  reused, a path outside the directory written, a host hook run, a remote waited on without end, a half push over two
+  repositories) are seen red against `stories-git` broken for each, in [GH20](README.md#gh20) and
+  [GH21](README.md#gh21).
 - `porelo-release check-readmes` and `check-releases` accept the module: README present, its pom flattened.
 
 ## To be checked

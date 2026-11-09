@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /** Creates and changes real bare repositories independently of the adapter under test. */
 public final class GitRepositories implements AutoCloseable {
@@ -80,6 +81,46 @@ public final class GitRepositories implements AutoCloseable {
         processes.git(worktree, "fetch", "origin", "main");
         processes.git(worktree, "reset", "--hard", "FETCH_HEAD");
         write(worktree, files);
+        commitAndPush(worktree);
+        return head(repository);
+    }
+
+    /**
+     * Commits deliberately malformed store files for containment tests. Link destinations are
+     * absolute test-owned canaries; links are staged, never followed by the fixture.
+     *
+     * @param repository Previously seeded repository.
+     * @param files Contained regular file replacements.
+     * @param links Contained link names and absolute test-owned destinations.
+     * @param deleted Contained paths to remove before applying replacements.
+     * @return The new remote commit.
+     * @throws IOException If a path is unsafe or Git fails.
+     */
+    public synchronized String damage(
+            final String repository,
+            final Map<String, String> files,
+            final Map<String, Path> links,
+            final Set<String> deleted)
+            throws IOException {
+        final Path worktree = worktree(repository);
+        processes.git(worktree, "fetch", "origin", "main");
+        processes.git(worktree, "reset", "--hard", "FETCH_HEAD");
+        final Map<String, Path> paths = new HashMap<>();
+        for (final String name : deleted) paths.put(name, FixturePaths.inside(worktree, name));
+        for (final String name : files.keySet()) FixturePaths.inside(worktree, name);
+        for (final Map.Entry<String, Path> link : links.entrySet()) {
+            paths.put(link.getKey(), FixturePaths.inside(worktree, link.getKey()));
+            if (!link.getValue().isAbsolute())
+                throw new IOException("Expected an absolute canary target; got " + link.getValue());
+        }
+        for (final String name : deleted) Files.delete(paths.get(name));
+        write(worktree, files);
+        for (final Map.Entry<String, Path> link : links.entrySet()) {
+            final Path path = java.util.Objects.requireNonNull(paths.get(link.getKey()));
+            Files.deleteIfExists(path);
+            Files.createDirectories(path.getParent());
+            Files.createSymbolicLink(path, link.getValue());
+        }
         commitAndPush(worktree);
         return head(repository);
     }

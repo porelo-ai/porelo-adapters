@@ -75,6 +75,63 @@ class GitHttpServerTest {
         }
     }
 
+    // Harm: refusing a fixed repository can miss a partial write when an adapter pushes in reverse.
+    @Test
+    void theSecondPushIsRefusedRegardlessOfRepositoryOrder() throws Exception {
+        final Path root = directory.resolve("forge");
+        final String token = UUID.randomUUID().toString();
+        try (GitRepositories repositories = new GitRepositories(root);
+                GitHttpServer server = new GitHttpServer(root);
+                GitClient git = new GitClient(directory.resolve("client"))) {
+            server.accept(token);
+            final Map<String, String> original = new java.util.LinkedHashMap<>();
+            for (final String name : List.of("one.git", "two.git")) {
+                repositories.create(name, Map.of("issue.md", "Queued\n"));
+                original.put(name, repositories.head(name));
+                final Path clone = directory.resolve(name);
+                git.run(
+                        directory,
+                        token,
+                        "clone",
+                        server.uri(name).toString().replace("http://", "http://fixture@"),
+                        clone.toString());
+                Files.writeString(clone.resolve("issue.md"), "Closed\n");
+                git.run(clone, null, "add", "issue.md");
+                git.run(clone, null, "commit", "-m", "Change issue state");
+            }
+            server.refuseSecondPush();
+            git.run(directory.resolve("two.git"), token, "push", "origin", "HEAD:main");
+            assertThatThrownBy(
+                            () ->
+                                    git.run(
+                                            directory.resolve("one.git"),
+                                            token,
+                                            "push",
+                                            "origin",
+                                            "HEAD:main"))
+                    .as("the second publication is refused even when one.git is pushed second")
+                    .isInstanceOf(IOException.class)
+                    .hasMessageContaining("403");
+            assertThat(repositories.head("one.git"))
+                    .as("refused second remote keeps its original commit")
+                    .isEqualTo(original.get("one.git"));
+            assertThat(repositories.file("two.git", "issue.md"))
+                    .as("the first push really changed its remote")
+                    .isEqualTo("Closed\n");
+            git.run(
+                    directory.resolve("two.git"),
+                    token,
+                    "push",
+                    "--force",
+                    "origin",
+                    original.get("two.git") + ":refs/heads/main");
+            assertThat(repositories.head("two.git"))
+                    .as("the failure control permits restoring the first remote")
+                    .isEqualTo(original.get("two.git"));
+            server.verify();
+        }
+    }
+
     @Test
     void missingAndRefusedCredentialsAreChallengedAndRecorded() throws Exception {
         // An unauthenticated or wrong-token request must not bypass the credential contract.

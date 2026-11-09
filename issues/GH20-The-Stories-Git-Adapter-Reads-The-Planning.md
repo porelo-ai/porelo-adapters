@@ -18,12 +18,12 @@ Read in `adapters/github` (`GitHubReader`, its `native` and `dist` profiles), in
 - `planning/stories-git`, artifact `porelo-planning-stories-git`, depending on Porelo's `planning/api` and `wire`
   only, with a `main` as `BuildMain` gives one: `describe` prints `protocolVersion`, `name` `stories-git`,
   `version`, `capabilities` `["write", "watch", "issues"]`, `credentials` `["github-app", "token"]`;
-  `serve <socket>` answers `Planning1`.
+  `serve <socket> <directory>` answers `Planning1`, in porelod's environment.
 - Settings, passed through unread by Porelo: the planning repository's clone URL, the stories directory, the link
   pattern (`https://github.com/porelo-ai/{repository}/blob/main/{path}`) and the owner the issue references resolve
   in.
 - The store is the adapter's own clone of the planning repository and of each repository a story's issues name, under
-  the directory Porelo gives it for the project, never a person's checkout.
+  the directory `serve` names, its own per project; it writes nowhere else, never in a person's checkout.
   `revision` names every clone's head commit, so a write can tell when any of them moved.
 - `GetWorkflow` reads `stories/workflow.yml` in the planning repository: the states in board order, each
   `{name, closed: true|false}`, and the phases `{name, states}`. Which states start work and which state ends it are
@@ -49,5 +49,3 @@ Read in `adapters/github` (`GitHubReader`, its `native` and `dist` profiles), in
 - That the stories index of `porelo-release` reads the same `stories/workflow.yml` instead of its built-in states,
   asked of Agent Machines.
 - Whether reading a private repository's index needs the credential too, or the clones of public ones go without it.
-- The adapter's directory and environment, open with the operator in Porelo's planning API: proposed is porelod's
-  environment and a directory per project as `serve`'s second argument.

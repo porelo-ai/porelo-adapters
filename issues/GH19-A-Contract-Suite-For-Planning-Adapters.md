@@ -22,7 +22,7 @@ at once); an issue carries `whatMustBeTrue`; errors
   `porelo-planning-contract`, published under `Apache-2.0`, as others build their adapters against it. It depends on
   Porelo's `planning/api` and `wire` only.
 - `PlanningContract`, the suite an adapter's test extends: it starts the adapter's main through `JavaExecutable`, as
-  the build suite does, over `serve <socket>`, and supplies a store through an abstract `Fixture` the adapter's test
+  the build suite does, over `serve <socket> <directory>`, and supplies a store through an abstract `Fixture` the adapter's test
   implements (for `stories-git`: bare git repositories it makes in a temporary directory, with
   `GIT_CONFIG_GLOBAL=/dev/null`).
 - The cases, each with the harm it prevents:
@@ -33,6 +33,8 @@ at once); an issue carries `whatMustBeTrue`; errors
   - a capability `describe` does not name is refused with `NotSupported`, never done silently;
   - a call whose credential is of a kind `describe` does not name is refused with `NotSupported` before anything is
     read or written;
+  - the adapter writes nothing outside the directory `serve` names and the fixture's remotes, checked against a
+    home and a temporary directory of its own the suite gives it;
   - the token a call carries appears in no answer, error, log line, argument list or file the fixture can read
     afterward;
   - `WatchChanges` reports a change made behind the adapter's back, and a read after it shows that change.

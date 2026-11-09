@@ -15,7 +15,7 @@ left out.
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
-| <a id="gh24"></a>[GH24](GH24-Each-Run-Named-By-Its-Trigger-With-Its-Jobs.md) | M | - | Each run of a commit named by its workflow and its trigger (push, pull request), queued, running or finished, every job under its run, and never no run while one is outstanding; needs two optional `Build2` fields |
+| <a id="gh24"></a>[GH24](GH24-Each-Run-Named-By-Its-Trigger-With-Its-Jobs.md) | L | - | Each run of a commit named by its workflow and its trigger (push, pull request), queued, running or finished, every job under its run, and never no run while one is outstanding; needs two optional `Build2` fields |
 | <a id="gh25"></a>[GH25](GH25-A-Failed-Job-Told-By-Its-Failed-Tests.md) | M | - | A failed job answered with its failed tests and a link to its log page instead of the log printed whole; needs two optional `Build2` fields |
 
 ## Backlog

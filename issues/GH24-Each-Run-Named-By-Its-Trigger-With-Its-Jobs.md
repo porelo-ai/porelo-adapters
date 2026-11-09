@@ -1,8 +1,8 @@
 # GH24 — Each Run Named By Its Trigger, With Its Jobs
 
 **Status:** Implementing.
-**Size:** M - both readers, the contract suite and its recordings, against two optional fields `porelo-build-api` must
-add to `Build2` first.
+**Size:** L - both readers, the contract suite and its recordings against new `Build2` fields, and the GitHub verdict
+for conclusions it does not know and the bound on job requests, which the plan's reading found.
 
 **What must be true.** When a commit is built by more than one run - a push and a pull request, or two workflows - a
 person reading the build sees one line per run naming its workflow and what triggered it, each queued, running or

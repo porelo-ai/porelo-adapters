@@ -14,11 +14,11 @@ The contract today (`Build2`): `Run (name, result)` names each run, also while q
 log)` names no run, so the five jobs of `build.yml` built once for the push and once for the pull request are listed
 twice with nothing telling them apart.
 
-The contract this builds against, to be agreed with `porelo-build-api`'s owner and added there first, both fields
-optional so a reader from before still answers:
+The contract this builds against, agreed with `porelo-build-api`'s owner and added there first, both fields optional
+so a reader from before still answers; Porelo refuses a reply that breaks a bound:
 - `Run` gains `event: ?string`, the forge's trigger in lower case as it spells it (`push`, `pull_request`, ...), and
-  `id: ?string`, the forge's run id as text.
-- `Job` gains `run: ?string`, the id of the run it belongs to.
+  `id: ?string`, the forge's run id as text; each one line of printable text, at most 64 characters.
+- `Job` gains `run: ?string`, the id of the run it belongs to, which must be one of the reply's `Run.id`.
 
 Today's code:
 - `ForgejoReader.build` reads `/actions/runs?head_sha=` and answers `named(runs)` - the run's `workflow_id` and

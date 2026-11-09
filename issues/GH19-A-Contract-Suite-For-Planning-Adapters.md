@@ -1,6 +1,6 @@
 # GH19 — A Contract Suite For Planning Adapters
 
-**Status:** Backlog, on the operator's word of 2026-11-09.
+**Status:** Implementing.
 **Size:** M - one new published test module and its cases over `org.fuin.porelo.Planning1`, a contract another
 repository defines; no adapter code.
 

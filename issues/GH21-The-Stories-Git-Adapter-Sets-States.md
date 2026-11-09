@@ -1,6 +1,6 @@
 # GH21 — The Stories-Git Adapter Sets States
 
-**Status:** Analyzed; blocked by [GH20](README.md#gh20).
+**Status:** Backlog, on the operator's word of 2026-11-09; blocked by [GH20](README.md#gh20).
 **Size:** L - writes into the planning repository and into the repositories that hold the issues, needs the stories
 index as a library from another repository, and pushes with a credential lent per call.
 

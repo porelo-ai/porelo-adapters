@@ -15,6 +15,10 @@ left out.
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
+| <a id="gh19"></a>[GH19](GH19-A-Contract-Suite-For-Planning-Adapters.md) | M | - | `porelo-planning-contract`, a published suite every planning adapter extends over `Planning1`: workflow as stored, stale revisions refused, all or none, unknown items and missing capabilities refused, the token never shown |
+| <a id="gh20"></a>[GH20](GH20-The-Stories-Git-Adapter-Reads-The-Planning.md) | M | [GH19](README.md#gh19) | `stories-git`, a native planning adapter at `/usr/libexec/porelo/planning/stories-git`, reads the workflow, the stories' heads and each repository's issue index from its own clones, with links |
+| <a id="gh21"></a>[GH21](GH21-The-Stories-Git-Adapter-Sets-States.md) | L | [GH20](README.md#gh20) | `stories-git` sets issue states, and a story's while it has none, all or none against a revision: files, stories index, commit and push with a token lent per call |
+| <a id="gh22"></a>[GH22](GH22-The-Stories-Git-Adapter-Tells-Changes.md) | S | [GH20](README.md#gh20) | `stories-git` streams changes made elsewhere, fetched every few minutes and on demand, and never starts anything |
 | <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH17](README.md#gh17), [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials |
 
 ## Analyzed
@@ -22,10 +26,6 @@ left out.
 | # | Size | Blocked by | Open questions | What it covers |
 |---|---|---|---|---|
 | <a id="gh11"></a>[GH11](GH11-The-Adapters-Agent-Works-In-A-Porelo-Task.md) | S | - | 0 | porelo-adapters' agent works in a Porelo task on the move's host as `Agent Adapters`; first its workflows' publishing, `gh` and artifact upload held to `PORELO_PUBLISH` and the forge's registry read, with a workflow test |
-| <a id="gh19"></a>[GH19](GH19-A-Contract-Suite-For-Planning-Adapters.md) | M | - | 0 | `porelo-planning-contract`, a published suite every planning adapter extends over `Planning1`: workflow as stored, stale revisions refused, all or none, unknown items and missing capabilities refused, the token never shown |
-| <a id="gh20"></a>[GH20](GH20-The-Stories-Git-Adapter-Reads-The-Planning.md) | M | [GH19](README.md#gh19) | 0 | `stories-git`, a native planning adapter at `/usr/libexec/porelo/planning/stories-git`, reads the workflow, the stories' heads and each repository's issue index from its own clones, with links |
-| <a id="gh21"></a>[GH21](GH21-The-Stories-Git-Adapter-Sets-States.md) | L | [GH20](README.md#gh20) | 0 | `stories-git` sets issue states, and a story's while it has none, all or none against a revision: files, stories index, commit and push with a token lent per call |
-| <a id="gh22"></a>[GH22](GH22-The-Stories-Git-Adapter-Tells-Changes.md) | S | [GH20](README.md#gh20) | 0 | `stories-git` streams changes made elsewhere, fetched every few minutes and on demand, and never starts anything |
 
 ## Accepted
 

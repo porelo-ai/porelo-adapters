@@ -1,6 +1,6 @@
 # GH20 — The Stories-Git Adapter Reads The Planning
 
-**Status:** Analyzed; blocked by [GH19](README.md#gh19).
+**Status:** Backlog, on the operator's word of 2026-11-09; blocked by [GH19](README.md#gh19).
 **Size:** M - a new native executable with its packages and the reading half of `Planning1`, over a file format
 another repository writes.
 

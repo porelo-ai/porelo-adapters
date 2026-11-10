@@ -5,7 +5,9 @@
       "name": "Build",
       "result": "in_progress",
       "nameFrom": "01.json#/workflow_runs/0/name",
-      "resultFrom": "01.json#/workflow_runs/0/status"
+      "resultFrom": "01.json#/workflow_runs/0/status",
+      "id": "2",
+      "idFrom": "01.json#/workflow_runs/0/id"
     }
   ]
 }

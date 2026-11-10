@@ -1,0 +1,35 @@
+2026-11-06T18:39:14.4527684Z [INFO] Results:
+2026-11-06T18:39:14.4528066Z [INFO] 
+2026-11-06T18:39:14.4528364Z [ERROR] Failures: 
+2026-11-06T18:39:14.4529668Z [ERROR]   AcceptanceIT.a yes writes project.yml; the same file from the same upstream is that project, and nothing else is Waited 30s for "shop-project". What the terminal showed:
+2026-11-06T18:39:14.4531081Z Last login: Fri Nov  6 18:28:12 2026 from 20.84.158.54
+2026-11-06T18:39:14.4531521Z 
+2026-11-06T18:39:14.4532858Z ]3008;start=3eefa606-c709-4475-b258-d5f090549939;machineid=b51816382def4bdcaf8d286b8187ff93;user=build;hostname=porelo-leg-fedora-42268760896-fedora;bootid=e7673a3c-848a-40d8-bfde-a32af09bfd91;pid=00000000000000103163;type=shell;cwd=/home/build\[build@porelo-leg-fedora-42268760896-fedora ~]$ 
+2026-11-06T18:39:14.4533888Z 
+2026-11-06T18:39:14.4536053Z ]3008;start=81c155d4-0db9-4132-b6df-7636cad53744;machineid=b51816382def4bdcaf8d286b8187ff93;user=build;hostname=porelo-leg-fedora-42268760896-fedora;bootid=e7673a3c-848a-40d8-bfde-a32af09bfd91;pid=00000000000000103163;type=command;cwd=/home/build\]3008;start=3eefa606-c709-4475-b258-d5f090549939;machineid=b51816382def4bdcaf8d286b8187ff93;user=build;hostname=porelo-leg-fedora-42268760896-fedora;bootid=e7673a3c-848a-40d8-bfde-a32af09bfd91;pid=00000000000000103163;type=shell;cwd=/home/build\ready$ 
+2026-11-06T18:39:14.4537732Z 
+2026-11-06T18:39:14.4539003Z ]3008;start=7b39eabe-b83b-417a-866c-f4efac77fde7;machineid=b51816382def4bdcaf8d286b8187ff93;user=build;hostname=porelo-leg-fedora-42268760896-fedora;bootid=e7673a3c-848a-40d8-bfde-a32af09bfd91;pid=00000000000000103163;type=command;cwd=/home/build\porelo: stub-ecosystem could not look up package.maven: it cannot say; what it read stands
+2026-11-06T18:39:14.4540619Z porelo: stub-ecosystem: Dockerfile:3: a container is built here
+2026-11-06T18:39:14.4541228Z porelo: this repository stays in 'default': its history comes from the checkout, and approved work goes back there
+2026-11-06T18:39:14.4541853Z porelo: this repository has no porelo.yml. Read from it and this machine:
+2026-11-06T18:39:14.4542286Z porelo:   found    package.maven (pom.xml)
+2026-11-06T18:39:14.4542780Z porelo:   opens    nexus.first-start.example  <- only this repository names it, and no curated set
+2026-11-06T18:39:14.4543839Z This repository has no porelo.yml. Write porelo.yml here, for you to commit, allow its settings, and start in 'default'? [y/N] project        'default', from /home/build/first-start-probe/shop/porelo.yml, which is yours to commit and adapt
+2026-11-06T18:39:14.4544739Z step      Reading the project and its source
+2026-11-06T18:39:14.4545321Z project        default - Porelo's settings: guarded, nothing reachable beyond the agent's provider, blocked connections refused
+2026-11-06T18:39:14.4545936Z step      Checking the machine, the egress and the upstream
+2026-11-06T18:39:14.4546304Z task           probe
+2026-11-06T18:39:14.4546546Z project        default
+2026-11-06T18:39:14.4546796Z repository     shop
+2026-11-06T18:39:14.4547042Z security class guarded
+2026-11-06T18:39:14.4547522Z setting        + egress.domains[nexus.first-start.example] = nexus.first-start.example  (from porelo.yml of shop)
+2026-11-06T18:39:14.4548155Z base image     ubuntu:24.04  (from /home/build/first-start-probe/shop/porelo.yml)
+2026-11-06T18:39:14.4548644Z image lines    from /home/build/first-start-probe/shop/porelo.yml
+2026-11-06T18:39:14.4549026Z task image     porelo/default_shop
+2026-11-06T18:39:14.4549313Z subagents      none
+2026-11-06T18:39:14.4550718Z branch         porelo/probe
+2026-11-06T18:39:14.4550998Z agent stub, named with --agent
+2026-11-06T18:39:14.4551330Z step      Opening the vault and the task's credentials
+2026-11-06T18:39:14.4551809Z the vault holds no credential for 'anthropic'. Run 'porelo vault login stub' now? [Y/n] 
+2026-11-06T18:39:14.4552234Z [INFO] 
+2026-11-06T18:39:14.4552514Z [ERROR] Tests run: 261, Failures: 1, Errors: 0, Skipped: 5

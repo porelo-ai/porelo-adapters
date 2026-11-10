@@ -66,6 +66,7 @@ final class RecordedForge implements AutoCloseable {
         assertThat(next).as("all recorded exchanges were requested").isEqualTo(exchanges.size());
     }
 
+    /** Stops the loopback forge after its exchanges have been checked. */
     @Override
     public void close() {
         server.stop(0);
@@ -128,7 +129,7 @@ final class RecordedForge implements AutoCloseable {
                 && exchange.host().equals(blob ? "blob" : "api");
     }
 
-    private static List<Exchange> read(final Path directory) throws IOException {
+    static List<Exchange> read(final Path directory) throws IOException {
         try (Stream<Path> paths = Files.list(directory)) {
             final List<Path> files =
                     paths.filter(path -> path.getFileName().toString().matches("[0-9]+\\.json"))

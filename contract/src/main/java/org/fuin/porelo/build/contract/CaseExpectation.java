@@ -19,6 +19,8 @@ import org.jspecify.annotations.Nullable;
 
 /** Values evidenced by a case's exchanges; contract rules never come from this file. */
 record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url, List<Run> runs) {
+    // A line pointer of the shape #L<n> reads as an issue citation to the shared checks.
+    private static final String LINE = "#line=";
 
     CaseExpectation(final String head, final List<Job> jobs, final long retryAfter) {
         this(head, jobs, retryAfter, "", List.of());
@@ -29,12 +31,17 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
         this(head, jobs, retryAfter, url, List.of());
     }
 
-    record Run(String name, String result) {}
+    record Run(String name, String result, @Nullable String event, @Nullable String id) {}
 
-    record Job(String name, String result, byte @Nullable [] log) {
+    record Job(
+            String name,
+            String result,
+            byte @Nullable [] log,
+            @Nullable String run,
+            @Nullable List<String> failedTests,
+            @Nullable String url) {
         boolean failed() {
-            return List.of("failure", "timed_out", "action_required", "startup_failure")
-                    .contains(result);
+            return List.of("failure", "timed_out", "startup_failure").contains(result);
         }
 
         boolean finished() {
@@ -56,9 +63,18 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
             final ContractCase test,
             final List<RecordedForge.Exchange> exchanges)
             throws IOException {
+        return read(directory, test, exchanges, "forge.example");
+    }
+
+    static CaseExpectation read(
+            final Path directory,
+            final ContractCase test,
+            final List<RecordedForge.Exchange> exchanges,
+            final String webHost)
+            throws IOException {
         final Map<?, ?> map =
                 object(Json.parse(Files.readString(directory.resolve("expect.json"))));
-        final Evidence evidence = new Evidence(exchanges);
+        final Evidence evidence = new Evidence(exchanges, webHost);
         if (test.expected() instanceof ContractCase.HeadAnswer expected) {
             keys(map, expected.absent() ? Set.of() : Set.of("head", "headFrom"));
             if (expected.absent()) return new CaseExpectation("", List.of(), 0);
@@ -96,7 +112,8 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
                             .toList();
             assertThat(number.longValue())
                     .as(
-                            "expect.json retry-after must match the recorded header, or the 60-second fallback when absent")
+                            "expect.json retry-after must match the recorded header, or the"
+                                    + " 60-second fallback when absent")
                     .isEqualTo(delays.isEmpty() ? 60 : Long.parseLong(delays.getFirst()));
             return new CaseExpectation("", List.of(), number.longValue());
         }
@@ -109,11 +126,17 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
         final List<Job> jobs = new ArrayList<>();
         for (final Object value : supplied) {
             final Map<?, ?> job = object(value);
-            keys(
+            optionalKeys(
                     job,
-                    job.containsKey("log")
-                            ? Set.of("name", "result", "nameFrom", "resultFrom", "log")
-                            : Set.of("name", "result", "nameFrom", "resultFrom"));
+                    Set.of("name", "result", "nameFrom", "resultFrom"),
+                    Set.of(
+                            "log",
+                            "run",
+                            "runFrom",
+                            "failedTests",
+                            "failedTestsFrom",
+                            "url",
+                            "urlFrom"));
             if (!(job.get("nameFrom") instanceof List<?> sources) || sources.isEmpty())
                 throw new IOException("Each job needs nonempty nameFrom references");
             final List<String> parts = new ArrayList<>();
@@ -139,7 +162,10 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
                             result,
                             job.containsKey("log")
                                     ? evidence.exchange(text(job, "log")).body()
-                                    : null));
+                                    : null,
+                            evidence.jobRun(job, nameSource),
+                            evidence.failedTests(job),
+                            evidence.jobUrl(job, nameSource)));
         }
         evidence.verifyJobs();
         return new CaseExpectation("", List.copyOf(jobs), 0, "", runs);
@@ -151,7 +177,10 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
         final List<Run> runs = new ArrayList<>();
         for (final Object value : supplied) {
             final Map<?, ?> run = object(value);
-            keys(run, Set.of("name", "result", "nameFrom", "resultFrom"));
+            optionalKeys(
+                    run,
+                    Set.of("name", "result", "nameFrom", "resultFrom"),
+                    Set.of("event", "eventFrom", "id", "idFrom"));
             final String nameFrom = text(run, "nameFrom");
             final String resultFrom = text(run, "resultFrom");
             evidence.run(nameFrom, resultFrom);
@@ -163,7 +192,14 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
             assertThat(evidence.value(resultFrom))
                     .as("expect.json run result must appear in its recorded run")
                     .isEqualTo(result);
-            runs.add(new Run(name, result));
+            runs.add(
+                    new Run(
+                            name,
+                            result,
+                            evidence.field(
+                                    run, "event", nameFrom.substring(0, nameFrom.lastIndexOf('/'))),
+                            evidence.field(
+                                    run, "id", nameFrom.substring(0, nameFrom.lastIndexOf('/')))));
         }
         evidence.verifyRuns();
         return List.copyOf(runs);
@@ -171,7 +207,13 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
 
     /** The runs an answer carries: the first ones in the forge's order. */
     List<Run> retainedRuns() {
-        return runs.subList(0, Math.min(Build.MOST_RUNS, runs.size()));
+        final List<Run> retained = new ArrayList<>();
+        final Set<String> seen = new java.util.HashSet<>();
+        for (final Run run : runs) {
+            if (retained.size() == Build.MOST_RUNS) break;
+            if (run.id() == null || seen.add(run.id())) retained.add(run);
+        }
+        return List.copyOf(retained);
     }
 
     List<Job> retainedJobs() {
@@ -195,6 +237,21 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
                     "expect.json fields must be " + expected + "; got " + map.keySet());
     }
 
+    private static void optionalKeys(
+            final Map<?, ?> map, final Set<String> required, final Set<String> optional)
+            throws IOException {
+        final Set<String> allowed = new java.util.HashSet<>(required);
+        allowed.addAll(optional);
+        if (!map.keySet().containsAll(required) || !allowed.containsAll(map.keySet()))
+            throw new IOException(
+                    "expect.json fields must include "
+                            + required
+                            + " with only "
+                            + optional
+                            + "; got "
+                            + map.keySet());
+    }
+
     private static Map<?, ?> object(final @Nullable Object value) throws IOException {
         if (value instanceof Map<?, ?> map) return map;
         throw new IOException("expect.json needs JSON objects");
@@ -210,9 +267,266 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
         private final Map<String, List<String>> lists = new LinkedHashMap<>();
         private final List<String> ordered = new ArrayList<>();
         private final List<String> runs = new ArrayList<>();
+        private final Map<String, Integer> runOrder = new LinkedHashMap<>();
+        private final String webHost;
 
-        Evidence(final List<RecordedForge.Exchange> exchanges) {
+        Evidence(final List<RecordedForge.Exchange> exchanges, final String webHost) {
             this.exchanges = exchanges;
+            this.webHost = webHost;
+        }
+
+        @Nullable String field(final Map<?, ?> expected, final String field, final String item)
+                throws IOException {
+            if (!paired(expected, field)) {
+                if (value(item) instanceof Map<?, ?> recorded) {
+                    final @Nullable Object source = recorded.get(field);
+                    if (field.equals("id") && source instanceof Long id && id > 0
+                            || field.equals("event")
+                                    && source instanceof String event
+                                    && !event.isBlank()
+                                    && event.codePointCount(0, event.length()) <= Build.MOST_ID
+                                    && event.codePoints().noneMatch(Evidence::unprintable))
+                        throw new IOException(
+                                "The recorded run's "
+                                        + field
+                                        + " needs an expectation and evidence");
+                }
+                return null;
+            }
+            final String from = text(expected, field + "From");
+            if (!from.equals(item + "/" + field))
+                throw new IOException(field + " evidence must come from the same recorded run");
+            final String actual = text(expected, field);
+            final @Nullable Object source = value(from);
+            if (field.equals("id")) {
+                if (!(source instanceof Long id) || id <= 0)
+                    throw new IOException("Run id evidence must be a positive integer");
+                assertThat(actual)
+                        .as("the run id retains the recorded integer exactly")
+                        .isEqualTo(Long.toString(id));
+            } else {
+                assertThat(source)
+                        .as("the event must appear in the same recorded run")
+                        .isEqualTo(actual);
+                assertThat(actual.codePointCount(0, actual.length()))
+                        .as("a recorded event fits the protocol")
+                        .isBetween(1, Build.MOST_ID);
+                assertThat(actual).as("a recorded event is one printable line").isNotBlank();
+                assertThat(actual.codePoints().anyMatch(Evidence::unprintable))
+                        .as("an event cannot forge a status line")
+                        .isFalse();
+            }
+            return actual;
+        }
+
+        private static boolean paired(final Map<?, ?> expected, final String field)
+                throws IOException {
+            if (expected.containsKey(field) != expected.containsKey(field + "From"))
+                throw new IOException(field + " and " + field + "From must be supplied together");
+            return expected.containsKey(field);
+        }
+
+        private static boolean unprintable(final int point) {
+            return Character.isISOControl(point)
+                    || Character.getType(point) == Character.FORMAT
+                    || Character.getType(point) == Character.LINE_SEPARATOR
+                    || Character.getType(point) == Character.PARAGRAPH_SEPARATOR
+                    || Character.getType(point) == Character.SURROGATE;
+        }
+
+        @Nullable String jobRun(final Map<?, ?> expected, final String name) throws IOException {
+            if (!paired(expected, "run")) {
+                final String file = name.substring(0, name.indexOf('#'));
+                if (exchange(file)
+                        .path()
+                        .matches(".*/actions/runs/[1-9][0-9]{0,18}/jobs(?:\\?.*)?"))
+                    throw new IOException("A recorded job list needs run and runFrom evidence");
+                return null;
+            }
+            final String from = text(expected, "runFrom");
+            if (!from.endsWith("/id") || !runs.contains(from.substring(0, from.length() - 3)))
+                throw new IOException("Job run evidence must name a recorded run's id");
+            if (!(value(from) instanceof Long id) || id <= 0)
+                throw new IOException("Job run evidence must be a positive integer");
+            final String run = text(expected, "run");
+            assertThat(run)
+                    .as("a job's run id matches its recorded run")
+                    .isEqualTo(Long.toString(id));
+            final String file = name.substring(0, name.indexOf('#'));
+            assertThat(exchange(file).path())
+                    .as("the jobs request ties each job to its recorded run")
+                    .matches(".*/actions/runs/" + run + "/jobs(?:\\?.*)?");
+            final String item = name.substring(0, name.lastIndexOf('/'));
+            if (value(item) instanceof Map<?, ?> job && job.containsKey("run_id"))
+                assertThat(job.get("run_id"))
+                        .as("GitHub's run_id agrees with the listing run")
+                        .isEqualTo(id);
+            runOrder.put(
+                    item.substring(0, item.lastIndexOf('/')),
+                    runs.indexOf(from.substring(0, from.length() - 3)));
+            return run;
+        }
+
+        @Nullable String jobUrl(final Map<?, ?> expected, final String name) throws IOException {
+            if (!paired(expected, "url")) {
+                final String item = name.substring(0, name.lastIndexOf('/'));
+                if (value(item) instanceof Map<?, ?> job && ownPage(job.get("html_url")))
+                    throw new IOException("The recorded job page needs url and urlFrom evidence");
+                if (expected.containsKey("runFrom")) {
+                    final String run = text(expected, "runFrom").replaceFirst("/id$", "");
+                    if (value(run) instanceof Map<?, ?> recorded
+                            && recorded.containsKey("workflow_id")
+                            && ownPage(recorded.get("html_url")))
+                        throw new IOException(
+                                "The recorded run page needs job url and urlFrom evidence");
+                }
+                return null;
+            }
+            final String from = text(expected, "urlFrom");
+            final String item = name.substring(0, name.lastIndexOf('/'));
+            final @Nullable Object source = value(from);
+            if (!(source instanceof String page))
+                throw new IOException("Job page evidence must be a string");
+            final String recorded;
+            if (from.equals(item + "/html_url")) {
+                recorded = page;
+            } else if (expected.containsKey("runFrom")
+                    && from.equals(text(expected, "runFrom").replaceFirst("/id$", "/html_url"))) {
+                recorded = page + "/jobs/" + item.substring(item.lastIndexOf('/') + 1);
+            } else {
+                throw new IOException("Job page evidence must belong to its recorded job or run");
+            }
+            final String url = text(expected, "url");
+            assertThat(url)
+                    .as("the job page is evidenced by its job or its run and job index")
+                    .isEqualTo(recorded);
+            assertThat(new Build.Job("", "", new byte[0], null, null, url).url())
+                    .as("the recorded job page satisfies the public URL contract")
+                    .isEqualTo(url);
+            assertThat(ownPage(url))
+                    .as("the recorded job page stays on the forge's web host")
+                    .isTrue();
+            return url;
+        }
+
+        private boolean ownPage(final @Nullable Object source) {
+            if (!(source instanceof String page)
+                    || new Build.Job("", "", new byte[0], null, null, page).url() == null)
+                return false;
+            return webHost.equalsIgnoreCase(java.net.URI.create(page).getHost());
+        }
+
+        @Nullable List<String> failedTests(final Map<?, ?> expected) throws IOException {
+            if (!paired(expected, "failedTests")) {
+                if (expected.containsKey("log")
+                        && List.of("failure", "timed_out", "startup_failure")
+                                .contains(text(expected, "result"))
+                        && !testEntries(exchange(text(expected, "log")).body()).isEmpty())
+                    throw new IOException(
+                            "A recorded failure summary needs failedTests and failedTestsFrom"
+                                    + " evidence");
+                return null;
+            }
+            if (!List.of("failure", "timed_out", "startup_failure")
+                    .contains(text(expected, "result")))
+                throw new IOException("Only a failed job can name failed tests");
+            if (!(expected.get("failedTests") instanceof List<?> tests)
+                    || !(expected.get("failedTestsFrom") instanceof List<?> sources)
+                    || tests.isEmpty()
+                    || tests.size() > Build.MOST_FAILED_TESTS
+                    || tests.size() != sources.size())
+                throw new IOException(
+                        "Failed tests need one log-line reference per name, within the public"
+                                + " bound");
+            final String log = text(expected, "log");
+            final Map<Integer, String> entries = testEntries(exchange(log).body());
+            final List<String> names = new ArrayList<>();
+            final List<Integer> lines = new ArrayList<>();
+            for (int index = 0; index < tests.size(); index++) {
+                if (!(tests.get(index) instanceof String test)
+                        || !(sources.get(index) instanceof String from)
+                        || !from.startsWith(log + LINE)
+                        || !from.substring(log.length() + LINE.length()).matches("[1-9][0-9]{0,8}"))
+                    throw new IOException(
+                            "Failed test evidence must name a line in the job's own recorded log");
+                final int line = Integer.parseInt(from.substring(log.length() + LINE.length()));
+                assertThat(entries.get(line))
+                        .as(
+                                "a failed test appears in a complete failure or error group at its"
+                                        + " evidence line")
+                        .isEqualTo(test);
+                names.add(test);
+                lines.add(line);
+            }
+            assertThat(names)
+                    .as("recorded failed tests are distinct in log order")
+                    .doesNotHaveDuplicates();
+            assertThat(lines)
+                    .as("failed test evidence follows the log's order")
+                    .isSorted()
+                    .doesNotHaveDuplicates();
+            assertThat(names)
+                    .as("the expectation includes every distinct bounded failure in the summary")
+                    .containsExactlyElementsOf(
+                            entries.values().stream()
+                                    .distinct()
+                                    .limit(Build.MOST_FAILED_TESTS)
+                                    .toList());
+            return List.copyOf(names);
+        }
+
+        private static Map<Integer, String> testEntries(final byte[] log) {
+            final Map<Integer, String> completed = new LinkedHashMap<>();
+            final Map<Integer, String> pending = new LinkedHashMap<>();
+            boolean block = false;
+            boolean errors = false;
+            final int start = Math.max(0, log.length - Build.TAIL);
+            int precedingLines = 0;
+            for (int index = 0; index < start; index++) {
+                if (log[index] == '\n') precedingLines++;
+            }
+            final String[] lines =
+                    new String(tail(log, Build.TAIL), StandardCharsets.UTF_8).split("\\n", -1);
+            final java.util.regex.Pattern entry =
+                    java.util.regex.Pattern.compile("^\\[ERROR\\]   ([^\\s:]+\\.[^\\s:]+):[0-9].*");
+            for (int index = 0; index < lines.length; index++) {
+                if (lines[index].length() > 4096) continue;
+                final String line =
+                        lines[index]
+                                .replaceAll("\\x1b\\[[0-?]*[ -/]*[@-~]", "")
+                                .replaceFirst("^\\d{4}-\\d{2}-\\d{2}T[^ ]+ ", "")
+                                .stripTrailing();
+                if (line.equals("[INFO] Results:")) {
+                    block = true;
+                    errors = false;
+                    pending.clear();
+                } else if (block
+                        && index < lines.length - 1
+                        && line.matches("\\[(?:INFO|ERROR)\\] Tests run: [0-9]+(?:,.*)?")) {
+                    completed.putAll(pending);
+                    block = false;
+                    pending.clear();
+                } else if (block
+                        && (line.equals("[ERROR] Failures:") || line.equals("[ERROR] Errors:"))) {
+                    errors = true;
+                } else if (block && line.matches("\\[(?:WARNING|ERROR|INFO)\\] Flakes:")) {
+                    errors = false;
+                } else if (block && errors) {
+                    final java.util.regex.Matcher match = entry.matcher(line);
+                    if (match.matches()
+                            && match.group(1).codePointCount(0, match.group(1).length())
+                                    <= Build.MOST_TEXT
+                            && match.group(1)
+                                    .codePoints()
+                                    .noneMatch(
+                                            point ->
+                                                    unprintable(point)
+                                                            || Character.isWhitespace(point)
+                                                            || Character.isSpaceChar(point)))
+                        pending.put(precedingLines + index + 1, match.group(1));
+                }
+            }
+            return completed;
         }
 
         RecordedForge.Exchange exchange(final String file) throws IOException {
@@ -229,7 +543,7 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
                             && !reference.substring(hash + 1).startsWith("/")))
                 throw new IOException("Expected exchange.json#/JSON/pointer: " + reference);
             @Nullable Object value =
-                    Json.parse(
+                    Json.parseExact(
                             new String(
                                     exchange(reference.substring(0, hash)).body(),
                                     StandardCharsets.UTF_8));
@@ -305,15 +619,20 @@ record CaseExpectation(String head, List<Job> jobs, long retryAfter, String url,
             final List<String> sources =
                     lists.keySet().stream()
                             .sorted(
-                                    java.util.Comparator.comparingInt(
-                                            source ->
-                                                    exchanges.stream()
-                                                            .map(RecordedForge.Exchange::file)
-                                                            .toList()
-                                                            .indexOf(
-                                                                    source.substring(
-                                                                            0,
-                                                                            source.indexOf('#')))))
+                                    java.util.Comparator.<String>comparingInt(
+                                                    source -> runOrder.getOrDefault(source, 0))
+                                            .thenComparingInt(
+                                                    source ->
+                                                            exchanges.stream()
+                                                                    .map(
+                                                                            RecordedForge.Exchange
+                                                                                    ::file)
+                                                                    .toList()
+                                                                    .indexOf(
+                                                                            source.substring(
+                                                                                    0,
+                                                                                    source.indexOf(
+                                                                                            '#')))))
                             .toList();
             for (final String source : sources) {
                 if (!(value(source) instanceof List<?> entries))

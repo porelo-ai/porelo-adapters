@@ -1,6 +1,6 @@
 # GH25 — A Failed Job Told By Its Failed Tests
 
-**Status:** Implementing.
+**Status:** Review.
 **Size:** M - both readers and the contract suite, a log reading of its own, against two optional fields
 `porelo-build-api` must add to `Build2` first.
 
@@ -48,8 +48,3 @@ Steps:
 - The new cases are seen red before the change and green after, for GitHub and Forgejo.
 - A log from outside (another build tool, a cut-off log) never invents a test: its case answers none.
 - `./mvnw -B -s settings.xml -Pnative,dist verify` green.
-
-## To be checked
-
-- Where each forge names a job's web page, or how it is built from the run and the job: measured while recording.
-- That Porelo's status shows the summary and the link instead of the log once the fields come, asked of Agent Core.

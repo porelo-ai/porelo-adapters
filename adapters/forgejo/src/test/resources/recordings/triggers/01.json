@@ -1,0 +1,12 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-11-09",
+  "capture": "runs-triggers",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-adapters/actions/runs?head_sha=997951a163827581d3e30bc8319584a65d4603cc&limit=50&page=1",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json;charset=utf-8"
+  },
+  "body": "{\"total_count\":2,\"workflow_runs\":[{\"id\":10,\"workflow_id\":\"check.yml\",\"status\":\"success\",\"event\":\"pull_request\",\"html_url\":\"https://forge.example/core/triggers/actions/runs/4\"},{\"id\":9,\"workflow_id\":\"check.yml\",\"status\":\"success\",\"event\":\"push\",\"html_url\":\"https://forge.example/core/triggers/actions/runs/3\"}]}"
+}

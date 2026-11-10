@@ -7,7 +7,9 @@
         "01.json#/workflow_runs/0/workflow_id",
         "02.json#/0/name"
       ],
-      "resultFrom": "02.json#/0/status"
+      "resultFrom": "02.json#/0/status",
+      "run": "3",
+      "runFrom": "01.json#/workflow_runs/0/id"
     },
     {
       "name": "ok.yml / build",
@@ -16,7 +18,9 @@
         "01.json#/workflow_runs/1/workflow_id",
         "03.json#/0/name"
       ],
-      "resultFrom": "03.json#/0/status"
+      "resultFrom": "03.json#/0/status",
+      "run": "2",
+      "runFrom": "01.json#/workflow_runs/1/id"
     },
     {
       "name": "ok.yml / lint",
@@ -25,7 +29,9 @@
         "01.json#/workflow_runs/1/workflow_id",
         "03.json#/1/name"
       ],
-      "resultFrom": "03.json#/1/status"
+      "resultFrom": "03.json#/1/status",
+      "run": "2",
+      "runFrom": "01.json#/workflow_runs/1/id"
     }
   ],
   "runs": [
@@ -33,13 +39,17 @@
       "name": "wait.yml",
       "result": "cancelled",
       "nameFrom": "01.json#/workflow_runs/0/workflow_id",
-      "resultFrom": "01.json#/workflow_runs/0/status"
+      "resultFrom": "01.json#/workflow_runs/0/status",
+      "id": "3",
+      "idFrom": "01.json#/workflow_runs/0/id"
     },
     {
       "name": "ok.yml",
       "result": "cancelled",
       "nameFrom": "01.json#/workflow_runs/1/workflow_id",
-      "resultFrom": "01.json#/workflow_runs/1/status"
+      "resultFrom": "01.json#/workflow_runs/1/status",
+      "id": "2",
+      "idFrom": "01.json#/workflow_runs/1/id"
     }
   ]
 }

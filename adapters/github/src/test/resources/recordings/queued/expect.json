@@ -5,7 +5,21 @@
       "name": "Build",
       "result": "queued",
       "nameFrom": "01.json#/workflow_runs/0/name",
-      "resultFrom": "01.json#/workflow_runs/0/status"
+      "resultFrom": "01.json#/workflow_runs/0/status",
+      "id": "2",
+      "idFrom": "01.json#/workflow_runs/0/id",
+      "event": "push",
+      "eventFrom": "01.json#/workflow_runs/0/event"
+    },
+    {
+      "name": "Build",
+      "result": "queued",
+      "nameFrom": "01.json#/workflow_runs/1/name",
+      "resultFrom": "01.json#/workflow_runs/1/status",
+      "id": "3",
+      "idFrom": "01.json#/workflow_runs/1/id",
+      "event": "pull_request",
+      "eventFrom": "01.json#/workflow_runs/1/event"
     }
   ]
 }

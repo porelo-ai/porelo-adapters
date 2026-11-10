@@ -7,7 +7,9 @@
         "01.json#/workflow_runs/0/name",
         "02.json#/jobs/0/name"
       ],
-      "resultFrom": "02.json#/jobs/0/conclusion"
+      "resultFrom": "02.json#/jobs/0/conclusion",
+      "run": "40105516390",
+      "runFrom": "01.json#/workflow_runs/0/id"
     },
     {
       "name": "Build / Whether the leased leg is proven",
@@ -16,7 +18,9 @@
         "01.json#/workflow_runs/0/name",
         "02.json#/jobs/1/name"
       ],
-      "resultFrom": "02.json#/jobs/1/conclusion"
+      "resultFrom": "02.json#/jobs/1/conclusion",
+      "run": "40105516390",
+      "runFrom": "01.json#/workflow_runs/0/id"
     },
     {
       "name": "Build / Windows",
@@ -26,7 +30,9 @@
         "02.json#/jobs/2/name"
       ],
       "resultFrom": "02.json#/jobs/2/conclusion",
-      "log": "04.json"
+      "log": "04.json",
+      "run": "40105516390",
+      "runFrom": "01.json#/workflow_runs/0/id"
     },
     {
       "name": "Build / Test against a leased machine",
@@ -35,7 +41,9 @@
         "01.json#/workflow_runs/0/name",
         "02.json#/jobs/3/name"
       ],
-      "resultFrom": "02.json#/jobs/3/conclusion"
+      "resultFrom": "02.json#/jobs/3/conclusion",
+      "run": "40105516390",
+      "runFrom": "01.json#/workflow_runs/0/id"
     },
     {
       "name": "Build / Prove the packages install (ubuntu:26.04, ubuntu:26.04@sha256:f144425ff09be612d6d9ad965196e9cdc23...",
@@ -44,7 +52,9 @@
         "01.json#/workflow_runs/0/name",
         "02.json#/jobs/4/name"
       ],
-      "resultFrom": "02.json#/jobs/4/conclusion"
+      "resultFrom": "02.json#/jobs/4/conclusion",
+      "run": "40105516390",
+      "runFrom": "01.json#/workflow_runs/0/id"
     },
     {
       "name": "Build / Prove the packages install (debian:13, debian:13@sha256:913f6706df59a68922d1dd08f78c2476560a8d367...",
@@ -53,7 +63,9 @@
         "01.json#/workflow_runs/0/name",
         "02.json#/jobs/5/name"
       ],
-      "resultFrom": "02.json#/jobs/5/conclusion"
+      "resultFrom": "02.json#/jobs/5/conclusion",
+      "run": "40105516390",
+      "runFrom": "01.json#/workflow_runs/0/id"
     },
     {
       "name": "Build / Prove the packages install (fedora:43, fedora:43@sha256:a651ddf48ea28a06ed4e1e6519f51c9f47e7a5a13...",
@@ -62,7 +74,9 @@
         "01.json#/workflow_runs/0/name",
         "02.json#/jobs/6/name"
       ],
-      "resultFrom": "02.json#/jobs/6/conclusion"
+      "resultFrom": "02.json#/jobs/6/conclusion",
+      "run": "40105516390",
+      "runFrom": "01.json#/workflow_runs/0/id"
     },
     {
       "name": "Build / Prove the packages install (fedora:44, fedora:44@sha256:43b29f65a41eb9c35e1cd5323e3bdf3b655c2357a...",
@@ -71,7 +85,9 @@
         "01.json#/workflow_runs/0/name",
         "02.json#/jobs/7/name"
       ],
-      "resultFrom": "02.json#/jobs/7/conclusion"
+      "resultFrom": "02.json#/jobs/7/conclusion",
+      "run": "40105516390",
+      "runFrom": "01.json#/workflow_runs/0/id"
     },
     {
       "name": "Build / Publish to Artifactory",
@@ -80,7 +96,9 @@
         "01.json#/workflow_runs/0/name",
         "02.json#/jobs/8/name"
       ],
-      "resultFrom": "02.json#/jobs/8/conclusion"
+      "resultFrom": "02.json#/jobs/8/conclusion",
+      "run": "40105516390",
+      "runFrom": "01.json#/workflow_runs/0/id"
     }
   ],
   "runs": [
@@ -88,7 +106,9 @@
       "name": "Build",
       "result": "failure",
       "nameFrom": "01.json#/workflow_runs/0/name",
-      "resultFrom": "01.json#/workflow_runs/0/conclusion"
+      "resultFrom": "01.json#/workflow_runs/0/conclusion",
+      "id": "40105516390",
+      "idFrom": "01.json#/workflow_runs/0/id"
     }
   ]
 }

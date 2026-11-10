@@ -17,6 +17,8 @@ import org.fuin.porelo.build.api.BuildMain;
 import org.fuin.porelo.build.api.BuildReader;
 import org.fuin.porelo.build.api.BuildRefused;
 import org.fuin.porelo.build.api.Target;
+import org.fuin.porelo.build.http.BuildFields;
+import org.fuin.porelo.build.http.FailedTests;
 import org.fuin.porelo.build.http.Http;
 import org.fuin.porelo.wire.Json;
 import org.fuin.porelo.wire.JsonException;
@@ -38,6 +40,10 @@ public final class GitHubReader implements BuildReader {
      * {@code git@host:owner/name(.git)}, {@code ssh://git@host/owner/name(.git)}, {@code
      * https://host/owner/name(.git)}.
      */
+    // A status outside these is unknown, never running: running would keep a caller waiting.
+    private static final List<String> OUTSTANDING =
+            List.of("in_progress", "queued", "requested", "waiting", "pending");
+
     private static final Pattern UPSTREAM =
             Pattern.compile(
                     "^(?:[a-z+]+://)?(?:[^@/]+@)?[^:/]+[:/](?:\\d+/)?([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+?)(?:\\.git)?/?$");
@@ -81,11 +87,13 @@ public final class GitHubReader implements BuildReader {
         BuildMain.run(new GitHubReader(Http.overNetwork(), Clock.systemUTC()), arguments);
     }
 
+    /** Returns the forge this reader implements. */
     @Override
     public String forge() {
         return "github";
     }
 
+    /** Returns the head commit of the named branch, or an empty string when absent. */
     @Override
     public String head(final Target target, final String branch) {
         final Repository repository = repository(target);
@@ -112,6 +120,7 @@ public final class GitHubReader implements BuildReader {
         return "";
     }
 
+    /** Reads the commit's aggregate verdict, bounded run and job lists, and requested log tails. */
     @Override
     public Build build(final Target target, final String commit, final Build.Logs logs) {
         final Repository repository = repository(target);
@@ -124,7 +133,7 @@ public final class GitHubReader implements BuildReader {
                         repository,
                         repository.path() + "/actions/runs?head_sha=" + commit,
                         "workflow_runs");
-        final List<Map<?, ?>> found = runs.entries();
+        final List<Map<?, ?>> found = BuildFields.distinct(runs.entries());
         if (!runs.whole()) {
             // A run left unread can be the one that failed.
             return Build.unknown(
@@ -142,16 +151,23 @@ public final class GitHubReader implements BuildReader {
         boolean queued = true;
         boolean cancelled = false;
         boolean failed = false;
+        String unknown = "";
         for (final Map<?, ?> run : found) {
             final String status = lower(run.get("status"));
             final String conclusion = lower(run.get("conclusion"));
-            if (!"completed".equals(status)) {
+            if (!"completed".equals(status) && !OUTSTANDING.contains(status)) {
+                unknown = "unknown GitHub status: " + (status.isEmpty() ? "<none>" : status);
+            } else if (!"completed".equals(status)) {
                 running = true;
-                queued &= List.of("queued", "requested", "waiting", "pending").contains(status);
+                queued &= !"in_progress".equals(status);
             } else if (FAILED_RUN.contains(conclusion)) {
                 failed = true;
             } else if ("cancelled".equals(conclusion)) {
                 cancelled = true;
+            } else if (!List.of("success", "skipped", "neutral").contains(conclusion)) {
+                unknown =
+                        "unknown GitHub conclusion: "
+                                + (conclusion.isEmpty() ? "<none>" : conclusion);
             }
         }
         if (failed) {
@@ -175,6 +191,7 @@ public final class GitHubReader implements BuildReader {
                             : "no single job failed; the workflow did",
                     runs(found));
         }
+        if (!unknown.isEmpty()) return Build.unknown(unknown);
         if (running) {
             return new Build(queued ? Build.QUEUED : Build.RUNNING, List.of(), "", runs(found));
         }
@@ -185,13 +202,16 @@ public final class GitHubReader implements BuildReader {
     /** Each run in GitHub's order with its conclusion, or its state while it has none. */
     private static List<Build.Run> runs(final List<Map<?, ?>> found) {
         return found.stream()
+                .limit(Build.MOST_RUNS)
                 .map(
                         run ->
                                 new Build.Run(
                                         name(run.get("name")),
                                         run.get("conclusion") == null
                                                 ? lower(run.get("status"))
-                                                : lower(run.get("conclusion"))))
+                                                : lower(run.get("conclusion")),
+                                        BuildFields.event(run.get("event")),
+                                        BuildFields.id(run.get("id"))))
                 .toList();
     }
 
@@ -206,15 +226,31 @@ public final class GitHubReader implements BuildReader {
             final List<Map<?, ?>> runs,
             final Build.Logs logs) {
         final List<ListedJob> all = new ArrayList<>();
-        for (final Map<?, ?> run : runs) {
+        final Map<String, List<Map<?, ?>>> byRun = new LinkedHashMap<>();
+        for (final Map<?, ?> run :
+                BuildFields.forJobs(
+                        runs, each -> FAILED_RUN.contains(lower(each.get("conclusion"))))) {
+            final String id = BuildFields.id(run.get("id"));
+            if (id == null) continue;
             // A run holds at most 256 jobs, so the list is whole.
             final Listed listed =
                     listed(
                             target,
                             repository,
-                            repository.path() + "/actions/runs/" + number(run.get("id")) + "/jobs",
+                            repository.path() + "/actions/runs/" + id + "/jobs",
                             "jobs");
-            for (final Map<?, ?> job : listed.entries()) {
+            byRun.put(id, listed.entries());
+        }
+        final java.util.Set<String> named = new java.util.HashSet<>();
+        for (final Build.Run run : runs(runs)) {
+            if (run.id() != null) named.add(run.id());
+        }
+        for (final Map<?, ?> run : runs) {
+            final String id = BuildFields.id(run.get("id"));
+            if (id == null) continue;
+            for (final Map<?, ?> job : byRun.getOrDefault(id, List.of())) {
+                if (job.containsKey("run_id") && !id.equals(BuildFields.id(job.get("run_id"))))
+                    continue;
                 // Finished, what became of it; not yet, how far it is.
                 final String result =
                         job.get("conclusion") == null
@@ -225,15 +261,18 @@ public final class GitHubReader implements BuildReader {
                                 name(run.get("name")) + " / " + name(job.get("name")),
                                 result,
                                 "completed".equals(lower(job.get("status"))),
-                                number(job.get("id"))));
+                                BuildFields.id(job.get("id")),
+                                named.contains(id) ? id : null,
+                                BuildFields.page(job.get("html_url"), target.upstream())));
             }
         }
         final List<Build.Job> jobs = new ArrayList<>();
         for (final ListedJob job : kept(all)) {
-            if (!job.finished()
+            if (job.id() == null
+                    || !job.finished()
                     || logs == Build.Logs.NONE
                     || logs != Build.Logs.ALL && !job.failed()) {
-                jobs.add(new Build.Job(job.name(), job.result()));
+                jobs.add(job.answer(null));
                 continue;
             }
             final Http.Response log =
@@ -242,10 +281,7 @@ public final class GitHubReader implements BuildReader {
                                     target,
                                     repository.path() + "/actions/jobs/" + job.id() + "/logs",
                                     Build.TAIL));
-            jobs.add(
-                    log.status() == 200
-                            ? new Build.Job(job.name(), job.result(), log.body())
-                            : new Build.Job(job.name(), job.result()));
+            jobs.add(job.answer(log.status() == 200 ? log.body() : null));
         }
         return jobs;
     }
@@ -283,7 +319,23 @@ public final class GitHubReader implements BuildReader {
      * @param finished Whether it completed.
      * @param id Its number at GitHub.
      */
-    record ListedJob(String name, String result, boolean finished, long id) {
+    record ListedJob(
+            String name,
+            String result,
+            boolean finished,
+            @Nullable String id,
+            @Nullable String run,
+            @Nullable String url) {
+
+        Build.Job answer(final byte @Nullable [] log) {
+            return new Build.Job(
+                    name,
+                    result,
+                    log,
+                    run,
+                    failed() && log != null ? FailedTests.read(log) : null,
+                    url);
+        }
 
         /** Whether it failed. */
         boolean failed() {
@@ -468,6 +520,7 @@ public final class GitHubReader implements BuildReader {
             return "/repos/" + owner + "/" + name;
         }
 
+        /** Returns the repository's owner and name as the forge spells them. */
         @Override
         public String toString() {
             return owner + "/" + name;
@@ -477,7 +530,7 @@ public final class GitHubReader implements BuildReader {
     /** An answer that is not JSON - a proxy's page, a cut connection - is no answer from GitHub. */
     private static @Nullable Object json(final Http.Response answer, final String asked) {
         try {
-            return Json.parse(new String(answer.body(), StandardCharsets.UTF_8));
+            return Json.parseExact(new String(answer.body(), StandardCharsets.UTF_8));
         } catch (JsonException ex) {
             throw new BuildRefused(
                     BuildRefused.Reason.UNREACHABLE,

@@ -8,7 +8,8 @@ It starts the main on the current test class path; the main must accept `serve <
 
 The suite starts a fresh adapter with `InstalledBuildReader` for each case and speaks
 `org.fuin.porelo.Build2` over an owner-only Unix socket. A loopback HTTP server supplies the forge answers.
-The target upstream is `git@forge.example:porelo-ai/porelo-frontend.git`, with a fresh token and the loopback API URL.
+The target upstream is `git@<web-host>:porelo-ai/porelo-frontend.git`, with a fresh token and the loopback API URL.
+The web host is `github.com` for GitHub and `forge.example` for Forgejo, independently of the replay API host.
 The no-repository case names `porelo-ai/no-such-repository-for-the-suite` instead.
 All scratch files are under `target/` and are removed after each case.
 
@@ -16,7 +17,8 @@ All scratch files are under `target/` and are removed after each case.
 
 Each case has its own directory: `head`, `absent-branch`, `no-build`, `queued`, `running`, `passed`,
 `failed`, `cancelled`, `logs-none`, `logs-failure`, `logs-all`, `log-tail`, `many-jobs`, `shared-logs`, `many-runs`,
-`rate-limited`, `primary-rate-limited`, `credential-refused`, `no-repository`, and `unreachable`.
+`triggers`, `action-required`, `failed-tests`, `rate-limited`, `primary-rate-limited`, `credential-refused`,
+`no-repository`, and `unreachable`.
 The questions, verdicts, refusals, and answer rules are fixed in the suite. Each recording directory also has
 `expect.json` for values evidenced by that forge’s answers; it cannot choose the rules.
 
@@ -29,8 +31,16 @@ verdict or `BuildRefused.Reason`, and the recorded retry delay for `RATE_LIMITED
 answers have no jobs. Final jobs retain forge order, with failed jobs retained ahead of other jobs when the list
 exceeds `Build.MOST_JOBS`; the returned list still follows the original order.
 Every answer but an unknown one names each run of the commit with its name and result, the first
-`Build.MOST_RUNS` in forge order, also while the build is queued or running; an unknown answer names none.
+`Build.MOST_RUNS` distinct runs in forge order, also while the build is queued or running; an unknown answer names none.
+Each run carries its forge trigger and positive integer ID when supplied. Each job names its listing run when
+that run is among the returned runs. A job list request's `/runs/<id>/jobs` path is evidence of that association;
+GitHub's `run_id`, when supplied, must agree. GitHub lists a run's latest attempt by default. At most `Build.MOST_RUNS`
+runs' jobs are requested, failed runs first; the returned jobs retain forge order.
 `many-runs` lists more runs than that limit, on one GitHub page and on two Forgejo pages.
+`queued` requires both outstanding runs. `triggers` distinguishes a push and a schedule on GitHub, and a push
+and a pull request of one workflow on Forgejo. `action-required` must answer unknown. `failed-tests` requires
+the seven tests in the complete recorded Maven summary and the job's HTTPS page. These three cases use
+`porelo-ai/porelo-adapters`, except `action-required`, which uses `porelo-ai/porelo-buildtools`.
 
 The subclass declares its exact authorization scheme: GitHub uses `"Bearer"`, Forgejo uses `"token"`. Every API
 request must carry exactly `Authorization: <scheme> <token>`. Every request to another origin must omit
@@ -67,6 +77,26 @@ log policy, size limit, or alternative question cannot be supplied here.
   has `name`, `result`, `nameFrom` and `resultFrom`: `nameFrom` points to the run's `name` (GitHub) or
   `workflow_id` (Forgejo), and `resultFrom` to a field of the same run, its `conclusion` once it has one and its
   `status` otherwise; Forgejo's runs have only `status`.
+- Optional run fields are paired with evidence: `event` with `eventFrom`, and `id` with `idFrom`.
+  Each pointer must name that same run's `event` or `id` field. An ID is the positive integer formatted as
+  decimal text without floating-point rounding. An event is one printable nonblank line of at most
+  `Build.MOST_ID` code points. An optional field absent from or invalid in the forge response expects
+  absence in the adapter's answer; valid recorded metadata requires its expectation and evidence pair.
+- Optional job fields are also paired: `run` with `runFrom`, `url` with `urlFrom`, and `failedTests` with
+  `failedTestsFrom`. `runFrom` names a recorded run's integer `id`; its value must match both `run` and the
+  job list request path. The job's `nameFrom` still identifies the entry in that list. A job whose run falls
+  outside the returned run limit expects no association in the answer.
+- For GitHub, `urlFrom` points to that job's `html_url`. For Forgejo, it points to the listing run's
+  `html_url`; the expected address appends `/jobs/<index>`, with the zero-based array position already
+  evidenced by the job's `nameFrom`. The page must satisfy the public HTTPS URL contract and the reader
+  keeps it only on the configured upstream's web host. URLs remain expected under every log policy.
+- `failedTests` is a nonempty array of at most `Build.MOST_FAILED_TESTS` distinct names, in log order.
+  `failedTestsFrom` is an equally sized array of line references, the response file name, `#line=` and a one-based
+  line number in the exact response body named by the job's `log`. Each line must contain that test in a
+  complete Surefire or Failsafe `Results:` block's `Failures:` or `Errors:` group, ended by `Tests run:`.
+  Timestamps, ANSI colors, and trailing carriage returns do not change the evidence. Flakes, continuation
+  lines, oversized lines, cut blocks, and display names without a class/method and line number supply no
+  test. The suite checks the bounded set independently of the readers. Jobs without tests omit both keys.
 - Rate-limit refusals: `retryAfter` is a nonnegative integer equal to the recorded `Retry-After` header.
   When that header is absent, the suite checks the 60-second fallback. GitHub's primary-limit recording
   deliberately exercises this fallback; Forgejo records an explicit 60-second header.
@@ -97,6 +127,8 @@ cannot quietly redefine an expected answer. Forgejo's root job arrays use pointe
 JSON pointer components support `~0` for `~` and `~1` for `/`.
 
 `log` names the exchange whose response body is that job's log, including a blob response after a redirect.
+Line references for failed tests refer to that body's retained bytes, so reducing a log requires recalculating
+its evidence line numbers. The reader examines only failed jobs' requested log tails, including under `all`.
 For a repeated exchange file, use `03.json#1`, where the suffix is the zero-based position among its expanded
 exchanges. Ordinary files use just their filename. Only loaded exchanges can be referenced: paths cannot
 escape the directory or substitute an unrelated local file. Body files and generated bodies are resolved
@@ -161,9 +193,10 @@ An unmatched request gets HTTP 404 and fails the case with its method and path; 
 Recorded exchanges carry `"recorded": true` and `"source": "github.com, 2026-10-24"`.
 They preserve the captured status, `content-type`, rate-limit headers, and log redirect, whose signed
 location is replaced by the double's blob URL. JSON bodies retain only fields the adapter reads:
-`object.sha`, list `total_count`, run/job `id`, `name`, `status`, `conclusion`, and refusal `message`.
+`object.sha`, list `total_count`, run/job `id`, `name`, `status`, `conclusion`, run `event`, job `run_id` and
+`html_url`, and refusal `message`.
 The repository probe's body becomes `{}` because only its status is read. Timestamps, commit metadata,
-steps, and URLs are omitted because the adapter does not read them; retained field values are unchanged.
+steps, and run URLs are omitted where the adapter does not read them; retained field values are unchanged.
 
 | Cases | Provenance and reason |
 |---|---|
@@ -176,6 +209,7 @@ steps, and URLs are omitted because the adapter does not read them; retained fie
 | `many-jobs` | The real builds have nine jobs; a generated sixty-job matrix puts the failure beyond the first fifty. |
 | `shared-logs` | Fifty generated logs exceed the 2 MiB total budget; the captures do not supply this boundary case. |
 | `many-runs` | The real commits have at most three runs; sixty generated outstanding runs cross the fifty-run limit. |
+| `triggers`, `action-required`, `failed-tests` | GitHub API captures retain the real repositories and values. The failure log retains exactly its last `Build.TAIL` bytes; its signed redirect uses the replay blob placeholder. Forgejo examples are explicitly generated pending recorder output, including the unknown-status example. |
 | `log-tail` | A deterministic long log exercises multiple read windows and exposes its retained end. |
 
 Every generated file carries `"recorded": false` and a one-line `why`, including files whose API
@@ -197,10 +231,14 @@ update the image versions in that script and run it with an empty output directo
 bash adapters/forgejo/src/test/record/record-forgejo.sh target/forgejo-capture
 ```
 
-The capture contains `index.txt` and each exchange's `.status`, `.headers`, and `.body` files. Review those files
-before reducing them to the contract exchange format. Keep the measured response status, content type, and every
+The capture contains `index.txt` and each exchange's `.status`, `.headers`, and `.body` files. It also writes
+`recordings/triggers/` and `recordings/failed-tests/` directly in the contract format, including `expect.json`
+and log-line evidence. Review these directories before replacing the generated examples in
+`adapters/forgejo/src/test/resources/recordings/`. The converter maps only request repository names and commit
+selectors to the suite's questions; response IDs, events, page URLs, names, results, and log bytes remain real.
+Keep the measured response status, content type, and every
 field the adapter reads: branch `commit.id`, runs `total_count`, `id`, `workflow_id`, `status`, and job `id`, `name`,
-`status`. The jobs endpoint returns a JSON array, and logs return timestamp-prefixed plain text directly.
+`status`, plus run `event` and `html_url`. The jobs endpoint returns a JSON array, and logs return timestamp-prefixed plain text directly.
 Only the `message` field distinguishes an unexecuted job's log 404 from other 404s. Repository confirmation
 reads only the status, so its body is `{}`. Request repository names and commit selectors are mapped to the
 suite's target; response field values and log bytes are retained unchanged.
@@ -213,6 +251,19 @@ the 2 MiB total log budget and the long-log case exceeds 2 MiB. The failed job's
 
 For another Forgejo release, set `source` to the version and capture day actually recorded, review the response
 shapes and statuses again, and keep uncaptured cases explicitly generated.
+
+The recorder also creates a repository with one workflow listening for `push` and `pull_request`, creates a
+branch in that repository, and opens its pull request. It requires both completed runs and records both job
+lists. A separate repository's failed job echoes the seven-entry Maven result block; no Maven is required in
+the runner. The advertised `ROOT_URL` is `https://forge.example/`, so the real run pages satisfy the public
+page contract; API calls and runner registration use the pod's internal HTTP service. The converter requires
+the advertised HTTPS host and the two measured trigger values rather than substituting them.
+
+Prerequisites are podman, curl, Python 3, and access to the pinned Forgejo and runner image versions named by
+the script. The recorder refuses an existing pod or a nonempty output directory. It removes only the exact pod
+ID it created and its private scratch directory, including after interruption, and exits nonzero if cleanup
+leaves either behind. The output is retained. Real capture and job-page navigation require a podman host.
+Allow several minutes; that duration is an estimate.
 
 Every workflow file present at a commit runs on push. A later push cancels older pending runs, so the capture
 named `runs-ok` contains cancelled runs. The recorded all-success case comes from `runs-wait`, which completed

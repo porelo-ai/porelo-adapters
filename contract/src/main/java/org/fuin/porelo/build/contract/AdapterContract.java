@@ -118,13 +118,21 @@ public abstract class AdapterContract {
                         UUID.randomUUID().toString(),
                         authorization)) {
             final CaseExpectation expected =
-                    CaseExpectation.read(recordings.resolve(test.name()), test, server.exchanges());
+                    CaseExpectation.read(
+                            recordings.resolve(test.name()),
+                            test,
+                            server.exchanges(),
+                            forge.equals("github") ? "github.com" : "forge.example");
             try (InstalledBuildReader reader =
                     new InstalledBuildReader(
                             JavaExecutable.write(scratch, main), forge, scratch.resolve("s"))) {
                 final Target target =
                         new Target(
-                                "git@forge.example:" + test.repository() + ".git",
+                                "git@"
+                                        + (forge.equals("github") ? "github.com" : "forge.example")
+                                        + ":"
+                                        + test.repository()
+                                        + ".git",
                                 server.api(),
                                 server.token());
                 try {
@@ -198,7 +206,15 @@ public abstract class AdapterContract {
             return;
         }
         assertThat(values.runs()).as("%s recorded runs", test.name()).isNotEmpty();
-        assertThat(runs.stream().map(run -> new CaseExpectation.Run(run.name(), run.result())))
+        assertThat(
+                        runs.stream()
+                                .map(
+                                        run ->
+                                                new CaseExpectation.Run(
+                                                        run.name(),
+                                                        run.result(),
+                                                        run.event(),
+                                                        run.id())))
                 .as("%s every run of the commit in forge order", test.name())
                 .containsExactlyElementsOf(values.retainedRuns());
         if (test.name().equals("many-runs")) {
@@ -248,6 +264,22 @@ public abstract class AdapterContract {
             assertThat(job.result())
                     .as("%s result of %s", test.name(), expected.name())
                     .isEqualTo(expected.result());
+            assertThat(job.run())
+                    .as("%s job belongs to its recorded run when that run is named", test.name())
+                    .isEqualTo(
+                            values.retainedRuns().stream()
+                                            .anyMatch(
+                                                    run ->
+                                                            java.util.Objects.equals(
+                                                                    run.id(), expected.run()))
+                                    ? expected.run()
+                                    : null);
+            assertThat(job.url())
+                    .as("%s job page comes from its forge", test.name())
+                    .isEqualTo(expected.url());
+            assertThat(job.failedTests())
+                    .as("%s failed tests come from its complete log summary", test.name())
+                    .isEqualTo(expected.failedTests());
             final byte[] log = job.log();
             if (expected.log() == null) {
                 assertThat(log)

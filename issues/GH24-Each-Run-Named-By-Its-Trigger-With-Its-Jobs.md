@@ -1,6 +1,6 @@
 # GH24 — Each Run Named By Its Trigger, With Its Jobs
 
-**Status:** Implementing.
+**Status:** Review.
 **Size:** L - both readers, the contract suite and its recordings against new `Build2` fields, and the GitHub verdict
 for conclusions it does not know and the bound on job requests, which the plan's reading found.
 
@@ -33,7 +33,7 @@ Taken from the plan's reading, each with a test seen red first:
   `null`, blank, not a string or not one printable line of at most 64 code points answers none.
 - A job's `run` is the run it was listed under, and on GitHub its `run_id` when given, which must be that run; every
   `Build.Job` branch carries `run` and `url`, green and log-less jobs too. Runs are taken once per `id`; GitHub's
-  `/jobs` asks `filter=latest`.
+  `/jobs` answers a run's latest attempt by default, measured byte for byte against `filter=latest`.
 - The verdict fails closed (a wrong verdict found in today's code): on GitHub only `success`, `skipped` and `neutral`
   count as green, `cancelled` as cancelled, `failure`, `timed_out` and `startup_failure` as failed, and any other
   conclusion - `action_required`, `stale`, none - answers `unknown` naming it, unless another run failed. On Forgejo a
@@ -59,9 +59,3 @@ Steps:
 - A queued commit's answer lists every run with its state; an empty `runs` is never answered while the verdict is
   queued or running.
 - `./mvnw -B -s settings.xml -Pnative,dist verify` green.
-
-## To be checked
-
-- That a run's answer names its trigger on both forges, and under which field: measured while recording anew.
-- Which reader the host carried when a running build answered no run: one from before `runs`, or this one; and
-  whether Porelo's `build status` prints `runs` - measured on a host, asked of Agent Core for the printing.

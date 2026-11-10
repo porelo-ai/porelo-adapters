@@ -1,0 +1,535 @@
+p-0.5.1-SNAPSHOT.jar
+2026-11-01T08:29:24.9510710Z [INFO] 
+2026-11-01T08:29:24.9511102Z [INFO] ---------------< org.fuin.porelo:porelo-adapter-github >----------------
+2026-11-01T08:29:24.9511548Z [INFO] Building Porelo GitHub Adapter 0.5.1-SNAPSHOT                      [5/7]
+2026-11-01T08:29:24.9511901Z [INFO]   from adapters/github/pom.xml
+2026-11-01T08:29:24.9512224Z [INFO] --------------------------------[ jar ]---------------------------------
+2026-11-01T08:29:24.9698469Z [INFO] Downloading from central.sonatype.snapshots: https://central.sonatype.com/repository/maven-snapshots/org/fuin/porelo/porelo-forge-client-github/0.1.0-SNAPSHOT/maven-metadata.xml
+2026-11-01T08:29:25.5828610Z [INFO] Downloaded from central.sonatype.snapshots: https://central.sonatype.com/repository/maven-snapshots/org/fuin/porelo/porelo-forge-client-github/0.1.0-SNAPSHOT/maven-metadata.xml (1.6 kB at 2.6 kB/s)
+2026-11-01T08:29:25.5850024Z [INFO] Downloading from central.sonatype.snapshots: https://central.sonatype.com/repository/maven-snapshots/org/fuin/porelo/porelo-forge-client-github/0.1.0-SNAPSHOT/porelo-forge-client-github-0.1.0-20261101.081543-1.pom
+2026-11-01T08:29:26.0928665Z [INFO] Downloaded from central.sonatype.snapshots: https://central.sonatype.com/repository/maven-snapshots/org/fuin/porelo/porelo-forge-client-github/0.1.0-SNAPSHOT/porelo-forge-client-github-0.1.0-20261101.081543-1.pom (2.3 kB at 4.5 kB/s)
+2026-11-01T08:29:26.0984597Z [INFO] Downloading from central: https://repo.maven.apache.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.21.2/jackson-datatype-jsr310-2.21.2.pom
+2026-11-01T08:29:26.1300270Z [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.21.2/jackson-datatype-jsr310-2.21.2.pom (5.3 kB at 173 kB/s)
+2026-11-01T08:29:26.1315672Z [INFO] Downloading from central: https://repo.maven.apache.org/maven2/com/fasterxml/jackson/module/jackson-modules-java8/2.21.2/jackson-modules-java8-2.21.2.pom
+2026-11-01T08:29:26.1578675Z [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/com/fasterxml/jackson/module/jackson-modules-java8/2.21.2/jackson-modules-java8-2.21.2.pom (3.1 kB at 118 kB/s)
+2026-11-01T08:29:26.1602886Z [INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark/0.29.0/commonmark-0.29.0.pom
+2026-11-01T08:29:26.1894504Z [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark/0.29.0/commonmark-0.29.0.pom (2.4 kB at 81 kB/s)
+2026-11-01T08:29:26.1908068Z [INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark-parent/0.29.0/commonmark-parent-0.29.0.pom
+2026-11-01T08:29:26.2210528Z [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark-parent/0.29.0/commonmark-parent-0.29.0.pom (13 kB at 476 kB/s)
+2026-11-01T08:29:26.2211604Z [INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark-ext-gfm-tables/0.29.0/commonmark-ext-gfm-tables-0.29.0.pom
+2026-11-01T08:29:26.2466687Z [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark-ext-gfm-tables/0.29.0/commonmark-ext-gfm-tables-0.29.0.pom (1.0 kB at 40 kB/s)
+2026-11-01T08:29:26.2480861Z [INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark-ext-footnotes/0.29.0/commonmark-ext-footnotes-0.29.0.pom
+2026-11-01T08:29:26.2752185Z [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark-ext-footnotes/0.29.0/commonmark-ext-footnotes-0.29.0.pom (1.0 kB at 37 kB/s)
+2026-11-01T08:29:26.2779977Z [INFO] Downloading from central.sonatype.snapshots: https://central.sonatype.com/repository/maven-snapshots/org/fuin/porelo/porelo-forge-client-github/0.1.0-SNAPSHOT/porelo-forge-client-github-0.1.0-20261101.081543-1.jar
+2026-11-01T08:29:26.8640417Z [INFO] Downloaded from central.sonatype.snapshots: https://central.sonatype.com/repository/maven-snapshots/org/fuin/porelo/porelo-forge-client-github/0.1.0-SNAPSHOT/porelo-forge-client-github-0.1.0-20261101.081543-1.jar (358 kB at 611 kB/s)
+2026-11-01T08:29:26.8656051Z [INFO] Downloading from central: https://repo.maven.apache.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.21.2/jackson-datatype-jsr310-2.21.2.jar
+2026-11-01T08:29:26.9014421Z [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.21.2/jackson-datatype-jsr310-2.21.2.jar (137 kB at 3.8 MB/s)
+2026-11-01T08:29:26.9020059Z [INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark/0.29.0/commonmark-0.29.0.jar
+2026-11-01T08:29:26.9021764Z [INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark-ext-gfm-tables/0.29.0/commonmark-ext-gfm-tables-0.29.0.jar
+2026-11-01T08:29:26.9030290Z [INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark-ext-footnotes/0.29.0/commonmark-ext-footnotes-0.29.0.jar
+2026-11-01T08:29:26.9260063Z [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark-ext-gfm-tables/0.29.0/commonmark-ext-gfm-tables-0.29.0.jar (23 kB at 961 kB/s)
+2026-11-01T08:29:26.9570600Z [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark-ext-footnotes/0.29.0/commonmark-ext-footnotes-0.29.0.jar (22 kB at 398 kB/s)
+2026-11-01T08:29:26.9746984Z [INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/commonmark/commonmark/0.29.0/commonmark-0.29.0.jar (216 kB at 3.0 MB/s)
+2026-11-01T08:29:26.9766560Z [INFO] 
+2026-11-01T08:29:26.9766963Z [INFO] --- enforcer:3.6.2:enforce (enforce-java-and-maven-version) @ porelo-adapter-github ---
+2026-11-01T08:29:27.0188320Z [INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+2026-11-01T08:29:27.0188901Z [INFO] Rule 1: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+2026-11-01T08:29:27.0189416Z [INFO] 
+2026-11-01T08:29:27.0189703Z [INFO] --- spotless:3.10.3:check (spotless-check) @ porelo-adapter-github ---
+2026-11-01T08:29:27.1084837Z [INFO] Index file does not exist. Fallback to an empty index
+2026-11-01T08:29:27.5733062Z [INFO] Spotless.Java is keeping 15 files clean - 0 needs changes to be clean, 15 were already clean, 0 were skipped because caching determined they were already clean
+2026-11-01T08:29:27.5757380Z [INFO] 
+2026-11-01T08:29:27.5757898Z [INFO] --- build-helper:3.6.1:regex-property (package-version) @ porelo-adapter-github ---
+2026-11-01T08:29:27.5940385Z [INFO] 
+2026-11-01T08:29:27.5940905Z [INFO] --- resources:3.4.0:resources (default-resources) @ porelo-adapter-github ---
+2026-11-01T08:29:27.6119097Z [INFO] Copying 1 resource from src/main/resources-filtered to target/classes
+2026-11-01T08:29:27.6165903Z [INFO] The encoding used to copy filtered properties files has not been set. This means that the same encoding will be used to copy filtered properties files as when copying other filtered resources. This might not be what you want! Run your build with --debug to see which files might be affected. Read more at https://maven.apache.org/plugins/maven-resources-plugin/examples/filtering-properties-files.html
+2026-11-01T08:29:27.6167393Z [INFO] 
+2026-11-01T08:29:27.6168067Z [INFO] --- flatten:1.8.0:flatten (flatten) @ porelo-adapter-github ---
+2026-11-01T08:29:27.6325068Z [INFO] Generating flattened POM of project org.fuin.porelo:porelo-adapter-github:jar:0.5.1-SNAPSHOT...
+2026-11-01T08:29:27.6430456Z [INFO] 
+2026-11-01T08:29:27.6431133Z [INFO] --- compiler:3.15.0:compile (default-compile) @ porelo-adapter-github ---
+2026-11-01T08:29:27.6705247Z [INFO] Recompiling the module because of changed dependency.
+2026-11-01T08:29:27.6738892Z [INFO] Compiling 9 source files with javac [debug release 25] to target/classes
+2026-11-01T08:29:28.3505289Z [INFO] 
+2026-11-01T08:29:28.3506097Z [INFO] --- resources:3.4.0:testResources (default-testResources) @ porelo-adapter-github ---
+2026-11-01T08:29:28.3543537Z [INFO] Copying 82 resources from src/test/resources to target/test-classes
+2026-11-01T08:29:28.3610176Z [INFO] 
+2026-11-01T08:29:28.3610771Z [INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ porelo-adapter-github ---
+2026-11-01T08:29:28.3645525Z [INFO] Recompiling the module because of changed dependency.
+2026-11-01T08:29:28.3662371Z [INFO] Compiling 6 source files with javac [debug release 25] to target/test-classes
+2026-11-01T08:29:28.6915230Z [INFO] /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/src/test/java/org/fuin/porelo/build/github/review/GitHubReviewWriteTest.java: /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/src/test/java/org/fuin/porelo/build/github/review/GitHubReviewWriteTest.java uses or overrides a deprecated API.
+2026-11-01T08:29:28.6917125Z [INFO] /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/src/test/java/org/fuin/porelo/build/github/review/GitHubReviewWriteTest.java: Recompile with -Xlint:deprecation for details.
+2026-11-01T08:29:28.6917914Z [INFO] 
+2026-11-01T08:29:28.6918206Z [INFO] --- surefire:3.5.5:test (default-test) @ porelo-adapter-github ---
+2026-11-01T08:29:28.7306634Z [INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+2026-11-01T08:29:28.7415993Z [INFO] 
+2026-11-01T08:29:28.7416342Z [INFO] -------------------------------------------------------
+2026-11-01T08:29:28.7416799Z [INFO]  T E S T S
+2026-11-01T08:29:28.7417051Z [INFO] -------------------------------------------------------
+2026-11-01T08:29:29.2600887Z [INFO] Running org.fuin.porelo.build.github.review.GitHubReviewWriteTest
+2026-11-01T08:29:29.6158221Z [INFO] Tests run: 62, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.347 s -- in org.fuin.porelo.build.github.review.GitHubReviewWriteTest
+2026-11-01T08:29:29.6161794Z [INFO] Running org.fuin.porelo.build.github.review.GitHubReviewReadTest
+2026-11-01T08:29:30.3507194Z [INFO] Tests run: 57, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.739 s -- in org.fuin.porelo.build.github.review.GitHubReviewReadTest
+2026-11-01T08:29:30.3511483Z [INFO] Running org.fuin.porelo.build.github.NoOldNameTest
+2026-11-01T08:29:30.4000038Z [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.052 s -- in org.fuin.porelo.build.github.NoOldNameTest
+2026-11-01T08:29:30.4001228Z [INFO] Running org.fuin.porelo.build.github.GitHubReaderTest
+2026-11-01T08:29:30.4431265Z [INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.041 s -- in org.fuin.porelo.build.github.GitHubReaderTest
+2026-11-01T08:29:30.4447101Z [INFO] Running org.fuin.porelo.build.github.GitHubContractTest
+2026-11-01T08:29:44.1521202Z [INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.71 s -- in org.fuin.porelo.build.github.GitHubContractTest
+2026-11-01T08:29:44.1820542Z [INFO] 
+2026-11-01T08:29:44.1820905Z [INFO] Results:
+2026-11-01T08:29:44.1821130Z [INFO] 
+2026-11-01T08:29:44.1823801Z [INFO] Tests run: 149, Failures: 0, Errors: 0, Skipped: 0
+2026-11-01T08:29:44.1824114Z [INFO] 
+2026-11-01T08:29:44.1844986Z [INFO] 
+2026-11-01T08:29:44.1845276Z [INFO] --- jar:3.5.0:jar (default-jar) @ porelo-adapter-github ---
+2026-11-01T08:29:44.2531256Z [INFO] Building jar: /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/porelo-adapter-github-0.5.1-SNAPSHOT.jar
+2026-11-01T08:29:44.2735708Z [INFO] 
+2026-11-01T08:29:44.2736558Z [INFO] --- native:1.1.11:compile-no-fork (build-porelo-adapter-github) @ porelo-adapter-github ---
+2026-11-01T08:29:44.2763129Z [WARNING]  Parameter 'fallback' (user property 'fallback') is deprecated: Native Image fallback support was removed in GraalVM 25.1.
+2026-11-01T08:29:44.2789152Z [INFO] Found GraalVM installation from GRAALVM_HOME variable.
+2026-11-01T08:29:44.2901299Z [INFO] Downloaded GraalVM reachability metadata repository from file:/home/runner/.m2/repository/org/graalvm/buildtools/graalvm-reachability-metadata/1.1.11/graalvm-reachability-metadata-1.1.11-repository.zip
+2026-11-01T08:29:44.5658410Z [INFO] Using GraalVM reachability metadata repository version 1.0.12
+2026-11-01T08:29:44.5740039Z [INFO] [graalvm reachability metadata repository for org.jspecify:jspecify:1.0.0]: Configuration directory is org.jspecify/jspecify/1.0.0
+2026-11-01T08:29:44.5762152Z [INFO] [graalvm reachability metadata repository for com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2]: Configuration directory is com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.13.1
+2026-11-01T08:29:44.5763876Z [INFO] [graalvm reachability metadata repository for com.fasterxml.jackson.core:jackson-databind:2.21.2]: Configuration directory is com.fasterxml.jackson.core/jackson-databind/2.15.2
+2026-11-01T08:29:44.5765048Z [INFO] [graalvm reachability metadata repository for com.fasterxml.jackson.core:jackson-annotations:2.21]: Configuration directory not found. Trying latest version.
+2026-11-01T08:29:44.5766530Z [INFO] [graalvm reachability metadata repository for com.fasterxml.jackson.core:jackson-annotations:2.21]: Configuration directory is com.fasterxml.jackson.core/jackson-annotations/2.3.0
+2026-11-01T08:29:44.5770488Z [INFO] [graalvm reachability metadata repository for com.fasterxml.jackson.core:jackson-core:2.21.2]: Configuration directory is com.fasterxml.jackson.core/jackson-core/2.6.0
+2026-11-01T08:29:44.5779383Z [WARNING] No jdk toolchain configuration found
+2026-11-01T08:29:44.5785888Z [WARNING] No jdk toolchain configuration found
+2026-11-01T08:29:44.5797169Z [WARNING] No jdk toolchain configuration found
+2026-11-01T08:29:44.5800752Z [WARNING] No jdk toolchain configuration found
+2026-11-01T08:29:44.5801124Z [WARNING] No jdk toolchain configuration found
+2026-11-01T08:29:44.5818956Z [INFO] Executing: /home/runner/work/_temp/porelo-graalvm-25.4.4.1.1/bin/native-image -cp /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/porelo-adapter-github-0.5.1-SNAPSHOT.jar:/home/runner/work/porelo-adapters/porelo-adapters/adapters/http/target/porelo-adapter-http-0.5.1-SNAPSHOT.jar:/home/runner/.m2/repository/org/fuin/porelo/porelo-build-api/0.5.1-SNAPSHOT/porelo-build-api-0.5.1-SNAPSHOT.jar:/home/runner/.m2/repository/org/fuin/porelo/porelo-wire/0.5.1-SNAPSHOT/porelo-wire-0.5.1-SNAPSHOT.jar:/home/runner/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/home/runner/.m2/repository/org/fuin/porelo/porelo-forge-client-github/0.1.0-SNAPSHOT/porelo-forge-client-github-0.1.0-SNAPSHOT.jar:/home/runner/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.21.2/jackson-datatype-jsr310-2.21.2.jar:/home/runner/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.21.2/jackson-databind-2.21.2.jar:/home/runner/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21.jar:/home/runner/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.21.2/jackson-core-2.21.2.jar:/home/runner/.m2/repository/org/commonmark/commonmark/0.29.0/commonmark-0.29.0.jar:/home/runner/.m2/repository/org/commonmark/commonmark-ext-gfm-tables/0.29.0/commonmark-ext-gfm-tables-0.29.0.jar:/home/runner/.m2/repository/org/commonmark/commonmark-ext-footnotes/0.29.0/commonmark-ext-footnotes-0.29.0.jar --color=never -o /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/porelo-adapter-github -H:ConfigurationFileDirectories=/home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/com.fasterxml.jackson.core/jackson-databind/2.15.2,/home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/com.fasterxml.jackson.core/jackson-annotations/2.3.0,/home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/org.jspecify/jspecify/1.0.0,/home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/com.fasterxml.jackson.core/jackson-core/2.6.0,/home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.13.1,/home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/com.fasterxml.jackson.core/jackson-databind/2.15.2,/home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/com.fasterxml.jackson.core/jackson-annotations/2.3.0,/home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/org.jspecify/jspecify/1.0.0,/home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/com.fasterxml.jackson.core/jackson-core/2.6.0,/home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.13.1 -H:+ReportExceptionStackTraces -march=x86-64 org.fuin.porelo.build.github.GitHubReader
+2026-11-01T08:29:47.0000317Z ========================================================================================================================
+2026-11-01T08:29:47.0020197Z GraalVM Native Image: Generating 'porelo-adapter-github' (executable)...
+2026-11-01T08:29:47.0030183Z ========================================================================================================================
+2026-11-01T08:29:47.0051001Z For detailed information and explanations on the build output, visit:
+2026-11-01T08:29:47.0051574Z https://github.com/oracle/graal/blob/master/docs/reference-manual/native-image/BuildOutput.md
+2026-11-01T08:29:47.0052167Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:29:49.2821619Z [1/8] Initializing...                                                                                   (3.7s @ 0.19GiB)
+2026-11-01T08:29:49.2822928Z  Builder configuration:
+2026-11-01T08:29:49.2823464Z  - Java version: 25.0.4.1.1+1, vendor version: GraalVM CE 25.4.4.1.1+1.1
+2026-11-01T08:29:49.2824197Z  - Graal compiler: optimization level: 2, target machine: x86-64
+2026-11-01T08:29:49.2827271Z  - C compiler: gcc (linux, x86_64, 13.3.0)
+2026-11-01T08:29:49.2827772Z  - Assertions: disabled, system assertions: disabled
+2026-11-01T08:29:49.2828338Z  Image configuration:
+2026-11-01T08:29:49.2830570Z  - Garbage collector: Serial GC (max heap size: 80% of RAM)
+2026-11-01T08:29:49.2831135Z  - Assertions: disabled (class-specific config may apply), system assertions: disabled
+2026-11-01T08:29:49.2836471Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:29:49.2837050Z Build resources:
+2026-11-01T08:29:49.2837345Z  - 13.27GiB of memory (85% of system memory because $CI set to 'true')
+2026-11-01T08:29:49.2837733Z  - 4 thread(s) (100.0% of 4 available processor(s), determined at start)
+2026-11-01T08:30:13.1016270Z [2/8] Performing analysis...  [******]                                                                 (23.4s @ 0.75GiB)
+2026-11-01T08:30:13.1279714Z     7,201 types,   9,714 fields, and  34,269 methods found reachable
+2026-11-01T08:30:13.1308743Z       453 types,      56 fields, and   1,428 methods registered for reflection
+2026-11-01T08:30:13.1309602Z        61 types,      62 fields, and      55 methods registered for JNI access
+2026-11-01T08:30:13.1310652Z        64 resource accesses registered with 174.33KiB total size
+2026-11-01T08:30:13.1311594Z         5 native libraries: dl, m, pthread, rt, z
+2026-11-01T08:30:15.7445015Z [3/8] Building universe...                                                                              (2.6s @ 0.84GiB)
+2026-11-01T08:30:18.0080824Z [4/8] Parsing methods...      [**]                                                                      (2.2s @ 0.91GiB)
+2026-11-01T08:30:19.6502613Z [5/8] Inlining methods...     [***]                                                                     (1.5s @ 0.97GiB)
+2026-11-01T08:30:49.5581181Z [6/8] Compiling methods...    [*****]                                                                  (29.9s @ 0.71GiB)
+2026-11-01T08:30:51.7748719Z [7/8] Laying out methods...   [**]                                                                      (2.2s @ 0.89GiB)
+2026-11-01T08:30:54.9513019Z [8/8] Creating image...       [**]                                                                      (2.4s @ 1.01GiB)
+2026-11-01T08:30:54.9522051Z   11.65MiB (43.75%) for code area:    22,034 compilation units
+2026-11-01T08:30:54.9522489Z   12.50MiB (46.96%) for image heap:  196,606 objects and 8 resources
+2026-11-01T08:30:54.9522809Z    2.47MiB ( 9.29%) for other data
+2026-11-01T08:30:54.9523077Z   26.62MiB in total image size, 24.75MiB in total file size
+2026-11-01T08:30:54.9606110Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:30:54.9606977Z Top 10 origins of code area:                                Top 10 object types in image heap:
+2026-11-01T08:30:54.9609580Z    1.09MiB java.base/sun.security.ssl                          2.96MiB byte[] for code metadata
+2026-11-01T08:30:54.9610238Z  845.05KiB java.base/java.util                                 2.26MiB byte[] for string data
+2026-11-01T08:30:54.9611617Z  593.56KiB java.base/com.sun.crypto.provider                   1.34MiB java.base/java.lang.String
+2026-11-01T08:30:54.9612366Z  557.14KiB java.net.http/jdk.internal.net.http               902.73KiB java.base/java.lang.Class
+2026-11-01T08:30:54.9613066Z  469.17KiB java.base/java.lang.invoke                        802.34KiB byte[] for general heap data
+2026-11-01T08:30:54.9613779Z  391.80KiB java.base/java.lang                               787.61KiB o.g.n.runtime/c.o.s.core.hub.DynamicHubCompanion
+2026-11-01T08:30:54.9614429Z  387.48KiB o.g.n.runtime/com.oracle.svm.core.code            479.60KiB heap alignment
+2026-11-01T08:30:54.9615133Z  384.53KiB java.base/java.util.concurrent                    285.13KiB byte[] for reflection metadata
+2026-11-01T08:30:54.9615805Z  350.98KiB java.base/sun.security.provider                   280.05KiB java.base/java.lang.Object[]
+2026-11-01T08:30:54.9616469Z  330.17KiB java.base/sun.security.x509                       203.52KiB java.base/java.lang.String[]
+2026-11-01T08:30:54.9617101Z    6.35MiB for 225 more packages                               2.29MiB for 1931 more object types
+2026-11-01T08:30:54.9624946Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:30:54.9625420Z Recommendations:
+2026-11-01T08:30:54.9627207Z  FUTR: Use '--future-defaults=all' to prepare for future releases.
+2026-11-01T08:30:54.9627772Z  HEAP: Set max heap for improved and more predictable memory usage.
+2026-11-01T08:30:54.9685788Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:30:54.9694901Z                        5.4s (7.7% of total time) in 1228 GCs | Peak RSS: 1.59GiB | CPU load: 3.67
+2026-11-01T08:30:54.9700102Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:30:54.9700499Z Build artifacts:
+2026-11-01T08:30:54.9707749Z  /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/porelo-adapter-github (executable, 24.75MiB)
+2026-11-01T08:30:54.9708696Z ========================================================================================================================
+2026-11-01T08:30:54.9709072Z Finished generating 'porelo-adapter-github' in 1m 9s.
+2026-11-01T08:30:55.1016776Z [INFO] 
+2026-11-01T08:30:55.1017106Z [INFO] --- jdeb:1.14:jdeb (deb) @ porelo-adapter-github ---
+2026-11-01T08:30:55.1747051Z [INFO] Creating debian package: /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/porelo-adapter-github_0.5.1~snapshot.20_amd64.deb
+2026-11-01T08:30:56.1267683Z [INFO] Building conffiles
+2026-11-01T08:30:56.1284854Z [INFO] Skipping 'conffiles' generation. No entries defined in maven/pom or ant/build.xml.
+2026-11-01T08:30:56.1285278Z [INFO] Adding control: control
+2026-11-01T08:30:56.1287135Z [INFO] Adding control: md5sums
+2026-11-01T08:30:56.1470652Z [INFO] Creating changes file: /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/porelo-adapter-github_0.5.1~SNAPSHOT_all.changes
+2026-11-01T08:30:56.1756372Z [INFO] Attaching created debian package /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/porelo-adapter-github_0.5.1~snapshot.20_amd64.deb
+2026-11-01T08:30:56.1765506Z [INFO] 
+2026-11-01T08:30:56.1765940Z [INFO] --- rpm:1.13.0:rpm (rpm) @ porelo-adapter-github ---
+2026-11-01T08:30:56.3292785Z [INFO] Writing to target to: /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/porelo-adapter-github-0.5.1~snapshot.20-1.x86_64.rpm
+2026-11-01T08:30:56.3310572Z [INFO] RPM base information - name: porelo-adapter-github, version: 0.5.1~snapshot.20-1, arch: x86_64
+2026-11-01T08:30:56.3311233Z [INFO] File Digest Algorithm: SHA-256
+2026-11-01T08:30:56.3420757Z [INFO] Writing target file: /home/runner/work/porelo-adapters/porelo-adapters/adapters/github/target/porelo-adapter-github-0.5.1~snapshot.20-1.x86_64.rpm
+2026-11-01T08:30:56.3449788Z [INFO] Adding dependency [require]: name = porelo, version = null, flags = []
+2026-11-01T08:30:56.3459785Z [INFO] Adding dependency [require]: name = libc.so.6(GLIBC_2.34)(64bit), version = null, flags = []
+2026-11-01T08:30:56.3460671Z [INFO] Adding dependency [require]: name = libz.so.1(ZLIB_1.2.2)(64bit), version = null, flags = []
+2026-11-01T08:30:56.3463613Z [INFO] Adding dependency [obsolete]: name = porelo-build-github, version = null, flags = []
+2026-11-01T08:30:59.7468787Z [INFO] Required RPM version: 4.11
+2026-11-01T08:30:59.7469452Z [INFO] attaching rpm
+2026-11-01T08:30:59.7472360Z [INFO] 
+2026-11-01T08:30:59.7473124Z [INFO] --- exec:3.6.3:exec (check-linkage) @ porelo-adapter-github ---
+2026-11-01T08:31:00.0685874Z OK    1 binary(ies) need no more than the packages declare: libc.so.6 GLIBC 2.34, libz.so.1 ZLIB 1.2.2
+2026-11-01T08:31:00.3967337Z [INFO] 
+2026-11-01T08:31:00.3967749Z [INFO] --- exec:3.6.3:exec (check-package-version) @ porelo-adapter-github ---
+2026-11-01T08:31:00.7025063Z OK    porelo-adapter-github_0.5.1~snapshot.20_amd64.deb and porelo-adapter-github-0.5.1~snapshot.20-1.x86_64.rpm carry 0.5.1~snapshot.20
+2026-11-01T08:31:01.1040652Z [INFO] 
+2026-11-01T08:31:01.1040985Z [INFO] ---------------< org.fuin.porelo:porelo-adapter-forgejo >---------------
+2026-11-01T08:31:01.1041480Z [INFO] Building Porelo Forgejo Adapter 0.5.1-SNAPSHOT                     [6/7]
+2026-11-01T08:31:01.1041861Z [INFO]   from adapters/forgejo/pom.xml
+2026-11-01T08:31:01.1042249Z [INFO] --------------------------------[ jar ]---------------------------------
+2026-11-01T08:31:01.1090313Z [INFO] 
+2026-11-01T08:31:01.1090846Z [INFO] --- enforcer:3.6.2:enforce (enforce-java-and-maven-version) @ porelo-adapter-forgejo ---
+2026-11-01T08:31:01.1103687Z [INFO] 
+2026-11-01T08:31:01.1104172Z [INFO] --- spotless:3.10.3:check (spotless-check) @ porelo-adapter-forgejo ---
+2026-11-01T08:31:01.1173725Z [INFO] Index file does not exist. Fallback to an empty index
+2026-11-01T08:31:01.1784897Z [INFO] Spotless.Java is keeping 4 files clean - 0 needs changes to be clean, 4 were already clean, 0 were skipped because caching determined they were already clean
+2026-11-01T08:31:01.1956641Z [INFO] Spotless.Shell is keeping 2 files clean - 0 needs changes to be clean, 2 were already clean, 0 were skipped because caching determined they were already clean
+2026-11-01T08:31:01.1965822Z [INFO] 
+2026-11-01T08:31:01.1966421Z [INFO] --- build-helper:3.6.1:regex-property (package-version) @ porelo-adapter-forgejo ---
+2026-11-01T08:31:01.1984642Z [INFO] 
+2026-11-01T08:31:01.1985203Z [INFO] --- resources:3.4.0:resources (default-resources) @ porelo-adapter-forgejo ---
+2026-11-01T08:31:01.1989714Z [INFO] skip non existing resourceDirectory /home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/src/main/resources
+2026-11-01T08:31:01.1990302Z [INFO] 
+2026-11-01T08:31:01.1990577Z [INFO] --- flatten:1.8.0:flatten (flatten) @ porelo-adapter-forgejo ---
+2026-11-01T08:31:01.1996751Z [INFO] Generating flattened POM of project org.fuin.porelo:porelo-adapter-forgejo:jar:0.5.1-SNAPSHOT...
+2026-11-01T08:31:01.2066628Z [INFO] 
+2026-11-01T08:31:01.2067140Z [INFO] --- compiler:3.15.0:compile (default-compile) @ porelo-adapter-forgejo ---
+2026-11-01T08:31:01.2112657Z [INFO] Recompiling the module because of changed dependency.
+2026-11-01T08:31:01.2115610Z [INFO] Compiling 2 source files with javac [debug release 25] to target/classes
+2026-11-01T08:31:01.5713034Z [INFO] 
+2026-11-01T08:31:01.5713995Z [INFO] --- resources:3.4.0:testResources (default-testResources) @ porelo-adapter-forgejo ---
+2026-11-01T08:31:01.5735113Z [INFO] Copying 77 resources from src/test/resources to target/test-classes
+2026-11-01T08:31:01.5787468Z [INFO] 
+2026-11-01T08:31:01.5788298Z [INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ porelo-adapter-forgejo ---
+2026-11-01T08:31:01.5811214Z [INFO] Recompiling the module because of changed dependency.
+2026-11-01T08:31:01.5820265Z [INFO] Compiling 2 source files with javac [debug release 25] to target/test-classes
+2026-11-01T08:31:01.7862473Z [INFO] 
+2026-11-01T08:31:01.7866619Z [INFO] --- surefire:3.5.5:test (default-test) @ porelo-adapter-forgejo ---
+2026-11-01T08:31:01.7918654Z [INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+2026-11-01T08:31:01.7963093Z [INFO] 
+2026-11-01T08:31:01.7963801Z [INFO] -------------------------------------------------------
+2026-11-01T08:31:01.7964474Z [INFO]  T E S T S
+2026-11-01T08:31:01.7981375Z [INFO] -------------------------------------------------------
+2026-11-01T08:31:02.2404355Z [INFO] Running org.fuin.porelo.build.forgejo.ForgejoContractTest
+2026-11-01T08:31:16.2604137Z [INFO] Tests run: 22, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 14.02 s -- in org.fuin.porelo.build.forgejo.ForgejoContractTest
+2026-11-01T08:31:16.2605035Z [INFO] Running org.fuin.porelo.build.forgejo.ForgejoReaderTest
+2026-11-01T08:31:16.3739527Z [INFO] Tests run: 35, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.111 s -- in org.fuin.porelo.build.forgejo.ForgejoReaderTest
+2026-11-01T08:31:16.4138172Z [INFO] 
+2026-11-01T08:31:16.4138468Z [INFO] Results:
+2026-11-01T08:31:16.4138695Z [INFO] 
+2026-11-01T08:31:16.4138946Z [INFO] Tests run: 57, Failures: 0, Errors: 0, Skipped: 0
+2026-11-01T08:31:16.4140375Z [INFO] 
+2026-11-01T08:31:16.4151550Z [INFO] 
+2026-11-01T08:31:16.4152166Z [INFO] --- jar:3.5.0:jar (default-jar) @ porelo-adapter-forgejo ---
+2026-11-01T08:31:16.4194293Z [INFO] Building jar: /home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/target/porelo-adapter-forgejo-0.5.1-SNAPSHOT.jar
+2026-11-01T08:31:16.4223918Z [INFO] 
+2026-11-01T08:31:16.4224502Z [INFO] --- native:1.1.11:compile-no-fork (build-porelo-adapter-forgejo) @ porelo-adapter-forgejo ---
+2026-11-01T08:31:16.4231464Z [WARNING]  Parameter 'fallback' (user property 'fallback') is deprecated: Native Image fallback support was removed in GraalVM 25.1.
+2026-11-01T08:31:16.4257640Z [INFO] Downloaded GraalVM reachability metadata repository from file:/home/runner/.m2/repository/org/graalvm/buildtools/graalvm-reachability-metadata/1.1.11/graalvm-reachability-metadata-1.1.11-repository.zip
+2026-11-01T08:31:16.7007670Z [INFO] Using GraalVM reachability metadata repository version 1.0.12
+2026-11-01T08:31:16.7021691Z [INFO] [graalvm reachability metadata repository for org.jspecify:jspecify:1.0.0]: Configuration directory is org.jspecify/jspecify/1.0.0
+2026-11-01T08:31:16.7022717Z [WARNING] No jdk toolchain configuration found
+2026-11-01T08:31:16.7023452Z [WARNING] No jdk toolchain configuration found
+2026-11-01T08:31:16.7025523Z [WARNING] No jdk toolchain configuration found
+2026-11-01T08:31:16.7027535Z [WARNING] No jdk toolchain configuration found
+2026-11-01T08:31:16.7028063Z [WARNING] No jdk toolchain configuration found
+2026-11-01T08:31:16.7035513Z [INFO] Executing: /home/runner/work/_temp/porelo-graalvm-25.4.4.1.1/bin/native-image -cp /home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/target/porelo-adapter-forgejo-0.5.1-SNAPSHOT.jar:/home/runner/work/porelo-adapters/porelo-adapters/adapters/http/target/porelo-adapter-http-0.5.1-SNAPSHOT.jar:/home/runner/.m2/repository/org/fuin/porelo/porelo-build-api/0.5.1-SNAPSHOT/porelo-build-api-0.5.1-SNAPSHOT.jar:/home/runner/.m2/repository/org/fuin/porelo/porelo-wire/0.5.1-SNAPSHOT/porelo-wire-0.5.1-SNAPSHOT.jar:/home/runner/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar --color=never -o /home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/target/porelo-adapter-forgejo -H:ConfigurationFileDirectories=/home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/org.jspecify/jspecify/1.0.0,/home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/target/graalvm-reachability-metadata/3154fee2ef622e65fdfdd936f1d241a061dee07c/org.jspecify/jspecify/1.0.0 -H:+ReportExceptionStackTraces -march=x86-64 org.fuin.porelo.build.forgejo.ForgejoReader
+2026-11-01T08:31:18.9170973Z ========================================================================================================================
+2026-11-01T08:31:18.9186824Z GraalVM Native Image: Generating 'porelo-adapter-forgejo' (executable)...
+2026-11-01T08:31:18.9187433Z ========================================================================================================================
+2026-11-01T08:31:18.9188007Z For detailed information and explanations on the build output, visit:
+2026-11-01T08:31:18.9188795Z https://github.com/oracle/graal/blob/master/docs/reference-manual/native-image/BuildOutput.md
+2026-11-01T08:31:18.9189756Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:31:21.1331296Z [1/8] Initializing...                                                                                   (3.5s @ 0.15GiB)
+2026-11-01T08:31:21.1332522Z  Builder configuration:
+2026-11-01T08:31:21.1333220Z  - Java version: 25.0.4.1.1+1, vendor version: GraalVM CE 25.4.4.1.1+1.1
+2026-11-01T08:31:21.1334023Z  - Graal compiler: optimization level: 2, target machine: x86-64
+2026-11-01T08:31:21.1334794Z  - C compiler: gcc (linux, x86_64, 13.3.0)
+2026-11-01T08:31:21.1336000Z  - Assertions: disabled, system assertions: disabled
+2026-11-01T08:31:21.1336321Z  Image configuration:
+2026-11-01T08:31:21.1336775Z  - Garbage collector: Serial GC (max heap size: 80% of RAM)
+2026-11-01T08:31:21.1337237Z  - Assertions: disabled (class-specific config may apply), system assertions: disabled
+2026-11-01T08:31:21.1347101Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:31:21.1347704Z Build resources:
+2026-11-01T08:31:21.1348122Z  - 13.27GiB of memory (85% of system memory because $CI set to 'true')
+2026-11-01T08:31:21.1348657Z  - 4 thread(s) (100.0% of 4 available processor(s), determined at start)
+2026-11-01T08:31:45.3328090Z [2/8] Performing analysis...  [******]                                                                 (24.0s @ 0.80GiB)
+2026-11-01T08:31:45.3602518Z     7,209 types,   9,732 fields, and  34,337 methods found reachable
+2026-11-01T08:31:45.3635430Z       453 types,      50 fields, and   1,428 methods registered for reflection
+2026-11-01T08:31:45.3636137Z        61 types,      62 fields, and      55 methods registered for JNI access
+2026-11-01T08:31:45.3636579Z        58 resource accesses registered with 174.30KiB total size
+2026-11-01T08:31:45.3636938Z         5 native libraries: dl, m, pthread, rt, z
+2026-11-01T08:31:48.1377565Z [3/8] Building universe...                                                                              (2.8s @ 0.90GiB)
+2026-11-01T08:31:50.5687652Z [4/8] Parsing methods...      [**]                                                                      (2.4s @ 0.96GiB)
+2026-11-01T08:31:52.7329702Z [5/8] Inlining methods...     [***]                                                                     (2.0s @ 0.56GiB)
+2026-11-01T08:32:24.1147860Z [6/8] Compiling methods...    [*****]                                                                  (31.4s @ 0.72GiB)
+2026-11-01T08:32:26.4352943Z [7/8] Laying out methods...   [**]                                                                      (2.3s @ 0.89GiB)
+2026-11-01T08:32:29.9406860Z [8/8] Creating image...       [**]                                                                      (2.8s @ 0.64GiB)
+2026-11-01T08:32:29.9411320Z   11.69MiB (43.92%) for code area:    22,084 compilation units
+2026-11-01T08:32:29.9412595Z   12.50MiB (46.95%) for image heap:  196,744 objects and 7 resources
+2026-11-01T08:32:29.9413357Z    2.43MiB ( 9.13%) for other data
+2026-11-01T08:32:29.9413993Z   26.62MiB in total image size, 24.75MiB in total file size
+2026-11-01T08:32:29.9505112Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:32:29.9505715Z Top 10 origins of code area:                                Top 10 object types in image heap:
+2026-11-01T08:32:29.9515873Z    1.09MiB java.base/sun.security.ssl                          2.97MiB byte[] for code metadata
+2026-11-01T08:32:29.9516754Z  845.33KiB java.base/java.util                                 2.26MiB byte[] for string data
+2026-11-01T08:32:29.9517990Z  593.74KiB java.base/com.sun.crypto.provider                   1.34MiB java.base/java.lang.String
+2026-11-01T08:32:29.9518958Z  586.50KiB java.net.http/jdk.internal.net.http               960.21KiB java.base/java.lang.Class
+2026-11-01T08:32:29.9520076Z  469.87KiB java.base/java.lang.invoke                        802.16KiB byte[] for general heap data
+2026-11-01T08:32:29.9521149Z  391.81KiB java.base/java.lang                               788.48KiB o.g.n.runtime/c.o.s.core.hub.DynamicHubCompanion
+2026-11-01T08:32:29.9522086Z  387.48KiB o.g.n.runtime/com.oracle.svm.core.code            405.79KiB heap alignment
+2026-11-01T08:32:29.9522953Z  384.62KiB java.base/java.util.concurrent                    284.81KiB byte[] for reflection metadata
+2026-11-01T08:32:29.9523961Z  350.99KiB java.base/sun.security.provider                   279.95KiB java.base/java.lang.Object[]
+2026-11-01T08:32:29.9524849Z  330.13KiB java.base/sun.security.x509                       203.77KiB java.base/java.lang.String[]
+2026-11-01T08:32:29.9525565Z    6.37MiB for 225 more packages                               2.29MiB for 1930 more object types
+2026-11-01T08:32:29.9544620Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:32:29.9545264Z Recommendations:
+2026-11-01T08:32:29.9546912Z  FUTR: Use '--future-defaults=all' to prepare for future releases.
+2026-11-01T08:32:29.9551425Z  HEAP: Set max heap for improved and more predictable memory usage.
+2026-11-01T08:32:29.9822258Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:32:29.9842775Z                        5.7s (7.8% of total time) in 1242 GCs | Peak RSS: 1.58GiB | CPU load: 3.68
+2026-11-01T08:32:29.9853623Z ------------------------------------------------------------------------------------------------------------------------
+2026-11-01T08:32:29.9854343Z Build artifacts:
+2026-11-01T08:32:29.9867609Z  /home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/target/porelo-adapter-forgejo (executable, 24.75MiB)
+2026-11-01T08:32:29.9868182Z ========================================================================================================================
+2026-11-01T08:32:29.9868573Z Finished generating 'porelo-adapter-forgejo' in 1m 12s.
+2026-11-01T08:32:30.1268129Z [INFO] 
+2026-11-01T08:32:30.1268497Z [INFO] --- jdeb:1.14:jdeb (deb) @ porelo-adapter-forgejo ---
+2026-11-01T08:32:30.1320100Z [INFO] Creating debian package: /home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/target/porelo-adapter-forgejo_0.5.1~snapshot.20_amd64.deb
+2026-11-01T08:32:30.9641974Z [INFO] Building conffiles
+2026-11-01T08:32:30.9644446Z [INFO] Skipping 'conffiles' generation. No entries defined in maven/pom or ant/build.xml.
+2026-11-01T08:32:30.9644885Z [INFO] Adding control: control
+2026-11-01T08:32:30.9646257Z [INFO] Adding control: md5sums
+2026-11-01T08:32:31.0134876Z [INFO] Creating changes file: /home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/target/porelo-adapter-forgejo_0.5.1~SNAPSHOT_all.changes
+2026-11-01T08:32:31.0350024Z [INFO] Attaching created debian package /home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/target/porelo-adapter-forgejo_0.5.1~snapshot.20_amd64.deb
+2026-11-01T08:32:31.0351248Z [INFO] 
+2026-11-01T08:32:31.0351519Z [INFO] --- rpm:1.13.0:rpm (rpm) @ porelo-adapter-forgejo ---
+2026-11-01T08:32:31.0363232Z [INFO] Writing to target to: /home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/target/porelo-adapter-forgejo-0.5.1~snapshot.20-1.x86_64.rpm
+2026-11-01T08:32:31.0363950Z [INFO] RPM base information - name: porelo-adapter-forgejo, version: 0.5.1~snapshot.20-1, arch: x86_64
+2026-11-01T08:32:31.0364236Z [INFO] File Digest Algorithm: SHA-256
+2026-11-01T08:32:31.0366068Z [INFO] Writing target file: /home/runner/work/porelo-adapters/porelo-adapters/adapters/forgejo/target/porelo-adapter-forgejo-0.5.1~snapshot.20-1.x86_64.rpm
+2026-11-01T08:32:31.0366614Z [INFO] Adding dependency [require]: name = porelo, version = null, flags = []
+2026-11-01T08:32:31.0367076Z [INFO] Adding dependency [require]: name = libc.so.6(GLIBC_2.34)(64bit), version = null, flags = []
+2026-11-01T08:32:31.0367557Z [INFO] Adding dependency [require]: name = libz.so.1(ZLIB_1.2.2)(64bit), version = null, flags = []
+2026-11-01T08:32:34.3498780Z [INFO] Required RPM version: 4.11
+2026-11-01T08:32:34.3499091Z [INFO] attaching rpm
+2026-11-01T08:32:34.3500044Z [INFO] 
+2026-11-01T08:32:34.3500403Z [INFO] --- exec:3.6.3:exec (check-linkage) @ porelo-adapter-forgejo ---
+2026-11-01T08:32:34.5663062Z OK    1 binary(ies) need no more than the packages declare: libc.so.6 GLIBC 2.34, libz.so.1 ZLIB 1.2.2
+2026-11-01T08:32:34.9577367Z [INFO] 
+2026-11-01T08:32:34.9577806Z [INFO] --- exec:3.6.3:exec (check-package-version) @ porelo-adapter-forgejo ---
+2026-11-01T08:32:35.2006193Z OK    porelo-adapter-forgejo_0.5.1~snapshot.20_amd64.deb and porelo-adapter-forgejo-0.5.1~snapshot.20-1.x86_64.rpm carry 0.5.1~snapshot.20
+2026-11-01T08:32:35.5637432Z [INFO] 
+2026-11-01T08:32:35.5637756Z [INFO] ---------------< org.fuin.porelo:porelo-review-standin >----------------
+2026-11-01T08:32:35.5638063Z [INFO] Building Porelo Review Stand-In 0.5.1-SNAPSHOT                     [7/7]
+2026-11-01T08:32:35.5638284Z [INFO]   from standin/pom.xml
+2026-11-01T08:32:35.5638516Z [INFO] --------------------------------[ jar ]---------------------------------
+2026-11-01T08:32:35.5709992Z [INFO] Downloading from central.sonatype.snapshots: https://central.sonatype.com/repository/maven-snapshots/org/fuin/porelo/porelo-forge-client-github/0.1.0-SNAPSHOT/porelo-forge-client-github-0.1.0-20261101.081543-1-tests.jar
+2026-11-01T08:32:35.8897736Z [INFO] Downloaded from central.sonatype.snapshots: https://central.sonatype.com/repository/maven-snapshots/org/fuin/porelo/porelo-forge-client-github/0.1.0-SNAPSHOT/porelo-forge-client-github-0.1.0-20261101.081543-1-tests.jar (75 kB at 235 kB/s)
+2026-11-01T08:32:35.8907592Z [INFO] 
+2026-11-01T08:32:35.8907979Z [INFO] --- enforcer:3.6.2:enforce (enforce-java-and-maven-version) @ porelo-review-standin ---
+2026-11-01T08:32:35.8922572Z [INFO] 
+2026-11-01T08:32:35.8923036Z [INFO] --- spotless:3.10.3:check (spotless-check) @ porelo-review-standin ---
+2026-11-01T08:32:35.8981498Z [INFO] Index file does not exist. Fallback to an empty index
+2026-11-01T08:32:36.1631526Z [INFO] Spotless.Java is keeping 12 files clean - 0 needs changes to be clean, 12 were already clean, 0 were skipped because caching determined they were already clean
+2026-11-01T08:32:36.1650292Z [INFO] 
+2026-11-01T08:32:36.1650675Z [INFO] --- resources:3.4.0:resources (default-resources) @ porelo-review-standin ---
+2026-11-01T08:32:36.1683234Z [INFO] Copying 16 resources from src/main/resources to target/classes
+2026-11-01T08:32:36.1715844Z [INFO] 
+2026-11-01T08:32:36.1716222Z [INFO] --- flatten:1.8.0:flatten (flatten) @ porelo-review-standin ---
+2026-11-01T08:32:36.1719379Z [INFO] Generating flattened POM of project org.fuin.porelo:porelo-review-standin:jar:0.5.1-SNAPSHOT...
+2026-11-01T08:32:36.1770963Z [INFO] 
+2026-11-01T08:32:36.1773321Z [INFO] --- compiler:3.15.0:compile (default-compile) @ porelo-review-standin ---
+2026-11-01T08:32:36.1821054Z [INFO] Recompiling the module because of changed dependency.
+2026-11-01T08:32:36.1826963Z [INFO] Compiling 9 source files with javac [debug release 25] to target/classes
+2026-11-01T08:32:36.7957689Z [INFO] /home/runner/work/porelo-adapters/porelo-adapters/standin/src/main/java/org/fuin/porelo/standin/FixtureSource.java: Some input files use or override a deprecated API.
+2026-11-01T08:32:36.7958744Z [INFO] /home/runner/work/porelo-adapters/porelo-adapters/standin/src/main/java/org/fuin/porelo/standin/FixtureSource.java: Recompile with -Xlint:deprecation for details.
+2026-11-01T08:32:36.7959471Z [INFO] 
+2026-11-01T08:32:36.7960088Z [INFO] --- resources:3.4.0:testResources (default-testResources) @ porelo-review-standin ---
+2026-11-01T08:32:36.7972867Z [INFO] skip non existing resourceDirectory /home/runner/work/porelo-adapters/porelo-adapters/standin/src/test/resources
+2026-11-01T08:32:36.7974686Z [INFO] 
+2026-11-01T08:32:36.7975170Z [INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ porelo-review-standin ---
+2026-11-01T08:32:36.7992933Z [INFO] Recompiling the module because of changed dependency.
+2026-11-01T08:32:36.7994787Z [INFO] Compiling 3 source files with javac [debug release 25] to target/test-classes
+2026-11-01T08:32:37.0875503Z [INFO] 
+2026-11-01T08:32:37.0876318Z [INFO] --- surefire:3.5.5:test (default-test) @ porelo-review-standin ---
+2026-11-01T08:32:37.0918812Z [INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+2026-11-01T08:32:37.0955159Z [INFO] 
+2026-11-01T08:32:37.0955661Z [INFO] -------------------------------------------------------
+2026-11-01T08:32:37.0955982Z [INFO]  T E S T S
+2026-11-01T08:32:37.0956283Z [INFO] -------------------------------------------------------
+2026-11-01T08:32:37.4967780Z [INFO] Running org.fuin.porelo.standin.StandInTest
+2026-11-01T08:32:48.8108668Z [INFO] Tests run: 45, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.31 s -- in org.fuin.porelo.standin.StandInTest
+2026-11-01T08:32:48.8110060Z [INFO] Running org.fuin.porelo.standin.StandInReplayTest
+2026-11-01T08:32:49.4444453Z [ERROR] Tests run: 7, Failures: 0, Errors: 7, Skipped: 0, Time elapsed: 0.633 s <<< FAILURE! -- in org.fuin.porelo.standin.StandInReplayTest
+2026-11-01T08:32:49.4445859Z [ERROR] org.fuin.porelo.standin.StandInReplayTest.pendingReadsGitHubAgainAfterItsPullRequestsWereStacked -- Time elapsed: 0.234 s <<< ERROR!
+2026-11-01T08:32:49.4447121Z org.fuin.porelo.wire.varlink.VarlinkException: org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.4448082Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.replyParameters(VarlinkClient.java:123)
+2026-11-01T08:32:49.4449022Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.call(VarlinkClient.java:59)
+2026-11-01T08:32:49.4449818Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:96)
+2026-11-01T08:32:49.4450407Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:87)
+2026-11-01T08:32:49.4451245Z 	at org.fuin.porelo.standin.StandInReplayTest.pendingReadsGitHubAgainAfterItsPullRequestsWereStacked(StandInReplayTest.java:268)
+2026-11-01T08:32:49.4452026Z 	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+2026-11-01T08:32:49.4452522Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4453008Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4453340Z 
+2026-11-01T08:32:49.4453872Z [ERROR] org.fuin.porelo.standin.StandInReplayTest.aSentCommentThatGitHubReadsBackOddlyIsNotHeld -- Time elapsed: 0.070 s <<< ERROR!
+2026-11-01T08:32:49.4454997Z org.fuin.porelo.wire.varlink.VarlinkException: org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.4455926Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.replyParameters(VarlinkClient.java:123)
+2026-11-01T08:32:49.4456546Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.call(VarlinkClient.java:59)
+2026-11-01T08:32:49.4457115Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:96)
+2026-11-01T08:32:49.4457869Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:87)
+2026-11-01T08:32:49.4458496Z 	at org.fuin.porelo.standin.StandInReplayTest.push(StandInReplayTest.java:110)
+2026-11-01T08:32:49.4459142Z 	at org.fuin.porelo.standin.StandInReplayTest.submission(StandInReplayTest.java:138)
+2026-11-01T08:32:49.4460200Z 	at org.fuin.porelo.standin.StandInReplayTest.aSentCommentThatGitHubReadsBackOddlyIsNotHeld(StandInReplayTest.java:377)
+2026-11-01T08:32:49.4460977Z 	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+2026-11-01T08:32:49.4461845Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4462371Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4462734Z 
+2026-11-01T08:32:49.4463272Z [ERROR] org.fuin.porelo.standin.StandInReplayTest.aReplyToASentReplyGoesToItsRootOnGitHub -- Time elapsed: 0.066 s <<< ERROR!
+2026-11-01T08:32:49.4464340Z org.fuin.porelo.wire.varlink.VarlinkException: org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.4465246Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.replyParameters(VarlinkClient.java:123)
+2026-11-01T08:32:49.4465906Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.call(VarlinkClient.java:59)
+2026-11-01T08:32:49.4466514Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:96)
+2026-11-01T08:32:49.4467150Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:87)
+2026-11-01T08:32:49.4467781Z 	at org.fuin.porelo.standin.StandInReplayTest.push(StandInReplayTest.java:110)
+2026-11-01T08:32:49.4468453Z 	at org.fuin.porelo.standin.StandInReplayTest.submission(StandInReplayTest.java:138)
+2026-11-01T08:32:49.4469432Z 	at org.fuin.porelo.standin.StandInReplayTest.aReplyToASentReplyGoesToItsRootOnGitHub(StandInReplayTest.java:335)
+2026-11-01T08:32:49.4470199Z 	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+2026-11-01T08:32:49.4470724Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4471960Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4472344Z 
+2026-11-01T08:32:49.4473001Z [ERROR] org.fuin.porelo.standin.StandInReplayTest.aCommentSentToGitHubIsOneResultThatGitHubsReplyJoins -- Time elapsed: 0.064 s <<< ERROR!
+2026-11-01T08:32:49.4474114Z org.fuin.porelo.wire.varlink.VarlinkException: org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.4475021Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.replyParameters(VarlinkClient.java:123)
+2026-11-01T08:32:49.4475922Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.call(VarlinkClient.java:59)
+2026-11-01T08:32:49.4476541Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:96)
+2026-11-01T08:32:49.4477179Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:87)
+2026-11-01T08:32:49.4477810Z 	at org.fuin.porelo.standin.StandInReplayTest.push(StandInReplayTest.java:110)
+2026-11-01T08:32:49.4478484Z 	at org.fuin.porelo.standin.StandInReplayTest.submission(StandInReplayTest.java:138)
+2026-11-01T08:32:49.4479535Z 	at org.fuin.porelo.standin.StandInReplayTest.aCommentSentToGitHubIsOneResultThatGitHubsReplyJoins(StandInReplayTest.java:281)
+2026-11-01T08:32:49.4480417Z 	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+2026-11-01T08:32:49.4480835Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4481430Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4481671Z 
+2026-11-01T08:32:49.4482115Z [ERROR] org.fuin.porelo.standin.StandInReplayTest.aForgedReplyToIsRefusedAndNothingIsWritten -- Time elapsed: 0.065 s <<< ERROR!
+2026-11-01T08:32:49.4483055Z org.fuin.porelo.wire.varlink.VarlinkException: org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.4483822Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.replyParameters(VarlinkClient.java:123)
+2026-11-01T08:32:49.4484367Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.call(VarlinkClient.java:59)
+2026-11-01T08:32:49.4484859Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:96)
+2026-11-01T08:32:49.4485366Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:87)
+2026-11-01T08:32:49.4485878Z 	at org.fuin.porelo.standin.StandInReplayTest.push(StandInReplayTest.java:110)
+2026-11-01T08:32:49.4486666Z 	at org.fuin.porelo.standin.StandInReplayTest.submission(StandInReplayTest.java:138)
+2026-11-01T08:32:49.4487389Z 	at org.fuin.porelo.standin.StandInReplayTest.aForgedReplyToIsRefusedAndNothingIsWritten(StandInReplayTest.java:180)
+2026-11-01T08:32:49.4488008Z 	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+2026-11-01T08:32:49.4488401Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4488779Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4489019Z 
+2026-11-01T08:32:49.4489623Z [ERROR] org.fuin.porelo.standin.StandInReplayTest.aCommentSentToGitHubAndAReadAtOnceBothFinish -- Time elapsed: 0.064 s <<< ERROR!
+2026-11-01T08:32:49.4490534Z org.fuin.porelo.wire.varlink.VarlinkException: org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.4491290Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.replyParameters(VarlinkClient.java:123)
+2026-11-01T08:32:49.4491805Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.call(VarlinkClient.java:59)
+2026-11-01T08:32:49.4492349Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:96)
+2026-11-01T08:32:49.4492864Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:87)
+2026-11-01T08:32:49.4493400Z 	at org.fuin.porelo.standin.StandInReplayTest.push(StandInReplayTest.java:110)
+2026-11-01T08:32:49.4494074Z 	at org.fuin.porelo.standin.StandInReplayTest.submission(StandInReplayTest.java:138)
+2026-11-01T08:32:49.4494790Z 	at org.fuin.porelo.standin.StandInReplayTest.aCommentSentToGitHubAndAReadAtOnceBothFinish(StandInReplayTest.java:209)
+2026-11-01T08:32:49.4495434Z 	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+2026-11-01T08:32:49.4495839Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4496258Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4496492Z 
+2026-11-01T08:32:49.4497027Z [ERROR] org.fuin.porelo.standin.StandInReplayTest.aCommentWhoseLineDiffersFromItsThreadIsHeldAndTheRunPartial -- Time elapsed: 0.061 s <<< ERROR!
+2026-11-01T08:32:49.4499426Z org.fuin.porelo.wire.varlink.VarlinkException: org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.4500180Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.replyParameters(VarlinkClient.java:123)
+2026-11-01T08:32:49.4500718Z 	at org.fuin.porelo.wire.varlink.VarlinkClient.call(VarlinkClient.java:59)
+2026-11-01T08:32:49.4501208Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:96)
+2026-11-01T08:32:49.4501711Z 	at org.fuin.porelo.standin.StandInReplayTest.call(StandInReplayTest.java:87)
+2026-11-01T08:32:49.4502229Z 	at org.fuin.porelo.standin.StandInReplayTest.push(StandInReplayTest.java:110)
+2026-11-01T08:32:49.4502734Z 	at org.fuin.porelo.standin.StandInReplayTest.run(StandInReplayTest.java:120)
+2026-11-01T08:32:49.4503260Z 	at org.fuin.porelo.standin.StandInReplayTest.forgeRun(StandInReplayTest.java:115)
+2026-11-01T08:32:49.4505873Z 	at org.fuin.porelo.standin.StandInReplayTest.aCommentWhoseLineDiffersFromItsThreadIsHeldAndTheRunPartial(StandInReplayTest.java:161)
+2026-11-01T08:32:49.4506586Z 	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+2026-11-01T08:32:49.4506983Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4507370Z 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+2026-11-01T08:32:49.4507629Z 
+2026-11-01T08:32:49.7731538Z [INFO] 
+2026-11-01T08:32:49.7731970Z [INFO] Results:
+2026-11-01T08:32:49.7732332Z [INFO] 
+2026-11-01T08:32:49.7732651Z [ERROR] Errors: 
+2026-11-01T08:32:49.7733960Z [ERROR]   StandInReplayTest.aCommentSentToGitHubAndAReadAtOnceBothFinish:209->submission:138->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7736214Z [ERROR]   StandInReplayTest.aCommentSentToGitHubIsOneResultThatGitHubsReplyJoins:281->submission:138->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7737553Z [ERROR]   StandInReplayTest.aCommentWhoseLineDiffersFromItsThreadIsHeldAndTheRunPartial:161->forgeRun:115->run:120->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7743963Z [ERROR]   StandInReplayTest.aForgedReplyToIsRefusedAndNothingIsWritten:180->submission:138->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7745042Z [ERROR]   StandInReplayTest.aReplyToASentReplyGoesToItsRootOnGitHub:335->submission:138->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7746440Z [ERROR]   StandInReplayTest.aSentCommentThatGitHubReadsBackOddlyIsNotHeld:377->submission:138->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7747514Z [ERROR]   StandInReplayTest.pendingReadsGitHubAgainAfterItsPullRequestsWereStacked:268->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7748178Z [INFO] 
+2026-11-01T08:32:49.7748500Z [ERROR] Tests run: 52, Failures: 0, Errors: 7, Skipped: 0
+2026-11-01T08:32:49.7748788Z [INFO] 
+2026-11-01T08:32:49.7749071Z [INFO] ------------------------------------------------------------------------
+2026-11-01T08:32:49.7749559Z [INFO] Reactor Summary for Porelo Adapters 0.5.1-SNAPSHOT:
+2026-11-01T08:32:49.7749839Z [INFO] 
+2026-11-01T08:32:49.7750098Z [INFO] Porelo Adapters .................................... SUCCESS [  6.018 s]
+2026-11-01T08:32:49.7750507Z [INFO] Porelo Build Contract .............................. SUCCESS [  6.496 s]
+2026-11-01T08:32:49.7750933Z [INFO] Porelo Adapter Parent .............................. SUCCESS [  0.055 s]
+2026-11-01T08:32:49.7751544Z [INFO] Porelo Adapter HTTP ................................ SUCCESS [  5.198 s]
+2026-11-01T08:32:49.7751957Z [INFO] Porelo GitHub Adapter .............................. SUCCESS [01:36 min]
+2026-11-01T08:32:49.7752373Z [INFO] Porelo Forgejo Adapter ............................. SUCCESS [01:34 min]
+2026-11-01T08:32:49.7752787Z [INFO] Porelo Review Stand-In ............................. FAILURE [ 14.211 s]
+2026-11-01T08:32:49.7753183Z [INFO] ------------------------------------------------------------------------
+2026-11-01T08:32:49.7753495Z [INFO] BUILD FAILURE
+2026-11-01T08:32:49.7753763Z [INFO] ------------------------------------------------------------------------
+2026-11-01T08:32:49.7754079Z [INFO] Total time:  03:43 min
+2026-11-01T08:32:49.7754317Z [INFO] Finished at: 2026-11-01T08:32:49Z
+2026-11-01T08:32:49.7754630Z [INFO] ------------------------------------------------------------------------
+2026-11-01T08:32:49.7757007Z [ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.5:test (default-test) on project porelo-review-standin: 
+2026-11-01T08:32:49.7757505Z [ERROR] 
+2026-11-01T08:32:49.7757940Z [ERROR] See /home/runner/work/porelo-adapters/porelo-adapters/standin/target/surefire-reports for the individual test results.
+2026-11-01T08:32:49.7758575Z [ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+2026-11-01T08:32:49.7758933Z [ERROR] -> [Help 1]
+2026-11-01T08:32:49.7759119Z [ERROR] 
+2026-11-01T08:32:49.7760338Z [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+2026-11-01T08:32:49.7760765Z [ERROR] Re-run Maven using the -X switch to enable full debug logging.
+2026-11-01T08:32:49.7761074Z [ERROR] 
+2026-11-01T08:32:49.7761427Z [ERROR] For more information about the errors and possible solutions, please read the following articles:
+2026-11-01T08:32:49.7762152Z [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+2026-11-01T08:32:49.7762522Z [ERROR] 
+2026-11-01T08:32:49.7762802Z [ERROR] After correcting the problems, you can resume the build with the command
+2026-11-01T08:32:49.7763187Z [ERROR]   mvn <args> -rf :porelo-review-standin
+2026-11-01T08:32:49.8438590Z ##[error]Process completed with exit code 1.
+2026-11-01T08:32:49.8554345Z Post job cleanup.
+2026-11-01T08:32:49.8556974Z ##[start-action display=Run actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9;id=__5fd57e58-39c4-4622-acd4-c8569f841e4b.__actions_cache]
+2026-11-01T08:32:49.8559057Z ##[end-action id=__5fd57e58-39c4-4622-acd4-c8569f841e4b.__actions_cache;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-11-01T08:32:49.8611381Z Post job cleanup.
+2026-11-01T08:32:49.9204268Z [command]/usr/bin/git version
+2026-11-01T08:32:49.9243168Z git version 2.56.0
+2026-11-01T08:32:49.9268386Z Temporarily overriding HOME='/home/runner/work/_temp/6903056b-ae73-4888-b0ea-a3b6bd3fc809' before making global git config changes
+2026-11-01T08:32:49.9268941Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-01T08:32:49.9272194Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/porelo-adapters/porelo-adapters
+2026-11-01T08:32:49.9304321Z Removing SSH command configuration
+2026-11-01T08:32:49.9309011Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-01T08:32:49.9342382Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-01T08:32:49.9563986Z Removing HTTP extra header
+2026-11-01T08:32:49.9568431Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-01T08:32:49.9604324Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-01T08:32:49.9814212Z Removing includeIf entries pointing to credentials config files
+2026-11-01T08:32:49.9820988Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-01T08:32:49.9870442Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-01T08:32:50.0212090Z Cleaning up orphan processes

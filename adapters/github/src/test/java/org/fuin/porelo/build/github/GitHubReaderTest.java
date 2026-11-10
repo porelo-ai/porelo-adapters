@@ -216,7 +216,8 @@ class GitHubReaderTest {
         assertThat(build.runs())
                 .as("every run in GitHub's order, each with its own result")
                 .containsExactly(
-                        new Build.Run("Lint", "in_progress"), new Build.Run("Build", "failure"));
+                        new Build.Run("Lint", "in_progress", null, "2"),
+                        new Build.Run("Build", "failure", null, "1"));
     }
 
     @Test
@@ -261,7 +262,8 @@ class GitHubReaderTest {
     void aRedirectFromTheApiIsRefusedNeverReadAsNoBuildOrNoBranch() {
         // GitHub answers 301 for a repository that was renamed or moved.
         final String moved =
-                "{\"message\":\"Moved Permanently\",\"url\":\"https://forge.example/repositories/1\"}";
+                "{\"message\":\"Moved"
+                        + " Permanently\",\"url\":\"https://forge.example/repositories/1\"}";
         answers.put(
                 API
                         + "/repos/porelo-ai/porelo/actions/runs?head_sha="

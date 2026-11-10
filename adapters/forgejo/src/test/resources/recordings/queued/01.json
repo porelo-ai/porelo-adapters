@@ -7,5 +7,5 @@
   "headers": {
     "content-type": "application/json"
   },
-  "body": "{\"total_count\":1,\"workflow_runs\":[{\"id\":10,\"workflow_id\":\"wait.yml\",\"status\":\"waiting\"}]}"
+  "body": "{\"total_count\":2,\"workflow_runs\":[{\"id\":10,\"workflow_id\":\"wait.yml\",\"status\":\"waiting\",\"event\":\"push\"},{\"id\":3,\"workflow_id\":\"wait.yml\",\"status\":\"waiting\",\"event\":\"pull_request\"}]}"
 }

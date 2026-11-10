@@ -1,0 +1,52 @@
+{
+  "jobs": [
+    {
+      "name": "Shared rules check / check",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/0/name"
+      ],
+      "resultFrom": "02.json#/jobs/0/conclusion",
+      "run": "41298055478",
+      "runFrom": "01.json#/workflow_runs/0/id",
+      "url": "https://github.com/porelo-ai/porelo-adapters/actions/runs/41298055478/job/124822991272",
+      "urlFrom": "02.json#/jobs/0/html_url"
+    },
+    {
+      "name": "Build / Build, packages and publish",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/1/name",
+        "03.json#/jobs/0/name"
+      ],
+      "resultFrom": "03.json#/jobs/0/conclusion",
+      "run": "41289974631",
+      "runFrom": "01.json#/workflow_runs/1/id",
+      "url": "https://github.com/porelo-ai/porelo-adapters/actions/runs/41289974631/job/124799004216",
+      "urlFrom": "03.json#/jobs/0/html_url"
+    }
+  ],
+  "runs": [
+    {
+      "name": "Shared rules check",
+      "result": "success",
+      "nameFrom": "01.json#/workflow_runs/0/name",
+      "resultFrom": "01.json#/workflow_runs/0/conclusion",
+      "id": "41298055478",
+      "idFrom": "01.json#/workflow_runs/0/id",
+      "event": "schedule",
+      "eventFrom": "01.json#/workflow_runs/0/event"
+    },
+    {
+      "name": "Build",
+      "result": "success",
+      "nameFrom": "01.json#/workflow_runs/1/name",
+      "resultFrom": "01.json#/workflow_runs/1/conclusion",
+      "id": "41289974631",
+      "idFrom": "01.json#/workflow_runs/1/id",
+      "event": "push",
+      "eventFrom": "01.json#/workflow_runs/1/event"
+    }
+  ]
+}

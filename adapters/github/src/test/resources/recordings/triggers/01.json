@@ -1,0 +1,16 @@
+{
+  "recorded": true,
+  "source": "github.com, 2026-11-09",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-adapters/actions/runs?head_sha=997951a163827581d3e30bc8319584a65d4603cc&per_page=100&page=1",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4998",
+    "x-ratelimit-reset": "1794265641",
+    "x-ratelimit-used": "2",
+    "x-ratelimit-resource": "core"
+  },
+  "body": "{\"total_count\":2,\"workflow_runs\":[{\"id\":41298055478,\"name\":\"Shared rules check\",\"event\":\"schedule\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"id\":41289974631,\"name\":\"Build\",\"event\":\"push\",\"status\":\"completed\",\"conclusion\":\"success\"}]}"
+}

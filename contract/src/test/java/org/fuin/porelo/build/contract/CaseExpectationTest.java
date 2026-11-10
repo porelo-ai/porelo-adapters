@@ -97,8 +97,8 @@ class CaseExpectationTest {
             assertThat(expectation.runs())
                     .as("each recorded run with its conclusion, or its state while it has none")
                     .containsExactly(
-                            new CaseExpectation.Run("Build", "failure"),
-                            new CaseExpectation.Run("Lint", "in_progress"));
+                            new CaseExpectation.Run("Build", "failure", null, "1"),
+                            new CaseExpectation.Run("Lint", "in_progress", null, "2"));
         }
     }
 
@@ -292,6 +292,10 @@ class CaseExpectationTest {
         final List<Map<String, Object>> runs = new ArrayList<>();
         runs.add(run("Build", "failure", RUNS + "/0/name", RUNS + "/0/conclusion"));
         runs.add(run("Lint", "in_progress", RUNS + "/1/name", RUNS + "/1/status"));
+        for (int index = 0; index < runs.size(); index++) {
+            runs.get(index).put("id", Integer.toString(index + 1));
+            runs.get(index).put("idFrom", RUNS + "/" + index + "/id");
+        }
         return runs;
     }
 

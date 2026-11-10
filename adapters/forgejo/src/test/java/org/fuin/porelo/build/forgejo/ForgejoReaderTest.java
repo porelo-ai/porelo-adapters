@@ -84,9 +84,16 @@ class ForgejoReaderTest {
                 .isEqualTo(
                         new Build(
                                 Build.CANCELLED,
-                                List.of(new Build.Job("check.yml / test", "cancelled")),
+                                List.of(
+                                        new Build.Job(
+                                                "check.yml / test",
+                                                "cancelled",
+                                                null,
+                                                "1",
+                                                null,
+                                                null)),
                                 "",
-                                List.of(new Build.Run("check.yml", "cancelled"))));
+                                List.of(new Build.Run("check.yml", "cancelled", null, "1"))));
     }
 
     @Test
@@ -232,8 +239,8 @@ class ForgejoReaderTest {
         assertThat(without.jobs())
                 .as("both jobs, neither log")
                 .containsExactly(
-                        new Build.Job("check.yml / green", "success"),
-                        new Build.Job("check.yml / red", "failure"));
+                        new Build.Job("check.yml / green", "success", null, "1", null, null),
+                        new Build.Job("check.yml / red", "failure", null, "1", null, null));
         assertThat(requests).as("NONE listed runs and jobs only").hasSize(2);
         answers.put(
                 API + LOG,
@@ -258,8 +265,9 @@ class ForgejoReaderTest {
         assertThat(build(Build.Logs.ALL).jobs())
                 .as("only failure logs while another run is outstanding")
                 .containsExactly(
-                        new Build.Job("check.yml / test", "failure", new byte[] {42}),
-                        new Build.Job("check.yml / green", "success"));
+                        new Build.Job(
+                                "check.yml / test", "failure", new byte[] {42}, "1", null, null),
+                        new Build.Job("check.yml / green", "success", null, "2", null, null));
     }
 
     @Test

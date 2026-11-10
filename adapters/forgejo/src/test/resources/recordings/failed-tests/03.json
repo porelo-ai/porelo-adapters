@@ -1,0 +1,18 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-11-09",
+  "capture": "log-failed-tests-17",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-adapters/actions/jobs/17/logs",
+  "status": 200,
+  "headers": {
+    "content-type": "text/plain; charset=utf-8"
+  },
+  "bodyFile": "failed-job.txt",
+  "reduction": {
+    "originalBytes": 4363,
+    "retainedBytes": 4363,
+    "sha256": "d8868fa6ee69f2ebccad5c6e2517b0d13cb4f2a0b92c0f6f712be60d71d5209c",
+    "tailSha256": "d8868fa6ee69f2ebccad5c6e2517b0d13cb4f2a0b92c0f6f712be60d71d5209c"
+  }
+}

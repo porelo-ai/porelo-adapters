@@ -1,6 +1,6 @@
 {
   "recorded": false,
-  "why": "A queued run could not be captured on demand.",
+  "why": "A queued run could not be captured on demand; a push and a pull request run of one workflow, both queued, must each be answered.",
   "method": "GET",
   "path": "/repos/porelo-ai/porelo-frontend/actions/runs?head_sha=0123456789abcdef0123456789abcdef01234567&per_page=100&page=1",
   "status": 200,
@@ -12,5 +12,5 @@
     "x-ratelimit-used": "19",
     "x-ratelimit-resource": "core"
   },
-  "body": "{\"total_count\":1,\"workflow_runs\":[{\"id\":2,\"name\":\"Build\",\"status\":\"queued\",\"conclusion\":null}]}"
+  "body": "{\"total_count\":2,\"workflow_runs\":[{\"id\":2,\"name\":\"Build\",\"status\":\"queued\",\"conclusion\":null,\"event\":\"push\"},{\"id\":3,\"name\":\"Build\",\"status\":\"queued\",\"conclusion\":null,\"event\":\"pull_request\"}]}"
 }

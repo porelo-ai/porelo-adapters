@@ -1,0 +1,78 @@
+{
+  "jobs": [
+    {
+      "name": "check.yml / build",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/0/name"
+      ],
+      "resultFrom": "02.json#/0/status",
+      "run": "10",
+      "runFrom": "01.json#/workflow_runs/0/id",
+      "url": "https://forge.example/core/triggers/actions/runs/4/jobs/0",
+      "urlFrom": "01.json#/workflow_runs/0/html_url"
+    },
+    {
+      "name": "check.yml / lint",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/1/name"
+      ],
+      "resultFrom": "02.json#/1/status",
+      "run": "10",
+      "runFrom": "01.json#/workflow_runs/0/id",
+      "url": "https://forge.example/core/triggers/actions/runs/4/jobs/1",
+      "urlFrom": "01.json#/workflow_runs/0/html_url"
+    },
+    {
+      "name": "check.yml / build",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/1/workflow_id",
+        "03.json#/0/name"
+      ],
+      "resultFrom": "03.json#/0/status",
+      "run": "9",
+      "runFrom": "01.json#/workflow_runs/1/id",
+      "url": "https://forge.example/core/triggers/actions/runs/3/jobs/0",
+      "urlFrom": "01.json#/workflow_runs/1/html_url"
+    },
+    {
+      "name": "check.yml / lint",
+      "result": "success",
+      "nameFrom": [
+        "01.json#/workflow_runs/1/workflow_id",
+        "03.json#/1/name"
+      ],
+      "resultFrom": "03.json#/1/status",
+      "run": "9",
+      "runFrom": "01.json#/workflow_runs/1/id",
+      "url": "https://forge.example/core/triggers/actions/runs/3/jobs/1",
+      "urlFrom": "01.json#/workflow_runs/1/html_url"
+    }
+  ],
+  "runs": [
+    {
+      "name": "check.yml",
+      "result": "success",
+      "id": "10",
+      "event": "pull_request",
+      "nameFrom": "01.json#/workflow_runs/0/workflow_id",
+      "resultFrom": "01.json#/workflow_runs/0/status",
+      "idFrom": "01.json#/workflow_runs/0/id",
+      "eventFrom": "01.json#/workflow_runs/0/event"
+    },
+    {
+      "name": "check.yml",
+      "result": "success",
+      "id": "9",
+      "event": "push",
+      "nameFrom": "01.json#/workflow_runs/1/workflow_id",
+      "resultFrom": "01.json#/workflow_runs/1/status",
+      "idFrom": "01.json#/workflow_runs/1/id",
+      "eventFrom": "01.json#/workflow_runs/1/event"
+    }
+  ]
+}

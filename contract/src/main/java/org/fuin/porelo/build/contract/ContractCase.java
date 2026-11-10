@@ -25,6 +25,7 @@ record ContractCase(String name, String repository, Question question, Expected 
     }
 
     record Head(String branch) implements Question {
+        /** Asks where the recorded branch points. */
         @Override
         public Object ask(final InstalledBuildReader reader, final Target target) {
             return reader.head(target, branch);
@@ -32,6 +33,7 @@ record ContractCase(String name, String repository, Question question, Expected 
     }
 
     record Commit(String commit, Build.Logs logs) implements Question {
+        /** Asks for the recorded commit's build under its log policy. */
         @Override
         public Object ask(final InstalledBuildReader reader, final Target target) {
             return reader.build(target, commit, logs);
@@ -40,6 +42,7 @@ record ContractCase(String name, String repository, Question question, Expected 
 
     /** Opens the pull request from a branch, with the reader's own title when none is given. */
     record OpenPullRequest(String branch, @Nullable String title) implements Question {
+        /** Opens or finds the recorded branch's pull request. */
         @Override
         public Object ask(final InstalledBuildReader reader, final Target target) {
             final PullRequest answer = reader.openPullRequest(target, branch, title);
@@ -86,6 +89,21 @@ record ContractCase(String name, String repository, Question question, Expected 
                 build("many-jobs", COMMIT, Build.Logs.FAILURE, Build.FAILURE),
                 build("shared-logs", COMMIT, Build.Logs.ALL, Build.SUCCESS),
                 build("many-runs", COMMIT, Build.Logs.ALL, Build.QUEUED),
+                new ContractCase(
+                        "triggers",
+                        "porelo-ai/porelo-adapters",
+                        new Commit("997951a163827581d3e30bc8319584a65d4603cc", Build.Logs.FAILURE),
+                        new Verdict(Build.SUCCESS)),
+                new ContractCase(
+                        "action-required",
+                        "porelo-ai/porelo-buildtools",
+                        new Commit("7759386cb7f4df607556bc6bf73713181a45c3d0", Build.Logs.FAILURE),
+                        new Verdict(Build.UNKNOWN)),
+                new ContractCase(
+                        "failed-tests",
+                        "porelo-ai/porelo-adapters",
+                        new Commit("2665984cb97ee201e778d0bb91d5191ec0256be4", Build.Logs.FAILURE),
+                        new Verdict(Build.FAILURE)),
                 refusal("rate-limited", BuildRefused.Reason.RATE_LIMITED),
                 refusal("primary-rate-limited", BuildRefused.Reason.RATE_LIMITED),
                 new ContractCase(

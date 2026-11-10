@@ -1,0 +1,16 @@
+{
+  "recorded": true,
+  "source": "github.com, 2026-11-09",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-adapters/actions/runs/41289974631/jobs?per_page=100&page=1",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "x-ratelimit-limit": "5000",
+    "x-ratelimit-remaining": "4996",
+    "x-ratelimit-reset": "1794265641",
+    "x-ratelimit-used": "4",
+    "x-ratelimit-resource": "core"
+  },
+  "body": "{\"total_count\":1,\"jobs\":[{\"id\":124799004216,\"run_id\":41289974631,\"html_url\":\"https://github.com/porelo-ai/porelo-adapters/actions/runs/41289974631/job/124799004216\",\"status\":\"completed\",\"conclusion\":\"success\",\"name\":\"Build, packages and publish\"}]}"
+}

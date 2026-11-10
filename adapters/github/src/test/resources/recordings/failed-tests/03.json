@@ -1,0 +1,11 @@
+{
+  "recorded": true,
+  "source": "github.com, 2026-11-09",
+  "method": "GET",
+  "path": "/repos/porelo-ai/porelo-adapters/actions/jobs/124796177250/logs",
+  "status": 302,
+  "headers": {
+    "location": "{{blob}}/log?sig=x"
+  },
+  "body": ""
+}

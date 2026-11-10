@@ -15,6 +15,8 @@ import org.fuin.porelo.build.api.BuildReader;
 import org.fuin.porelo.build.api.BuildRefused;
 import org.fuin.porelo.build.api.PullRequest;
 import org.fuin.porelo.build.api.Target;
+import org.fuin.porelo.build.http.BuildFields;
+import org.fuin.porelo.build.http.FailedTests;
 import org.fuin.porelo.build.http.Http;
 import org.fuin.porelo.wire.Json;
 import org.fuin.porelo.wire.JsonException;
@@ -51,11 +53,13 @@ public final class ForgejoReader implements BuildReader {
         BuildMain.run(new ForgejoReader(Http.overNetwork()), arguments);
     }
 
+    /** Returns the forge this reader implements. */
     @Override
     public String forge() {
         return "forgejo";
     }
 
+    /** Returns the head commit of the named branch, or an empty string when absent. */
     @Override
     public String head(final Target target, final String branch) {
         requireApi(target);
@@ -80,13 +84,14 @@ public final class ForgejoReader implements BuildReader {
         return sha;
     }
 
+    /** Reads the commit's aggregate verdict, bounded run and job lists, and requested log tails. */
     @Override
     public Build build(final Target target, final String commit, final Build.Logs logs) {
         requireApi(target);
         final Repository repository = repository(target);
         if (!commit.matches("[0-9a-f]{40}"))
             return Build.unknown("'" + commit + "' is not a full commit sha");
-        final List<Map<?, ?>> runs = runs(target, repository, commit);
+        final List<Map<?, ?>> runs = BuildFields.distinct(runs(target, repository, commit));
         if (runs.isEmpty())
             return Build.unknown(
                     "no build of " + commit.substring(0, 12) + " at " + repository + " yet");
@@ -94,18 +99,22 @@ public final class ForgejoReader implements BuildReader {
         boolean outstanding = false;
         boolean running = false;
         boolean cancelled = false;
+        String unknown = "";
         for (final Map<?, ?> run : runs) {
             final String status = text(run.get("status"));
-            if (!STATUSES.contains(status))
-                return Build.unknown("unknown Forgejo status: " + status);
+            if (!STATUSES.contains(status)) unknown = "unknown Forgejo status: " + status;
             failed |= status.equals("failure");
             outstanding |= OUTSTANDING.contains(status);
             running |= status.equals("running");
             cancelled |= status.equals("cancelled");
         }
+        if (!failed && !unknown.isEmpty()) return Build.unknown(unknown);
         if (!failed && outstanding)
             return new Build(running ? Build.RUNNING : Build.QUEUED, List.of(), "", named(runs));
-        final Build.Logs wanted = logs == Build.Logs.ALL && outstanding ? Build.Logs.FAILURE : logs;
+        final Build.Logs wanted =
+                logs == Build.Logs.ALL && (outstanding || !unknown.isEmpty())
+                        ? Build.Logs.FAILURE
+                        : logs;
         final List<Build.Job> jobs = jobs(target, repository, runs, wanted);
         return new Build(
                 failed ? Build.FAILURE : cancelled ? Build.CANCELLED : Build.SUCCESS,
@@ -119,10 +128,18 @@ public final class ForgejoReader implements BuildReader {
     /** Each run in Forgejo's order, named by its workflow file, with its status. */
     private static List<Build.Run> named(final List<Map<?, ?>> runs) {
         return runs.stream()
-                .map(run -> new Build.Run(text(run.get("workflow_id")), text(run.get("status"))))
+                .limit(Build.MOST_RUNS)
+                .map(
+                        run ->
+                                new Build.Run(
+                                        text(run.get("workflow_id")),
+                                        text(run.get("status")),
+                                        BuildFields.event(run.get("event")),
+                                        BuildFields.id(run.get("id"))))
                 .toList();
     }
 
+    /** Opens the branch's pull request into the default branch, or returns the one already open. */
     @Override
     public PullRequest openPullRequest(
             final Target target, final String branch, final @Nullable String title) {
@@ -246,27 +263,42 @@ public final class ForgejoReader implements BuildReader {
             final List<Map<?, ?>> runs,
             final Build.Logs logs) {
         final List<ListedJob> all = new ArrayList<>();
-        for (final Map<?, ?> run : runs) {
+        final Map<String, List<Map<?, ?>>> byRun = new LinkedHashMap<>();
+        for (final Map<?, ?> run :
+                BuildFields.forJobs(runs, each -> "failure".equals(each.get("status")))) {
+            final String id = BuildFields.id(run.get("id"));
+            if (id == null) continue;
             final Http.Response response =
-                    api(
-                            target,
-                            repository.path() + "/actions/runs/" + id(run.get("id")) + "/jobs",
-                            0);
+                    api(target, repository.path() + "/actions/runs/" + id + "/jobs", 0);
             refuse(response);
-            for (final Map<?, ?> job : entries(json(response))) {
+            byRun.put(id, entries(json(response)));
+        }
+        final java.util.Set<String> named = new java.util.HashSet<>();
+        for (final Build.Run run : named(runs)) {
+            if (run.id() != null) named.add(run.id());
+        }
+        for (final Map<?, ?> run : runs) {
+            final String id = BuildFields.id(run.get("id"));
+            if (id == null) continue;
+            final List<Map<?, ?>> listed = byRun.getOrDefault(id, List.of());
+            for (int index = 0; index < listed.size(); index++) {
+                final Map<?, ?> job = listed.get(index);
                 all.add(
                         new ListedJob(
                                 text(run.get("workflow_id")) + " / " + text(job.get("name")),
                                 text(job.get("status")),
-                                id(job.get("id"))));
+                                BuildFields.id(job.get("id")),
+                                named.contains(id) ? id : null,
+                                jobPage(run, index, target)));
             }
         }
         final List<Build.Job> jobs = new ArrayList<>();
         for (final ListedJob job : kept(all)) {
-            if (logs == Build.Logs.NONE
+            if (job.id() == null
+                    || logs == Build.Logs.NONE
                     || OUTSTANDING.contains(job.result())
                     || logs == Build.Logs.FAILURE && !job.failed()) {
-                jobs.add(new Build.Job(job.name(), job.result()));
+                jobs.add(job.answer(null));
                 continue;
             }
             final Http.Response response =
@@ -275,10 +307,10 @@ public final class ForgejoReader implements BuildReader {
                             repository.path() + "/actions/jobs/" + job.id() + "/logs",
                             Build.TAIL);
             if (response.status() == 404 && unexecuted(response)) {
-                jobs.add(new Build.Job(job.name(), job.result()));
+                jobs.add(job.answer(null));
             } else {
                 refuse(response);
-                jobs.add(new Build.Job(job.name(), job.result(), response.body()));
+                jobs.add(job.answer(response.body()));
             }
         }
         return jobs;
@@ -303,7 +335,31 @@ public final class ForgejoReader implements BuildReader {
         return kept;
     }
 
-    private record ListedJob(String name, String result, long id) {
+    private static @Nullable String jobPage(
+            final Map<?, ?> run, final int index, final Target target) {
+        final String page = BuildFields.page(run.get("html_url"), target.upstream());
+        if (page == null) return null;
+        final URI address = URI.create(page);
+        if (address.getRawQuery() != null || address.getRawFragment() != null) return null;
+        return BuildFields.page(page + "/jobs/" + index, target.upstream());
+    }
+
+    private record ListedJob(
+            String name,
+            String result,
+            @Nullable String id,
+            @Nullable String run,
+            @Nullable String url) {
+        Build.Job answer(final byte @Nullable [] log) {
+            return new Build.Job(
+                    name,
+                    result,
+                    log,
+                    run,
+                    failed() && log != null ? FailedTests.read(log) : null,
+                    url);
+        }
+
         boolean failed() {
             return result.equals("failure");
         }
@@ -337,7 +393,8 @@ public final class ForgejoReader implements BuildReader {
                 || uri.getQuery() != null
                 || uri.getFragment() != null) {
             throw new IllegalArgumentException(
-                    "Target.api must name an HTTP or HTTPS API without credentials, query, or fragment");
+                    "Target.api must name an HTTP or HTTPS API without credentials, query, or"
+                            + " fragment");
         }
         final String base = target.api();
         return base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
@@ -375,7 +432,7 @@ public final class ForgejoReader implements BuildReader {
 
     private static @Nullable Object json(final Http.Response response) {
         try {
-            return Json.parse(new String(response.body(), StandardCharsets.UTF_8));
+            return Json.parseExact(new String(response.body(), StandardCharsets.UTF_8));
         } catch (JsonException ex) {
             throw unreachable("Forgejo answered with something that is not JSON");
         }
@@ -406,12 +463,6 @@ public final class ForgejoReader implements BuildReader {
         throw unreachable("Forgejo returned an invalid count or id");
     }
 
-    private static long id(final @Nullable Object value) {
-        final long id = nonnegative(value);
-        if (id == 0) throw unreachable("Forgejo returned a zero id");
-        return id;
-    }
-
     private static BuildRefused unreachable(final String detail) {
         return new BuildRefused(BuildRefused.Reason.UNREACHABLE, detail);
     }
@@ -432,6 +483,7 @@ public final class ForgejoReader implements BuildReader {
             return "/repos/" + owner + "/" + name;
         }
 
+        /** Returns the repository's owner and name as the forge spells them. */
         @Override
         public String toString() {
             return owner + "/" + name;

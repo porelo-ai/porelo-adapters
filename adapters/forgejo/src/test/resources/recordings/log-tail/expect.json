@@ -8,7 +8,9 @@
         "02.json#/0/name"
       ],
       "resultFrom": "02.json#/0/status",
-      "log": "03.json"
+      "log": "03.json",
+      "run": "1",
+      "runFrom": "01.json#/workflow_runs/0/id"
     }
   ],
   "runs": [
@@ -16,7 +18,9 @@
       "name": "tail.yml",
       "result": "failure",
       "nameFrom": "01.json#/workflow_runs/0/workflow_id",
-      "resultFrom": "01.json#/workflow_runs/0/status"
+      "resultFrom": "01.json#/workflow_runs/0/status",
+      "id": "1",
+      "idFrom": "01.json#/workflow_runs/0/id"
     }
   ]
 }

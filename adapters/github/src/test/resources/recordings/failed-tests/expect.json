@@ -1,0 +1,48 @@
+{
+  "jobs": [
+    {
+      "name": "Build / Build, packages and publish",
+      "result": "failure",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/name",
+        "02.json#/jobs/0/name"
+      ],
+      "resultFrom": "02.json#/jobs/0/conclusion",
+      "log": "04.json",
+      "run": "41221215415",
+      "runFrom": "01.json#/workflow_runs/0/id",
+      "url": "https://github.com/porelo-ai/porelo-adapters/actions/runs/41221215415/job/124796177250",
+      "urlFrom": "02.json#/jobs/0/html_url",
+      "failedTests": [
+        "StandInReplayTest.aCommentSentToGitHubAndAReadAtOnceBothFinish",
+        "StandInReplayTest.aCommentSentToGitHubIsOneResultThatGitHubsReplyJoins",
+        "StandInReplayTest.aCommentWhoseLineDiffersFromItsThreadIsHeldAndTheRunPartial",
+        "StandInReplayTest.aForgedReplyToIsRefusedAndNothingIsWritten",
+        "StandInReplayTest.aReplyToASentReplyGoesToItsRootOnGitHub",
+        "StandInReplayTest.aSentCommentThatGitHubReadsBackOddlyIsNotHeld",
+        "StandInReplayTest.pendingReadsGitHubAgainAfterItsPullRequestsWereStacked"
+      ],
+      "failedTestsFrom": [
+        "04.json#line=476",
+        "04.json#line=477",
+        "04.json#line=478",
+        "04.json#line=479",
+        "04.json#line=480",
+        "04.json#line=481",
+        "04.json#line=482"
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "name": "Build",
+      "result": "failure",
+      "nameFrom": "01.json#/workflow_runs/0/name",
+      "resultFrom": "01.json#/workflow_runs/0/conclusion",
+      "id": "41221215415",
+      "idFrom": "01.json#/workflow_runs/0/id",
+      "event": "push",
+      "eventFrom": "01.json#/workflow_runs/0/event"
+    }
+  ]
+}

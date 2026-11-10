@@ -7,7 +7,9 @@
         "01.json#/workflow_runs/0/name",
         "02.json#/jobs/0/name"
       ],
-      "resultFrom": "02.json#/jobs/0/conclusion"
+      "resultFrom": "02.json#/jobs/0/conclusion",
+      "run": "1",
+      "runFrom": "01.json#/workflow_runs/0/id"
     }
   ],
   "runs": [
@@ -15,7 +17,9 @@
       "name": "Build",
       "result": "cancelled",
       "nameFrom": "01.json#/workflow_runs/0/name",
-      "resultFrom": "01.json#/workflow_runs/0/conclusion"
+      "resultFrom": "01.json#/workflow_runs/0/conclusion",
+      "id": "1",
+      "idFrom": "01.json#/workflow_runs/0/id"
     }
   ]
 }

@@ -22,13 +22,12 @@
             <artifactId>jspecify</artifactId>
         </dependency>
 
-        <!-- test -->
         <dependency>
             <groupId>org.fuin.porelo</groupId>
             <artifactId>porelo-build-api</artifactId>
-            <scope>test</scope>
         </dependency>
 
+        <!-- test -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

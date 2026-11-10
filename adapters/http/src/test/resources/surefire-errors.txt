@@ -1,0 +1,12 @@
+2026-11-01T08:32:49.7731970Z [INFO] Results:
+2026-11-01T08:32:49.7732332Z [INFO] 
+2026-11-01T08:32:49.7732651Z [ERROR] Errors: 
+2026-11-01T08:32:49.7733960Z [ERROR]   StandInReplayTest.aCommentSentToGitHubAndAReadAtOnceBothFinish:209->submission:138->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7736214Z [ERROR]   StandInReplayTest.aCommentSentToGitHubIsOneResultThatGitHubsReplyJoins:281->submission:138->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7737553Z [ERROR]   StandInReplayTest.aCommentWhoseLineDiffersFromItsThreadIsHeldAndTheRunPartial:161->forgeRun:115->run:120->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7743963Z [ERROR]   StandInReplayTest.aForgedReplyToIsRefusedAndNothingIsWritten:180->submission:138->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7745042Z [ERROR]   StandInReplayTest.aReplyToASentReplyGoesToItsRootOnGitHub:335->submission:138->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7746440Z [ERROR]   StandInReplayTest.aSentCommentThatGitHubReadsBackOddlyIsNotHeld:377->submission:138->push:110->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7747514Z [ERROR]   StandInReplayTest.pendingReadsGitHubAgainAfterItsPullRequestsWereStacked:268->call:87->call:96 » Varlink org.fuin.porelo.Tasks1.Failed {message=The fetched head of pull request 6 is not the one GitHub named}
+2026-11-01T08:32:49.7748178Z [INFO] 
+2026-11-01T08:32:49.7748500Z [ERROR] Tests run: 52, Failures: 0, Errors: 7, Skipped: 0

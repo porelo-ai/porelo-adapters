@@ -1,0 +1,48 @@
+{
+  "jobs": [
+    {
+      "name": "test.yml / test",
+      "result": "failure",
+      "nameFrom": [
+        "01.json#/workflow_runs/0/workflow_id",
+        "02.json#/0/name"
+      ],
+      "resultFrom": "02.json#/0/status",
+      "run": "11",
+      "runFrom": "01.json#/workflow_runs/0/id",
+      "url": "https://forge.example/core/maven-failure/actions/runs/1/jobs/0",
+      "urlFrom": "01.json#/workflow_runs/0/html_url",
+      "log": "03.json",
+      "failedTests": [
+        "StandInReplayTest.aCommentSentToGitHubAndAReadAtOnceBothFinish",
+        "StandInReplayTest.aCommentSentToGitHubIsOneResultThatGitHubsReplyJoins",
+        "StandInReplayTest.aCommentWhoseLineDiffersFromItsThreadIsHeldAndTheRunPartial",
+        "StandInReplayTest.aForgedReplyToIsRefusedAndNothingIsWritten",
+        "StandInReplayTest.aReplyToASentReplyGoesToItsRootOnGitHub",
+        "StandInReplayTest.aSentCommentThatGitHubReadsBackOddlyIsNotHeld",
+        "StandInReplayTest.pendingReadsGitHubAgainAfterItsPullRequestsWereStacked"
+      ],
+      "failedTestsFrom": [
+        "03.json#line=7",
+        "03.json#line=8",
+        "03.json#line=9",
+        "03.json#line=10",
+        "03.json#line=11",
+        "03.json#line=12",
+        "03.json#line=13"
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "name": "test.yml",
+      "result": "failure",
+      "id": "11",
+      "event": "push",
+      "nameFrom": "01.json#/workflow_runs/0/workflow_id",
+      "resultFrom": "01.json#/workflow_runs/0/status",
+      "idFrom": "01.json#/workflow_runs/0/id",
+      "eventFrom": "01.json#/workflow_runs/0/event"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # GH29 — The Planning Modules Leave
 
-**Status:** Backlog.
+**Status:** Implementing.
 **Size:** S - one module group and what names it, no contract another repository reads.
 
 **What must be true.** `porelo-adapters` builds, tests and ships only build adapters: the `planning/` module group -

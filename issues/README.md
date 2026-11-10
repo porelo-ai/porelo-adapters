@@ -10,15 +10,11 @@ left out.
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
 | <a id="gh18"></a>[GH18](GH18-Every-Run-Of-A-Commit-In-The-Build-Answer.md) | M | - | Every `Build2.Build` answer of the GitHub and Forgejo readers carries `runs`, one name and result per run of the commit, queued and running too, at most 50 in the forge's order; the contract suite and its recordings hold it; waits for `porelo-build-api`'s `runs` |
-| <a id="gh19"></a>[GH19](GH19-A-Contract-Suite-For-Planning-Adapters.md) | L | - | `porelo-planning-contract`, a published suite every planning adapter extends over `Planning1`: workflow as stored, stale revisions refused, all or none, unknown items and missing capabilities refused, the token never shown |
-| <a id="gh20"></a>[GH20](GH20-The-Stories-Git-Adapter-Reads-The-Planning.md) | L | - | `stories-git`, a native planning adapter at `/usr/libexec/porelo/planning/stories-git`, reads the workflow, the stories' heads and each repository's issue index from its own clones, with links |
 
 ## Backlog
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
-| <a id="gh21"></a>[GH21](GH21-The-Stories-Git-Adapter-Sets-States.md) | L | [GH20](README.md#gh20) | `stories-git` sets issue states, and a story's while it has none, all or none against a revision: files, stories index, commit and push with a token lent per call |
-| <a id="gh22"></a>[GH22](GH22-The-Stories-Git-Adapter-Tells-Changes.md) | S | [GH20](README.md#gh20) | `stories-git` streams changes made elsewhere, fetched every few minutes and on demand, and never starts anything |
 | <a id="gh24"></a>[GH24](GH24-Each-Run-Named-By-Its-Trigger-With-Its-Jobs.md) | M | - | Each run of a commit named by its workflow and its trigger (push, pull request), queued, running or finished, every job under its run, and never no run while one is outstanding; needs two optional `Build2` fields |
 | <a id="gh25"></a>[GH25](GH25-A-Failed-Job-Told-By-Its-Failed-Tests.md) | M | - | A failed job answered with its failed tests and a link to its log page instead of the log printed whole; needs two optional `Build2` fields |
 | <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH17](README.md#gh17), [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials |
@@ -59,3 +55,12 @@ left out.
 | <a id="gh03"></a>GH03 | The Code Read Against The Skills It Names | `reader` read against the five skills `AGENTS.md` names, each finding fixed with a test seen red or declined. |
 | <a id="gh01"></a>GH01 | Release The Reader As A Package | A tag and `main` publish the reader as a `.deb` and an `.rpm` to the package repositories, where Porelo finds it. |
 | <a id="gh04"></a>GH04 | Renamed Porelo Here | The reader is `org.fuin.porelo:porelo-build-github`, packaged as `porelo-build-github` at `/usr/libexec/porelo/builds/github`, where Porelo looks; a documents test refuses the old word. |
+
+## Rejected
+
+| # | Title | Why |
+|---|---|---|
+| <a id="gh19"></a>GH19 | A Contract Suite For Planning Adapters | Planning is no adapter process and has no `Planning1` contract any more; it moves into the app `porelo-planner`, which takes the Git HTTP test server and the secret scan as its own test helpers. |
+| <a id="gh20"></a>GH20 | The Stories-Git Adapter Reads The Planning | Reading the planning moves into the app `porelo-planner`, with `stories-git`'s code as its model. |
+| <a id="gh21"></a>GH21 | The Stories-Git Adapter Sets States | Setting states moves into the app `porelo-planner`. |
+| <a id="gh22"></a>GH22 | The Stories-Git Adapter Tells Changes | Telling changes made elsewhere moves into the app `porelo-planner`. |

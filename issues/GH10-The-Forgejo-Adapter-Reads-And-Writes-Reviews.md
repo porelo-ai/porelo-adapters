@@ -1,6 +1,18 @@
-# [GH10](README.md#gh10) — The Forgejo Adapter Reads And Writes Reviews
+# GH10 — The Forgejo Adapter Reads And Writes Reviews
 
-**Status:** Idea.
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH10",
+  "title": "The Forgejo Adapter Reads And Writes Reviews",
+  "state": "Idea",
+  "size": "-",
+  "priority": "Medium",
+  "rank": 5,
+  "blockedBy": [],
+  "covers": "Forgejo serves reviews as SARIF beside `Build2` through the `forgejo` client, preserving origin and position evidence and holding unsupported writes"
+}
+```
 
 **What must be true.** The Forgejo adapter, `porelo-adapter-forgejo`, serves `Review1` beside `Build2`, reading and
 writing pull request reviews, line and general comments, threads and suggestions as Porelo's SARIF 2.1.0 profile.

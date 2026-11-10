@@ -1,7 +1,20 @@
 # GH25 — A Failed Job Told By Its Failed Tests
 
-**Status:** Review.
-**Size:** M - both readers and the contract suite, a log reading of its own, against two optional fields
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH25",
+  "title": "A Failed Job Told By Its Failed Tests",
+  "state": "Review",
+  "size": "M",
+  "priority": "Medium",
+  "rank": 3,
+  "blockedBy": [],
+  "covers": "A failed job answered with its failed tests and a link to its log page instead of the log printed whole; needs two optional `Build2` fields"
+}
+```
+
+**Why this size.** both readers and the contract suite, a log reading of its own, against two optional fields
 `porelo-build-api` must add to `Build2` first.
 
 **What must be true.** When a build fails, a person reading it sees for each failed job the tests that failed and a

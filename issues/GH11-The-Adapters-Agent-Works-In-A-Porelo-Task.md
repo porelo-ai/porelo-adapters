@@ -1,7 +1,21 @@
 # GH11 — The Adapters' Agent Works In A Porelo Task
 
-**Status:** Analyzed.
-**Size:** S - three workflows and `settings.xml` switched by the forge's variables, with a workflow test, before the
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH11",
+  "title": "The Adapters' Agent Works In A Porelo Task",
+  "state": "Analyzed",
+  "size": "S",
+  "priority": "Medium",
+  "rank": 1,
+  "blockedBy": [],
+  "covers": "porelo-adapters' agent works in a Porelo task on the move's host as `Agent Adapters`; first its workflows' publishing, `gh` and artifact upload held to `PORELO_PUBLISH` and the forge's registry read, with a workflow test",
+  "openQuestions": 0
+}
+```
+
+**Why this size.** three workflows and `settings.xml` switched by the forge's variables, with a workflow test, before the
 move; then the trial move's steps, this issue worked to Review inside the task, and the way back.
 
 **What must be true.** porelo-adapters' agent works in a Porelo task on the move's host, as the project's procedure for an agent's

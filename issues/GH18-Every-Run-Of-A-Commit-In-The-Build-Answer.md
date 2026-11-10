@@ -1,7 +1,20 @@
 # GH18 — Every Run Of A Commit In The Build Answer
 
-**Status:** Review
-**Size:** M - both readers, the published contract suite and its recordings change, against a new field of
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH18",
+  "title": "Every Run Of A Commit In The Build Answer",
+  "state": "Review",
+  "size": "M",
+  "priority": "Medium",
+  "rank": 4,
+  "blockedBy": [],
+  "covers": "Every `Build2.Build` answer of the GitHub and Forgejo readers carries `runs`, one name and result per run of the commit, queued and running too, at most 50 in the forge's order; the contract suite and its recordings hold it; waits for `porelo-build-api`'s `runs`"
+}
+```
+
+**Why this size.** both readers, the published contract suite and its recordings change, against a new field of
 `porelo-build-api`.
 
 **What must be true.** Every `Build2.Build` answer of the GitHub and the Forgejo reader carries `runs`, one entry per

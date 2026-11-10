@@ -1,6 +1,18 @@
 # GH23 — The Tests Follow The Pyramid
 
-**Status:** Accepted.
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH23",
+  "title": "The Tests Follow The Pyramid",
+  "state": "Accepted",
+  "size": "-",
+  "priority": "Medium",
+  "rank": 1,
+  "blockedBy": [],
+  "covers": "The tests follow the pyramid: the audit of every suite by level with measured times, the flows proven only through integration or runner steps, and six sized fixes"
+}
+```
 
 **What must be true.** Every flow of the build adapters, their contract suite and the review stand-in is proven by
 unit tests over fakes that run in seconds; integration tests show only what a real socket, process, git or TLS adds,

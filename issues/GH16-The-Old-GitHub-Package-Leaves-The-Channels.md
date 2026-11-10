@@ -1,7 +1,20 @@
 # GH16 — The Old GitHub Package Leaves The Channels
 
-**Status:** Idea.
-**Size:** S - two published files left to remove, a few lines of documentation, no code.
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH16",
+  "title": "The Old GitHub Package Leaves The Channels",
+  "state": "Idea",
+  "size": "S",
+  "priority": "Medium",
+  "rank": 3,
+  "blockedBy": [],
+  "covers": "`porelo-build-github` leaves both channels, gone from `snapshots` with `releases` left for after the first released adapter, so `apt install 'porelo*'` installs and updates every package, on a host with the old package too"
+}
+```
+
+**Why this size.** two published files left to remove, a few lines of documentation, no code.
 
 **What must be true.** `apt install 'porelo*'` installs and updates every Porelo package on `snapshots` and on `releases`, on a
 new host and on one that has `porelo-build-github`, and `porelo-build-github` stays out of both channels.

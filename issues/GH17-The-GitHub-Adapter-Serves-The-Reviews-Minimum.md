@@ -1,7 +1,23 @@
-# [GH17](README.md#gh17) — The GitHub Adapter Serves The Review's Minimum
+# GH17 — The GitHub Adapter Serves The Review's Minimum
 
-**Status:** Idea; blocked by porelo's written `Review1` description and profile version `"1"`, and by a `VarlinkServer` that serves two interfaces.
-**Size:** M - one module and its tests against one contract change; the native check below measured what could have made it L.
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH17",
+  "title": "The GitHub Adapter Serves The Review's Minimum",
+  "state": "Idea",
+  "size": "M",
+  "priority": "Medium",
+  "rank": 2,
+  "blockedBy": [],
+  "covers": "One person's review on GitHub: `Review1` beside `Build2` with a pull request's facts, one page of comments and one released comment written, a token lent per call and no way to a verdict; waits for porelo's `Review1` description and a two-interface `VarlinkServer`"
+}
+```
+
+**Why this size.** one module and its tests against one contract change; the native check below measured what could have made it L.
+
+**How it stands.** It waits on porelo's written `Review1` description and profile version `"1"`, and on a
+`VarlinkServer` that serves two interfaces.
 
 **What must be true.** One person reviewing a pull request in their own repository on GitHub gets its comments and threads
 through `porelo-adapter-github`, and sends one released comment at a time, with a token lent for each call and no way to

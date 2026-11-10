@@ -1,6 +1,18 @@
-# [GH09](README.md#gh09) — Review Cases In The Contract Suite
+# GH09 — Review Cases In The Contract Suite
 
-**Status:** Accepted.
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH09",
+  "title": "Review Cases In The Contract Suite",
+  "state": "Accepted",
+  "size": "-",
+  "priority": "Medium",
+  "rank": 2,
+  "blockedBy": ["GH10"],
+  "covers": "Shared `Review1` cases in `porelo-build-contract` guard SARIF fidelity and native client calls, unsupported capabilities and authorized writes without duplicates; blocks [GH02](README.md#gh02)"
+}
+```
 
 **What must be true.** Every GitHub and Forgejo review adapter passes one published `Review1` contract suite for
 Porelo's SARIF 2.1.0 profile, so conversion cannot lose anchors, misattribute a comment, leak a credential or send an

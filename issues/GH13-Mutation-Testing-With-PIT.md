@@ -1,6 +1,18 @@
-# [GH13](README.md#gh13) — Mutation Testing With PIT
+# GH13 — Mutation Testing With PIT
 
-**Status:** Accepted.
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH13",
+  "title": "Mutation Testing With PIT",
+  "state": "Accepted",
+  "size": "-",
+  "priority": "Medium",
+  "rank": 3,
+  "blockedBy": [],
+  "covers": "A `pit` profile run by hand, with PIT and its JUnit 5 plugin pinned, and a report sorting the surviving mutants into real gaps and harmless ones"
+}
+```
 
 **What must be true.** A maintainer can run mutation testing over this repository's Java code by hand and read which
 surviving mutants are real gaps in its tests and which are harmless.

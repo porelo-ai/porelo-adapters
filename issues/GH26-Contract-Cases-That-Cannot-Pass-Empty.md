@@ -1,6 +1,18 @@
 # GH26 — Contract Cases That Cannot Pass Empty
 
-**Status:** Idea.
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH26",
+  "title": "Contract Cases That Cannot Pass Empty",
+  "state": "Idea",
+  "size": "-",
+  "priority": "Medium",
+  "rank": 1,
+  "blockedBy": [],
+  "covers": "The published build contract suite refuses an adapter that drops a recorded run's jobs, or answers no trigger or failed test in the cases that hold them"
+}
+```
 
 **What must be true.** An adapter that extends the published build contract suite cannot pass the run, trigger and
 failed-test cases while answering none of what they hold.

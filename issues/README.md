@@ -5,35 +5,6 @@ issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questio
 waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
 
-## Review
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
-| <a id="gh29"></a>[GH29](GH29-The-Planning-Modules-Leave.md) | S | - | The `planning/` module group - `stories-git`, the planning contract suite, their docs, tests and changelog entries - leaves the repository, and nothing left names it |
-| <a id="gh24"></a>[GH24](GH24-Each-Run-Named-By-Its-Trigger-With-Its-Jobs.md) | L | - | Each run of a commit named by its workflow and its trigger (push, pull request), queued, running or finished, every job under its run, and never no run while one is outstanding; needs two optional `Build2` fields |
-| <a id="gh25"></a>[GH25](GH25-A-Failed-Job-Told-By-Its-Failed-Tests.md) | M | - | A failed job answered with its failed tests and a link to its log page instead of the log printed whole; needs two optional `Build2` fields |
-| <a id="gh18"></a>[GH18](GH18-Every-Run-Of-A-Commit-In-The-Build-Answer.md) | M | - | Every `Build2.Build` answer of the GitHub and Forgejo readers carries `runs`, one name and result per run of the commit, queued and running too, at most 50 in the forge's order; the contract suite and its recordings hold it; waits for `porelo-build-api`'s `runs` |
-
-## Backlog
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
-| <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH17](README.md#gh17), [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials |
-
-## Analyzed
-
-| # | Size | Blocked by | Open questions | What it covers |
-|---|---|---|---|---|
-| <a id="gh11"></a>[GH11](GH11-The-Adapters-Agent-Works-In-A-Porelo-Task.md) | S | - | 0 | porelo-adapters' agent works in a Porelo task on the move's host as `Agent Adapters`; first its workflows' publishing, `gh` and artifact upload held to `PORELO_PUBLISH` and the forge's registry read, with a workflow test |
-
-## Accepted
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
-| <a id="gh23"></a>[GH23](GH23-The-Tests-Follow-The-Pyramid.md) | - | - | The tests follow the pyramid: the audit of every suite by level with measured times, the flows proven only through integration or runner steps, and six sized fixes |
-| <a id="gh09"></a>[GH09](GH09-Review-Cases-In-The-Contract-Suite.md) | - | [GH10](README.md#gh10) | Shared `Review1` cases in `porelo-build-contract` guard SARIF fidelity and native client calls, unsupported capabilities and authorized writes without duplicates; blocks [GH02](README.md#gh02) |
-| <a id="gh13"></a>[GH13](GH13-Mutation-Testing-With-PIT.md) | - | - | A `pit` profile run by hand, with PIT and its JUnit 5 plugin pinned, and a report sorting the surviving mutants into real gaps and harmless ones |
-
 ## Idea
 
 | # | Size | Blocked by | What it covers |
@@ -44,6 +15,35 @@ left out.
 | <a id="gh14"></a>[GH14](GH14-Stand-In-Says-A-Short-Thread-Is-Complete.md) | - | - | The stand-in counts a run as complete although a review thread's comments were not read to their end |
 | <a id="gh10"></a>[GH10](GH10-The-Forgejo-Adapter-Reads-And-Writes-Reviews.md) | - | - | Forgejo serves reviews as SARIF beside `Build2` through the `forgejo` client, preserving origin and position evidence and holding unsupported writes |
 | <a id="gh15"></a>[GH15](GH15-An-Overview-Of-Forge-Functions.md) | S | - | One documentation page says per function and forge what the forge offers and what the adapter does today, each cell no more than its marked source |
+
+## Accepted
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh23"></a>[GH23](GH23-The-Tests-Follow-The-Pyramid.md) | - | - | The tests follow the pyramid: the audit of every suite by level with measured times, the flows proven only through integration or runner steps, and six sized fixes |
+| <a id="gh09"></a>[GH09](GH09-Review-Cases-In-The-Contract-Suite.md) | - | [GH10](README.md#gh10) | Shared `Review1` cases in `porelo-build-contract` guard SARIF fidelity and native client calls, unsupported capabilities and authorized writes without duplicates; blocks [GH02](README.md#gh02) |
+| <a id="gh13"></a>[GH13](GH13-Mutation-Testing-With-PIT.md) | - | - | A `pit` profile run by hand, with PIT and its JUnit 5 plugin pinned, and a report sorting the surviving mutants into real gaps and harmless ones |
+
+## Analyzed
+
+| # | Size | Blocked by | What it covers | Open questions |
+|---|---|---|---|---|
+| <a id="gh11"></a>[GH11](GH11-The-Adapters-Agent-Works-In-A-Porelo-Task.md) | S | - | porelo-adapters' agent works in a Porelo task on the move's host as `Agent Adapters`; first its workflows' publishing, `gh` and artifact upload held to `PORELO_PUBLISH` and the forge's registry read, with a workflow test | 0 |
+
+## Backlog
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH17](README.md#gh17), [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials |
+
+## Review
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh29"></a>[GH29](GH29-The-Planning-Modules-Leave.md) | S | - | The `planning/` module group - `stories-git`, the planning contract suite, their docs, tests and changelog entries - leaves the repository, and nothing left names it |
+| <a id="gh24"></a>[GH24](GH24-Each-Run-Named-By-Its-Trigger-With-Its-Jobs.md) | L | - | Each run of a commit named by its workflow and its trigger (push, pull request), queued, running or finished, every job under its run, and never no run while one is outstanding; needs two optional `Build2` fields |
+| <a id="gh25"></a>[GH25](GH25-A-Failed-Job-Told-By-Its-Failed-Tests.md) | M | - | A failed job answered with its failed tests and a link to its log page instead of the log printed whole; needs two optional `Build2` fields |
+| <a id="gh18"></a>[GH18](GH18-Every-Run-Of-A-Commit-In-The-Build-Answer.md) | M | - | Every `Build2.Build` answer of the GitHub and Forgejo readers carries `runs`, one name and result per run of the commit, queued and running too, at most 50 in the forge's order; the contract suite and its recordings hold it; waits for `porelo-build-api`'s `runs` |
 
 ## Finished
 

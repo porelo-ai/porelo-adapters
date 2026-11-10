@@ -1,7 +1,20 @@
 # GH29 — The Planning Modules Leave
 
-**Status:** Review.
-**Size:** S - one module group and what names it, no contract another repository reads.
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH29",
+  "title": "The Planning Modules Leave",
+  "state": "Review",
+  "size": "S",
+  "priority": "Medium",
+  "rank": 1,
+  "blockedBy": [],
+  "covers": "The `planning/` module group - `stories-git`, the planning contract suite, their docs, tests and changelog entries - leaves the repository, and nothing left names it"
+}
+```
+
+**Why this size.** one module group and what names it, no contract another repository reads.
 
 **What must be true.** `porelo-adapters` builds, tests and ships only build adapters: the `planning/` module group -
 the `stories-git` planning adapter, the planning contract suite, their documentation and tests - is gone, and nothing

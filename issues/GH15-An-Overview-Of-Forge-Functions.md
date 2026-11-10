@@ -1,7 +1,20 @@
 # GH15 — An Overview Of Forge Functions
 
-**Status:** Idea.
-**Size:** S - one documentation page, filled from a table that is already read, and one test in the adapter modules.
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH15",
+  "title": "An Overview Of Forge Functions",
+  "state": "Idea",
+  "size": "S",
+  "priority": "Medium",
+  "rank": 6,
+  "blockedBy": [],
+  "covers": "One documentation page says per function and forge what the forge offers and what the adapter does today, each cell no more than its marked source"
+}
+```
+
+**Why this size.** one documentation page, filled from a table that is already read, and one test in the adapter modules.
 
 **What must be true.** A person reads in one page of this repository's documentation, per function and forge (GitHub,
 Forgejo, GitLab, Bitbucket Data Center), what the forge offers and what Porelo's adapter does today, and no cell claims

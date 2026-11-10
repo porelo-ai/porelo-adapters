@@ -1,7 +1,20 @@
 # GH24 — Each Run Named By Its Trigger, With Its Jobs
 
-**Status:** Review.
-**Size:** L - both readers, the contract suite and its recordings against new `Build2` fields, and the GitHub verdict
+```json
+{
+  "$schema": "issue-1.json",
+  "id": "GH24",
+  "title": "Each Run Named By Its Trigger, With Its Jobs",
+  "state": "Review",
+  "size": "L",
+  "priority": "Medium",
+  "rank": 2,
+  "blockedBy": [],
+  "covers": "Each run of a commit named by its workflow and its trigger (push, pull request), queued, running or finished, every job under its run, and never no run while one is outstanding; needs two optional `Build2` fields"
+}
+```
+
+**Why this size.** both readers, the contract suite and its recordings against new `Build2` fields, and the GitHub verdict
 for conclusions it does not know and the bound on job requests, which the plan's reading found.
 
 **What must be true.** When a commit is built by more than one run - a push and a pull request, or two workflows - a

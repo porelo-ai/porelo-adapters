@@ -1,7 +1,0 @@
-# Planning adapter contract
-
-This published [Apache-2.0](../../LICENSE-Apache-2.0) JUnit 5 library supplies `PlanningContract`: extend it with an adapter main class and a `Fixture`, or map a `Board` to files in `planning.git`, `one.git`, and `two.git` with `GitHttpFixture` (override its settings mapping when needed).
-The suite exercises Planning1 through `InstalledPlanning`, with independent wire connections for simultaneous writes, isolated home and temporary directories, credential scans, readable containment canaries, bounded calls, and named JUnit skips for unavailable fixture abilities; Git fixtures require Git on `/usr/bin:/bin`, POSIX paths, and a JDK with `jdk.httpserver`.
-It is a behavioral contract rather than an adapter or a sandbox: its reference adapter and switchable fault proofs remain in test sources. Process inspection samples in the background and before Git HTTP responses, retaining observations of helpers that exit before a call returns. Credential scans cover raw bytes, all three Base64 alignments, file and link names, link targets, and the runtime directory.
-`SetStates` mixes story and issue moves in one atomic batch at one revision; malformed selectors are `InvalidParameter(changes)`, duplicate identifiers name their resource kind, and an empty batch checks without advancing the revision. Story summaries and full stories preserve optional priority text.
-A custom `Fixture` supplies `decoy` with a valid readable story or issue document, so traversal checks distinguish a guarded refusal from a missing-file error.

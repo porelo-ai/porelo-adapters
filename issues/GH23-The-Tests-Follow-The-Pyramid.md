@@ -59,9 +59,6 @@ The fixes, each its own issue when it is analyzed:
    interval; `StandIn`'s calls, `Push`, `Submission` and `GitHubSource` as unit tests; one narrow real-git test stays.
 6. **S** - The workflows' inline logic (push range, channel and snapshot rule, pull request origin, trigger check)
    moved into commands with unit tests, so a workflow only calls them.
-7. **XS** - The planning adapter and its suite (`planning/`, being built) keep their logic - the story and index
-   parsers, the workflow file, the revision, containment - in unit tests; the contract suite stays the integration
-   level, and its fault proofs run a reference adapter in-process where the case allows.
 
 ## Acceptance
 

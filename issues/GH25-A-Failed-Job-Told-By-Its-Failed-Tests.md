@@ -1,6 +1,6 @@
 # GH25 — A Failed Job Told By Its Failed Tests
 
-**Status:** Backlog.
+**Status:** Implementing.
 **Size:** M - both readers and the contract suite, a log reading of its own, against two optional fields
 `porelo-build-api` must add to `Build2` first.
 

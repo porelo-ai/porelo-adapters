@@ -1,6 +1,6 @@
 # GH24 — Each Run Named By Its Trigger, With Its Jobs
 
-**Status:** Backlog.
+**Status:** Implementing.
 **Size:** M - both readers, the contract suite and its recordings, against two optional fields `porelo-build-api` must
 add to `Build2` first.
 

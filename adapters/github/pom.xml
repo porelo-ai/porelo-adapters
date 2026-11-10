@@ -162,6 +162,28 @@
                     </plugin>
 
 
+                    <!-- The third-party notices, by the steps adapters/pom.xml defines; exec's runs after them. -->
+                    <plugin>
+                        <groupId>org.cyclonedx</groupId>
+                        <artifactId>cyclonedx-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>notices-bill</id>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>notices-classpath</id>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+
                     <plugin>
                         <groupId>org.vafer</groupId>
                         <artifactId>jdeb</artifactId>
@@ -202,6 +224,17 @@
                                                 <group>root</group>
                                             </mapper>
                                         </data>
+                                        <data>
+                                            <src>${project.build.directory}/THIRD-PARTY-NOTICES</src>
+                                            <type>file</type>
+                                            <mapper>
+                                                <type>perm</type>
+                                                <prefix>/usr/share/doc/${package.name}</prefix>
+                                                <filemode>644</filemode>
+                                                <user>root</user>
+                                                <group>root</group>
+                                            </mapper>
+                                        </data>
                                     </dataSet>
                                 </configuration>
                             </execution>
@@ -231,7 +264,9 @@
                             <forceRelease>true</forceRelease>
                             <architecture>x86_64</architecture>
                             <group>Applications/System</group>
-                            <license>GPL-3.0-or-later AND Apache-2.0</license>
+                            <!-- Its own code's and Porelo's libraries', then the third-party code's and the runtime's; what that
+                                 code embeds is in THIRD-PARTY-NOTICES. -->
+                            <license>GPL-3.0-or-later AND LGPL-3.0-or-later AND Apache-2.0 AND BSD-2-Clause AND GPL-2.0-only WITH Classpath-exception-2.0</license>
                             <packager>Michael Schnell &lt;michael@fuin.org&gt;</packager>
                             <obsoletes>
                                 <obsolete>porelo-build-github</obsolete>
@@ -271,6 +306,23 @@
                                     <group>root</group>
                                     <license>true</license>
                                 </entry>
+                                <!-- porelo-forge-client-github's classes in the executable are under this one. -->
+                                <entry>
+                                    <name>/usr/share/licenses/${package.name}/LICENSE.LGPL-3.0</name>
+                                    <file>${maven.multiModuleProjectDirectory}/LICENSE-LGPL-3.0</file>
+                                    <mode>0644</mode>
+                                    <user>root</user>
+                                    <group>root</group>
+                                    <license>true</license>
+                                </entry>
+                                <entry>
+                                    <name>/usr/share/licenses/${package.name}/THIRD-PARTY-NOTICES</name>
+                                    <file>${project.build.directory}/THIRD-PARTY-NOTICES</file>
+                                    <mode>0644</mode>
+                                    <user>root</user>
+                                    <group>root</group>
+                                    <license>true</license>
+                                </entry>
                             </entries>
                         </configuration>
                     </plugin>
@@ -281,6 +333,10 @@
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
                         <executions>
+                            <execution>
+                                <id>third-party-notices</id>
+                                <phase>package</phase>
+                            </execution>
                             <execution>
                                 <id>check-linkage</id>
                                 <phase>verify</phase>

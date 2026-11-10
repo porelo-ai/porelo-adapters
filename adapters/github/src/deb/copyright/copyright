@@ -8,10 +8,16 @@ License: GPL-3.0-or-later
 
 Files: usr/libexec/porelo/builds/github
 Copyright: 2026 Michael Schnell <michael@fuin.org>
-License: GPL-3.0-or-later and Apache-2.0
-Comment: This executable is compiled whole from the program and the classes of
- porelo-wire (org.fuin.porelo.wire). Those classes are under Apache-2.0, and the
- rest of the executable under GPL-3.0-or-later.
+License: GPL-3.0-or-later and LGPL-3.0-or-later and Apache-2.0 and BSD-2-Clause and GPL-2.0 with Classpath exception
+Comment:
+ This executable is compiled whole from the program; from Porelo's libraries
+ porelo-adapter-http and porelo-build-api (GPL-3.0-or-later), porelo-wire
+ (Apache-2.0) and porelo-forge-client-github (LGPL-3.0-or-later); from the
+ third-party libraries Jackson (Apache-2.0), commonmark (BSD-2-Clause) and
+ jspecify (Apache-2.0); and from the GraalVM Java runtime (GPL-2.0 with the
+ Classpath exception). The copyright, license and notice texts of the
+ third-party code and of the runtime, and of the code they embed, stand in
+ full in /usr/share/doc/porelo-adapter-github/THIRD-PARTY-NOTICES.
 
 License: GPL-3.0-or-later
  This program is free software: you can redistribute it and/or modify it under
@@ -40,3 +46,24 @@ License: Apache-2.0
  .
  On Debian systems the complete text of the Apache License, Version 2.0 can be
  found in "/usr/share/common-licenses/Apache-2.0".
+
+License: LGPL-3.0-or-later
+ This library is free software: you can redistribute it and/or modify it under
+ the terms of the GNU Lesser General Public License as published by the Free
+ Software Foundation, either version 3 of the License, or (at your option) any
+ later version.
+ .
+ On Debian systems the complete text of the GNU Lesser General Public License
+ version 3 can be found in "/usr/share/common-licenses/LGPL-3", and the GNU
+ General Public License version 3 it builds on in
+ "/usr/share/common-licenses/GPL-3".
+
+License: BSD-2-Clause
+ The complete text, with the copyright notices of the code under it, is in
+ "/usr/share/doc/porelo-adapter-github/THIRD-PARTY-NOTICES".
+
+License: GPL-2.0 with Classpath exception
+ The GraalVM Java runtime compiled into the executable is under the GNU General
+ Public License version 2 with the Classpath exception. The complete text, with
+ the runtime's other legal notices, is in
+ "/usr/share/doc/porelo-adapter-github/THIRD-PARTY-NOTICES".

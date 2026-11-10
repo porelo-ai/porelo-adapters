@@ -5,7 +5,7 @@
   "$schema": "issue-1.json",
   "id": "GH30",
   "title": "The Packages Carry The Notices Of What They Compile In",
-  "state": "Implementing",
+  "state": "Review",
   "size": "S",
   "priority": "Medium",
   "rank": 1,
@@ -51,8 +51,12 @@ for every Porelo repository, `porelo-release third-party-notices`, not by code o
 - The `.deb` ships it as `/usr/share/doc/<package>/THIRD-PARTY-NOTICES`, the `.rpm` as `%license`; the rpm's
   `license` field names the licenses compiled in.
 - What goes red first: jdeb and the rpm plugin refuse an entry whose source file is missing, so a `dist` build in
-  which the notices were not written fails; seen once by leaving the generator's step out. The generator itself
-  refuses, and writes nothing, for a jar whose license it cannot tell.
+  which the notices were not written fails; seen for both, with the file removed and the generator's step skipped.
+  The generator itself refuses, and writes nothing, for a jar whose license it cannot tell.
+- The steps are bound in the two adapters only: `adapters/pom.xml` and `adapters/http` package nothing, and an
+  execution of the group bound to `package` ran there too.
+- The `.rpm` of the GitHub adapter also carries the LGPL-3.0 text, as `LICENSE.LGPL-3.0`, for
+  `porelo-forge-client-github`: Fedora has no `/usr/share/common-licenses`.
 
 ## Acceptance
 

@@ -15,4 +15,78 @@
         <module>github</module>
         <module>forgejo</module>
     </modules>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- The third-party notices a package ships, written from what its executable compiles in: the
+                     runtime classpath, its bill and the JDK. Bound to no phase here, since this module and http
+                     package nothing; an adapter's dist profile binds the three by id to package, after the jar. -->
+                <plugin>
+                    <groupId>org.cyclonedx</groupId>
+                    <artifactId>cyclonedx-maven-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>notices-bill</id>
+                            <phase>none</phase>
+                            <goals>
+                                <goal>makeBom</goal>
+                            </goals>
+                            <configuration>
+                                <outputFormat>json</outputFormat>
+                                <outputName>notices-bom</outputName>
+                                <!-- The adapters are not deployed, and the bill is wanted all the same. -->
+                                <skipNotDeployed>false</skipNotDeployed>
+                                <skipAttach>true</skipAttach>
+                                <includeTestScope>false</includeTestScope>
+                                <includeProvidedScope>false</includeProvidedScope>
+                                <includeSystemScope>false</includeSystemScope>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>notices-classpath</id>
+                            <phase>none</phase>
+                            <goals>
+                                <goal>build-classpath</goal>
+                            </goals>
+                            <configuration>
+                                <includeScope>runtime</includeScope>
+                                <outputFile>${project.build.directory}/notices-classpath.txt</outputFile>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>third-party-notices</id>
+                            <phase>none</phase>
+                            <goals>
+                                <goal>exec</goal>
+                            </goals>
+                            <configuration>
+                                <executable>${java.home}/bin/java</executable>
+                                <includeProjectDependencies>false</includeProjectDependencies>
+                                <includePluginDependencies>true</includePluginDependencies>
+                                <executableDependency>
+                                    <groupId>org.fuin.porelo</groupId>
+                                    <artifactId>porelo-release</artifactId>
+                                </executableDependency>
+                                <!-- Porelo's own libraries are named in the copyright file; the rest is third-party. -->
+                                <commandlineArgs>-classpath %classpath org.fuin.porelo.release.Main third-party-notices ${project.build.directory}/notices-classpath.txt ${project.build.directory}/notices-bom.json ${java.home} ${project.build.directory}/THIRD-PARTY-NOTICES --own org\.fuin\.porelo:.*</commandlineArgs>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

@@ -28,7 +28,7 @@ reach a verdict.
 The conversion both ways stands in `adapters/github`, but the executable does not reach it: `GitHubReader` serves only `Build2`.
 [GH02](README.md#gh02) as a whole also holds edits, batches, retries and moving the build calls, and none of that is needed for one
 person's first review. The shared contract suite earns its keep with a second adapter, so its safety cases start here as this
-adapter's own tests and move into the suite with [GH10](README.md#gh10).
+adapter's own tests and move into the suite with [GH33](README.md#gh33).
 
 ## The shape
 

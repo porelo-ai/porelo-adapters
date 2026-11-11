@@ -9,7 +9,7 @@
   "size": "-",
   "priority": "Medium",
   "rank": 2,
-  "blockedBy": ["GH10"],
+  "blockedBy": ["GH33"],
   "covers": "Shared `Review1` cases in `porelo-build-contract` guard SARIF fidelity and native client calls, unsupported capabilities and authorized writes without duplicates; blocks [GH02](README.md#gh02)"
 }
 ```
@@ -25,7 +25,7 @@ approximations or a clean review.
   review synchronization, its written SARIF profile, its hardened SARIF reader and its source levels and risk
   classes; by each adapter listing the services it offers, each by contract and version; and
   by `porelo-forge-clients`, which knows nothing of Porelo.
-- **Blocked by** [GH10](README.md#gh10) too, the second adapter that makes one suite earn its keep; until then the safety cases are
+- **Blocked by** [GH33](README.md#gh33) too, the second adapter that makes one suite earn its keep; until then the safety cases are
   the GitHub adapter's own tests.
 - **Blocks:** [GH02](README.md#gh02).
 - Extend `porelo-build-contract` in `contract` beside the build-only `ContractCase` and `CaseExpectation`. Exercise

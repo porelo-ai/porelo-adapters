@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH16",
   "title": "The Old GitHub Package Leaves The Channels",
-  "state": "Analyzed",
+  "state": "Estimated",
   "size": "S",
   "priority": "Medium",
-  "rank": 2,
+  "rank": 5,
   "blockedBy": [],
   "covers": "`porelo-build-github` leaves both channels, gone from `snapshots` with `releases` left for after the first released adapter, so `apt install 'porelo*'` installs and updates every package, on a host with the old package too"
 }
@@ -54,9 +54,14 @@ are released there would leave that channel without a GitHub reader.
 ## Plan
 
 - `snapshots` is done. Until the step below, a host with both sources stays refused, by `0.5.0` in `releases`.
-- From `releases`, delete `porelo-dist-deb/pool/main/p/porelo-build-github/porelo-build-github_0.5.0_amd64.deb` and
-  `porelo-dist-rpm/releases/porelo-build-github-0.5.0-1.x86_64.rpm`, right after the published index shows the first released
-  `porelo-adapter-github`, built against a released Porelo that speaks `Build2`. Each by its full path, its digest read first.
+- The operator deletes two files from `releases` by hand in Artifactory, once; the workflow gets no delete step and no
+  delete rights. The files, by full path:
+  - `porelo-dist-deb/pool/main/p/porelo-build-github/porelo-build-github_0.5.0_amd64.deb`
+  - `porelo-dist-rpm/releases/porelo-build-github-0.5.0-1.x86_64.rpm`
+
+  It is due right after the published `releases` index shows the first released `porelo-adapter-github`, built against
+  a released Porelo that speaks `Build2`, and not before. The agent reads each file's digest beforehand and hands the
+  two paths over.
 - After it, read both indices anonymously with retries until the name is gone, then run the line on a fresh host.
 - Keep `Conflicts`, `Replaces` and `Obsoletes` in `adapters/github`, since they remove the old package from a host.
 - Write in `doc/index.md` that a host with the old package runs `sudo apt purge porelo-build-github` once, and correct what the
@@ -82,16 +87,8 @@ a re-run republishes it. Nothing in this repository prevents that re-run.
 - A host with the old package really installed is taken through the documented way and ends with `porelo-adapter-github`
   installed, `porelo-build-github` gone.
 
-## Open questions
-
-- Who deletes the two files from `releases`: the operator once in Artifactory, or a step of this repository's workflow
-  with the account it publishes with, which would need delete rights on those paths.
-
 ## To be checked
 
-- How the two files of `releases` are deleted. Whether `JF_ACCESS_TOKEN`, the account the build publishes with, may delete in
-  these paths is unknown until tried: only a run's own probe file has been deleted with it, in a step that ignores failure. No
-  agent holds a token for it.
 - How long Artifactory takes to recalculate both indices on a deletion: on `snapshots` they were read clean afterwards, the time
   not measured.
 - The line on `snapshots`, on a fresh host, since the deletion.

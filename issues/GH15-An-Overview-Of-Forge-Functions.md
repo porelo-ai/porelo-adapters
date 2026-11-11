@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH15",
   "title": "An Overview Of Forge Functions",
-  "state": "Analyzed",
+  "state": "Estimated",
   "size": "S",
   "priority": "Medium",
-  "rank": 1,
+  "rank": 4,
   "blockedBy": [],
   "covers": "One documentation page says per function and forge what the forge offers and what the adapter does today, each cell no more than its marked source"
 }
@@ -25,7 +25,7 @@ more than its source. It defines no new contract, adds no adapter call and waits
 - A page under `doc/`, listed in `mkdocs.yml`, with one row per function and for each forge two facts: what the forge
   offers and what the adapter does today.
 - Every "offers" cell keeps its source mark: **P** the call stands in the forge's API description at a named pin, **D** read
-  only in the forge's public documentation, **K** known from memory and read nowhere, **R** also seen in recorded answers.
+  only in the forge's public documentation, **R** also seen in recorded answers.
   The page says what each mark means and names each pin and its digest; a description with no published digest says so.
 - The content comes from `porelo-project`'s table of what each forge can offer, one row per function across the four
   forges with these marks. Where a **P** mark names no pin or digest, as for GitLab and Bitbucket Data Center today, the
@@ -42,6 +42,8 @@ more than its source. It defines no new contract, adds no adapter call and waits
 - Read in today's code: an adapter's socket serves the whole `Build2` description, but a method the adapter does not
   override answers `MethodNotImplemented`: the Forgejo reader overrides `openPullRequest`, the GitHub reader does not. The
   test reads the adapter cells against the methods each reader class overrides, not against the description alone.
+- A cell the source marks **K**, known from memory and read nowhere, stays off the page until it is checked; the page
+  shows it as not yet read.
 - **Blocked from outside:** nothing; the source table is written.
 - **Estimate:** 30 minutes, the measured median of S.
 
@@ -50,11 +52,4 @@ more than its source. It defines no new contract, adds no adapter call and waits
 - The page builds under `check-doc-site` and is reachable from the documentation's navigation.
 - Every "offers" cell carries a mark, and every pin named has its digest or says it has none.
 - The test is seen to fail on a method removed from the page and on a row claiming a method no adapter serves.
-
-## Open questions
-
-- Does a **K** cell, known from memory only, go on the public page with its mark, or stay off it until it was checked? Every **D**
-  cell comes from a summarizing fetch and keeps its mark either way.
-
-## To be checked
 

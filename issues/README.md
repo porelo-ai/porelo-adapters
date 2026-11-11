@@ -5,17 +5,6 @@ issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questio
 waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
 
-## Idea
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
-| <a id="gh26"></a>[GH26](GH26-Contract-Cases-That-Cannot-Pass-Empty.md) | - | - | The published build contract suite refuses an adapter that drops a recorded run's jobs, or answers no trigger or failed test in the cases that hold them |
-| <a id="gh17"></a>[GH17](GH17-The-GitHub-Adapter-Serves-The-Reviews-Minimum.md) | M | - | One person's review on GitHub: `Review1` beside `Build2` with a pull request's facts, one page of comments and one released comment written, a token lent per call and no way to a verdict; waits for porelo's `Review1` description and a two-interface `VarlinkServer` |
-| <a id="gh16"></a>[GH16](GH16-The-Old-GitHub-Package-Leaves-The-Channels.md) | S | - | `porelo-build-github` leaves both channels, gone from `snapshots` with `releases` left for after the first released adapter, so `apt install 'porelo*'` installs and updates every package, on a host with the old package too |
-| <a id="gh14"></a>[GH14](GH14-Stand-In-Says-A-Short-Thread-Is-Complete.md) | - | - | The stand-in counts a run as complete although a review thread's comments were not read to their end |
-| <a id="gh10"></a>[GH10](GH10-The-Forgejo-Adapter-Reads-And-Writes-Reviews.md) | - | - | Forgejo serves reviews as SARIF beside `Build2` through the `forgejo` client, preserving origin and position evidence and holding unsupported writes |
-| <a id="gh15"></a>[GH15](GH15-An-Overview-Of-Forge-Functions.md) | S | - | One documentation page says per function and forge what the forge offers and what the adapter does today, each cell no more than its marked source |
-
 ## Accepted
 
 | # | Size | Blocked by | What it covers |
@@ -23,6 +12,12 @@ left out.
 | <a id="gh23"></a>[GH23](GH23-The-Tests-Follow-The-Pyramid.md) | - | - | The tests follow the pyramid: the audit of every suite by level with measured times, the flows proven only through integration or runner steps, and six sized fixes |
 | <a id="gh09"></a>[GH09](GH09-Review-Cases-In-The-Contract-Suite.md) | - | [GH10](README.md#gh10) | Shared `Review1` cases in `porelo-build-contract` guard SARIF fidelity and native client calls, unsupported capabilities and authorized writes without duplicates; blocks [GH02](README.md#gh02) |
 | <a id="gh13"></a>[GH13](GH13-Mutation-Testing-With-PIT.md) | - | - | A `pit` profile run by hand, with PIT and its JUnit 5 plugin pinned, and a report sorting the surviving mutants into real gaps and harmless ones |
+| <a id="gh26"></a>[GH26](GH26-Contract-Cases-That-Cannot-Pass-Empty.md) | - | - | The published build contract suite refuses an adapter that drops a recorded run's jobs, or answers no trigger or failed test in the cases that hold them |
+| <a id="gh17"></a>[GH17](GH17-The-GitHub-Adapter-Serves-The-Reviews-Minimum.md) | M | - | One person's review on GitHub: `Review1` beside `Build2` with a pull request's facts, one page of comments and one released comment written, a token lent per call and no way to a verdict; waits for porelo's `Review1` description and a two-interface `VarlinkServer` |
+| <a id="gh16"></a>[GH16](GH16-The-Old-GitHub-Package-Leaves-The-Channels.md) | S | - | `porelo-build-github` leaves both channels, gone from `snapshots` with `releases` left for after the first released adapter, so `apt install 'porelo*'` installs and updates every package, on a host with the old package too |
+| <a id="gh14"></a>[GH14](GH14-Stand-In-Says-A-Short-Thread-Is-Complete.md) | - | - | The stand-in counts a run as complete although a review thread's comments were not read to their end |
+| <a id="gh10"></a>[GH10](GH10-The-Forgejo-Adapter-Reads-And-Writes-Reviews.md) | - | - | Forgejo serves reviews as SARIF beside `Build2` through the `forgejo` client, preserving origin and position evidence and holding unsupported writes |
+| <a id="gh15"></a>[GH15](GH15-An-Overview-Of-Forge-Functions.md) | S | - | One documentation page says per function and forge what the forge offers and what the adapter does today, each cell no more than its marked source |
 
 ## Analyzed
 

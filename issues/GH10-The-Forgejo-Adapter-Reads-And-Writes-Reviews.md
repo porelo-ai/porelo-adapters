@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH10",
   "title": "The Forgejo Adapter Reads And Writes Reviews",
-  "state": "Idea",
+  "state": "Accepted",
   "size": "-",
   "priority": "Medium",
-  "rank": 5,
+  "rank": 8,
   "blockedBy": [],
   "covers": "Forgejo serves reviews as SARIF beside `Build2` through the `forgejo` client, preserving origin and position evidence and holding unsupported writes"
 }

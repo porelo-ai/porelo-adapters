@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH15",
   "title": "An Overview Of Forge Functions",
-  "state": "Idea",
+  "state": "Accepted",
   "size": "S",
   "priority": "Medium",
-  "rank": 6,
+  "rank": 9,
   "blockedBy": [],
   "covers": "One documentation page says per function and forge what the forge offers and what the adapter does today, each cell no more than its marked source"
 }

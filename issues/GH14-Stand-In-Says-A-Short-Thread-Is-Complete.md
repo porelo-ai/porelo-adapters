@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH14",
   "title": "The Stand-In Says A Short Thread Is Complete",
-  "state": "Idea",
+  "state": "Accepted",
   "size": "-",
   "priority": "Medium",
-  "rank": 4,
+  "rank": 7,
   "blockedBy": [],
   "covers": "The stand-in counts a run as complete although a review thread's comments were not read to their end"
 }

@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH17",
   "title": "The GitHub Adapter Serves The Review's Minimum",
-  "state": "Idea",
+  "state": "Accepted",
   "size": "M",
   "priority": "Medium",
-  "rank": 2,
+  "rank": 5,
   "blockedBy": [],
   "covers": "One person's review on GitHub: `Review1` beside `Build2` with a pull request's facts, one page of comments and one released comment written, a token lent per call and no way to a verdict; waits for porelo's `Review1` description and a two-interface `VarlinkServer`"
 }

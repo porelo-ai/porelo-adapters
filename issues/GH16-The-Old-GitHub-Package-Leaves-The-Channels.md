@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH16",
   "title": "The Old GitHub Package Leaves The Channels",
-  "state": "Idea",
+  "state": "Accepted",
   "size": "S",
   "priority": "Medium",
-  "rank": 3,
+  "rank": 6,
   "blockedBy": [],
   "covers": "`porelo-build-github` leaves both channels, gone from `snapshots` with `releases` left for after the first released adapter, so `apt install 'porelo*'` installs and updates every package, on a host with the old package too"
 }

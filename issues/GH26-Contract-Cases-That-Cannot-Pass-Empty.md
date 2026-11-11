@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH26",
   "title": "Contract Cases That Cannot Pass Empty",
-  "state": "Idea",
+  "state": "Accepted",
   "size": "-",
   "priority": "Medium",
-  "rank": 1,
+  "rank": 4,
   "blockedBy": [],
   "covers": "The published build contract suite refuses an adapter that drops a recorded run's jobs, or answers no trigger or failed test in the cases that hold them"
 }

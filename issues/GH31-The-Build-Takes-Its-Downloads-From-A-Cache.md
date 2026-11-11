@@ -5,7 +5,7 @@
   "$schema": "issue-1.json",
   "id": "GH31",
   "title": "The Build Takes Its Downloads From A Cache",
-  "state": "Implementing",
+  "state": "Review",
   "size": "S",
   "priority": "Medium",
   "rank": 1,
@@ -34,7 +34,7 @@ answered late: every download it makes that a cache can hold comes from one, and
 
 - `build.yml`'s step `rpm, to read the built package` takes `rpm` from the image when the image has it, and calls no
   mirror then. Otherwise it restores the `.deb` files of `rpm` and its dependencies from a cache keyed by the runner
-  image (`ImageOS` and `ImageVersion`) and installs them with `apt-get install --no-download`. Only on a miss does it
+  image (`ImageOS` and `ImageVersion`) and installs them with `dpkg -i`, which needs no fresh package lists. Only on a miss does it
   call the archive, `apt-get update` and `apt-get install --download-only` with retries, which checks each file against
   the signed index, and saves what it fetched under that key.
 - Old entries go by GitHub's own rule: an entry not read for seven days is deleted. Every key here names a version, a

@@ -36,9 +36,63 @@ jobs:
             - name: The pinned GraalVM
               uses: ./.github/actions/pinned-jdk
 
-            # check-package-version reads the built .rpm with rpm, which the runner is not promised to have.
+            # check-package-version reads the built .rpm with rpm, which the image is not promised to have; the archive is
+            # called only on a cache miss, so its outages fail no Build once the cache holds the packages.
             - name: rpm, to read the built package
-              run: sudo apt-get update -qq && sudo apt-get install -y -qq rpm
+              id: rpm
+              run: |
+                  set -eu
+                  if command -v rpm; then
+                      rpm --version
+                      echo "present=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "present=false" >> "$GITHUB_OUTPUT"
+                      echo "key=rpm-debs-$RUNNER_OS-${ImageOS:?the runner names no image}-${ImageVersion:?the runner names no image version}" >> "$GITHUB_OUTPUT"
+                  fi
+
+            # Keyed by the runner image, so a new image leaves the old entry unread, and GitHub deletes it after seven days.
+            - name: Restore the rpm packages
+              id: rpm-cache
+              if: steps.rpm.outputs.present != 'true'
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ~/.cache/porelo-apt/rpm
+                  key: ${{ steps.rpm.outputs.key }}
+
+            - name: Download the rpm packages
+              if: steps.rpm.outputs.present != 'true' && steps.rpm-cache.outputs.cache-hit != 'true'
+              run: |
+                  set -eu
+                  archives="$HOME/.cache/porelo-apt/rpm"
+                  mkdir -p "$archives/partial"
+                  sudo apt-get update -o Acquire::Retries=5 \
+                      || { echo "::error::apt-get update failed for the rpm packages"; exit 1; }
+                  sudo apt-get install --download-only -y -o Acquire::Retries=5 -o "Dir::Cache::archives=$archives" rpm \
+                      || { echo "::error::apt-get download failed for the rpm packages"; exit 1; }
+                  sudo chown -R "$USER" "$archives"
+                  rm -rf "$archives/partial" "$archives/lock"
+                  set -- "$archives"/*.deb
+                  if [ ! -f "$1" ]; then
+                      echo "::error::apt-get downloaded no .deb files for rpm"
+                      exit 1
+                  fi
+
+            - name: Install the cached rpm packages
+              if: steps.rpm.outputs.present != 'true'
+              run: |
+                  set -eu
+                  sudo dpkg -i "$HOME"/.cache/porelo-apt/rpm/*.deb
+                  if ! command -v rpm; then
+                      echo "::error::rpm is still missing after the install"
+                      exit 1
+                  fi
+
+            - name: Save the rpm packages
+              if: steps.rpm.outputs.present != 'true' && steps.rpm-cache.outputs.cache-hit != 'true'
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ~/.cache/porelo-apt/rpm
+                  key: ${{ steps.rpm.outputs.key }}
 
             # Not -DskipTests: the dist profile's checks need the binary and the packages it is packed into - the reader
             # against the C library and zlib both declare, and the version both carry.

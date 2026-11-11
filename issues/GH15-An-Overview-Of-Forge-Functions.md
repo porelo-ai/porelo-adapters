@@ -27,8 +27,10 @@ more than its source. It defines no new contract, adds no adapter call and waits
 - Every "offers" cell keeps its source mark: **P** the call stands in the forge's API description at a named pin, **D** read
   only in the forge's public documentation, **K** known from memory and read nowhere, **R** also seen in recorded answers.
   The page says what each mark means and names each pin and its digest; a description with no published digest says so.
-- The content comes from the reading of the four forges' API descriptions by `porelo-forge-clients`, whose agent holds it.
-  Nothing is called against a forge for this page, and an unsettled point stays marked as unsettled.
+- The content comes from `porelo-project`'s table of what each forge can offer, one row per function across the four
+  forges with these marks. Where a **P** mark names no pin or digest, as for GitLab and Bitbucket Data Center today, the
+  cell says so and none is made up. Nothing is called against a forge for this page, and an unsettled point stays marked
+  as unsettled.
 - The page carries the calls and their marks only: no issue number of another repository, no agent's name, no recommendation
   or discussion of a contract, and none of Porelo's class names unless the page describes them.
 - The "adapter does today" cells state only what this repository serves: `org.fuin.porelo.Build2` for GitHub and Forgejo,
@@ -40,8 +42,7 @@ more than its source. It defines no new contract, adds no adapter call and waits
 - Read in today's code: an adapter's socket serves the whole `Build2` description, but a method the adapter does not
   override answers `MethodNotImplemented`: the Forgejo reader overrides `openPullRequest`, the GitHub reader does not. The
   test reads the adapter cells against the methods each reader class overrides, not against the description alone.
-- **Blocked from outside:** `porelo-forge-clients` holds clients for GitHub and Forgejo only; the reading of GitLab's and
-  Bitbucket Data Center's API descriptions is not in that repository, and is asked of its agent.
+- **Blocked from outside:** nothing; the source table is written.
 - **Estimate:** 30 minutes, the measured median of S.
 
 ## Acceptance

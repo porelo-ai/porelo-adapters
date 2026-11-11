@@ -5,12 +5,12 @@
   "$schema": "issue-1.json",
   "id": "GH31",
   "title": "The Build Takes Its Downloads From A Cache",
-  "state": "Idea",
+  "state": "Implementing",
   "size": "S",
   "priority": "Medium",
-  "rank": 7,
+  "rank": 1,
   "blockedBy": [],
-  "covers": "The Build fetches nothing from outside that a cache could hold, `rpm` included, and each of the repository's caches keeps only its newest entry"
+  "covers": "The Build fetches nothing from outside that a cache could hold, `rpm` included, and no cache keeps a superseded entry past seven days"
 }
 ```
 
@@ -18,7 +18,7 @@
 repository reads.
 
 **What must be true.** A Build of this repository fails only when what it builds is wrong, not because a mirror outside
-answered late: every download it makes that a cache can hold comes from one, and no cache grows past its newest entry.
+answered late: every download it makes that a cache can hold comes from one, and no cache keeps a superseded entry for long.
 
 - Today the `pinned-jdk` action caches the wrapper's Maven, the Maven repository, shfmt and the GraalVM. One download
   is not cached: `build.yml`'s step `rpm, to read the built package` runs `sudo apt-get update` and
@@ -32,18 +32,13 @@ answered late: every download it makes that a cache can hold comes from one, and
 
 ## Plan
 
-- Measure whether `ubuntu-24.04` ships `rpm` (`command -v rpm` in a run, or the runner image's package list). If it
-  does, the step only refuses when `rpm` is missing and calls no mirror. If it does not, the `.deb` files `apt-get
-  install --download-only` fetches are cached under a key of their names and versions, checked against the digests
-  in the package index, and installed with `dpkg -i` from the cache.
-- Each cache in the `pinned-jdk` action and the step above keeps only its newest entry: after a save under a new key,
-  the entries of the same prefix with another key are deleted through the Actions cache API, which needs
-  `actions: write` for that step, or GitHub's own limit is used if a repository setting can delete entries after a
-  set time.
-- Test levels: none in the unit suite; the change is a workflow. It is seen working in a Build with an empty cache
-  and in one after it, whose log shows no mirror called and one entry per cache.
-
-## To be checked
-
-- Whether the `ubuntu-24.04` image ships `rpm`.
-- Whether a repository setting deletes cache entries after a set time, and what retention GitHub applies today.
+- `build.yml`'s step `rpm, to read the built package` takes `rpm` from the image when the image has it, and calls no
+  mirror then. Otherwise it restores the `.deb` files of `rpm` and its dependencies from a cache keyed by the runner
+  image (`ImageOS` and `ImageVersion`) and installs them with `apt-get install --no-download`. Only on a miss does it
+  call the archive, `apt-get update` and `apt-get install --download-only` with retries, which checks each file against
+  the signed index, and saves what it fetched under that key.
+- Old entries go by GitHub's own rule: an entry not read for seven days is deleted. Every key here names a version, a
+  digest, a pom hash or a runner image, so an entry that is superseded is no longer read and goes after seven days;
+  no step deletes entries itself, so no step needs `actions: write`.
+- Test levels: none in the unit suite; the change is a workflow. It is seen working in the Build: the first run fills
+  the cache, the next reads it, and neither calls a mirror when the image has `rpm`.

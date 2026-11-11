@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH10",
   "title": "The Forgejo Adapter Reads And Writes Reviews",
-  "state": "Accepted",
-  "size": "-",
+  "state": "Analyzed",
+  "size": "XL",
   "priority": "Medium",
-  "rank": 8,
+  "rank": 3,
   "blockedBy": [],
   "covers": "Forgejo serves reviews as SARIF beside `Build2` through the `forgejo` client, preserving origin and position evidence and holding unsupported writes"
 }
@@ -54,6 +54,33 @@ origin and conversion limits, and holds unsupported writes without changing thei
 - Extend `ForgejoReaderTest` and `ForgejoContractTest` with the adapter-boundary cases that [GH09](README.md#gh09) then shares using native
   client doubles and evidence-backed records; see guards fail first. Reuse shared SARIF security rules without
   depending on GitHub's client or adapter implementation.
+
+## Size
+
+XL: reading and writing reviews, serving `Review1`, moving `Build2` onto the client and the shared contract cases in
+one. It splits into three issues of L or smaller, as GitHub's side did:
+
+1. **Forgejo review conversion (M):** the forge-neutral parts of `adapters/github`'s review code (`ReviewDocument`,
+   `ReviewText`, `ReviewRefusal`, `RepositoryPath`) shared, and a Forgejo read and write over the `forgejo` client's
+   records into the profile, proven by unit tests over recorded Forgejo answers. Waits on nothing outside.
+2. **The Forgejo adapter serves the review's minimum (M):** as GitHub's minimum, beside `Build2`. Waits on porelo's
+   `Review1` description and a two-interface `VarlinkServer`.
+3. **Every review operation and `Build2` through the client (L):** edits, deletes, reconciled retries, the
+   hardened SARIF reader and the shared contract cases; `ForgejoReader`'s own HTTP calls moved onto the client.
+
+Read in today's code: the `forgejo` client has `pull`, `reviews`, `createReview`, `dismissReview`, `reviewComments`,
+`createReviewComment`, `deleteReviewComment`, `issueComments`, `createIssueComment`, `version` and `permission`, and no
+call for review threads, a reply to a review comment, or resolving a thread; Forgejo 17's API description has none
+either. `createReviewComment` needs an existing review, so a single line comment goes through `createReview`. The
+conversion on GitHub's side builds the profile with Jackson today, not with `java-sarif`.
+
+**Blocked from outside:** porelo's `Review1` description and two-interface `VarlinkServer`, its SARIF profile and
+hardened reader (none in porelo's code today), and the move of `ForgejoReader`'s calls into the `forgejo` client.
+**Estimate:** the median of M for each M part (56 minutes) and of L for the L part (82 minutes), once split.
+
+## Open questions
+
+- Split this issue into the three issues above, the first one taken now since it waits on nothing outside?
 
 ## To be checked
 

@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH15",
   "title": "An Overview Of Forge Functions",
-  "state": "Accepted",
+  "state": "Analyzed",
   "size": "S",
   "priority": "Medium",
-  "rank": 9,
+  "rank": 1,
   "blockedBy": [],
   "covers": "One documentation page says per function and forge what the forge offers and what the adapter does today, each cell no more than its marked source"
 }
@@ -37,6 +37,13 @@ more than its source. It defines no new contract, adds no adapter call and waits
   a row claims one it does not serve; the "offers" cells by no test, since nothing cheap can ask four forges, so their marks and
   pins say how far each is to be believed.
 
+- Read in today's code: an adapter's socket serves the whole `Build2` description, but a method the adapter does not
+  override answers `MethodNotImplemented`: the Forgejo reader overrides `openPullRequest`, the GitHub reader does not. The
+  test reads the adapter cells against the methods each reader class overrides, not against the description alone.
+- **Blocked from outside:** `porelo-forge-clients` holds clients for GitHub and Forgejo only; the reading of GitLab's and
+  Bitbucket Data Center's API descriptions is not in that repository, and is asked of its agent.
+- **Estimate:** 30 minutes, the measured median of S.
+
 ## Acceptance
 
 - The page builds under `check-doc-site` and is reachable from the documentation's navigation.
@@ -50,5 +57,3 @@ more than its source. It defines no new contract, adds no adapter call and waits
 
 ## To be checked
 
-- How the test learns what an adapter serves: the `Build2` interface description on its class path, or what the adapter itself
-  answers.

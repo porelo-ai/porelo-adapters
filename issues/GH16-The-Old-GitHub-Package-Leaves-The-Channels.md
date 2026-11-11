@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH16",
   "title": "The Old GitHub Package Leaves The Channels",
-  "state": "Accepted",
+  "state": "Analyzed",
   "size": "S",
   "priority": "Medium",
-  "rank": 6,
+  "rank": 2,
   "blockedBy": [],
   "covers": "`porelo-build-github` leaves both channels, gone from `snapshots` with `releases` left for after the first released adapter, so `apt install 'porelo*'` installs and updates every package, on a host with the old package too"
 }
@@ -62,8 +62,13 @@ are released there would leave that channel without a GitHub reader.
 - Write in `doc/index.md` that a host with the old package runs `sudo apt purge porelo-build-github` once, and correct what the
   changelog entry says. There is no transitional package: it would keep the name in both channels and install an empty package on
   every new host.
-- Nothing here adds a test: the published-index check of the line belongs to the repository that publishes Porelo itself, and it
-  turns red when the name returns.
+- Nothing here adds a test. The published-index check of the line belongs to the repository that publishes Porelo itself;
+  no workflow there runs it today, so it turns red only when run by hand.
+- `Depends: porelo` and the rpm's `Requires` get a lower bound at the first released Porelo that speaks `Build2`, so the
+  adapter cannot be installed beside a Porelo that refuses it.
+- **Blocked from outside:** a released Porelo that speaks `Build2`, and this repository's first release, which needs
+  released `porelo-parent` and `porelo-forge-clients` first.
+- **Estimate:** 30 minutes, the measured median of S.
 
 **What could bring it back.** No current build can: `main` publishes only `porelo-adapter-github` and `porelo-adapter-forgejo`,
 the former repository name redirects here, and no other repository publishes the name. A re-run of an old run can, since it runs
@@ -77,6 +82,11 @@ a re-run republishes it. Nothing in this repository prevents that re-run.
 - A host with the old package really installed is taken through the documented way and ends with `porelo-adapter-github`
   installed, `porelo-build-github` gone.
 
+## Open questions
+
+- Who deletes the two files from `releases`: the operator once in Artifactory, or a step of this repository's workflow
+  with the account it publishes with, which would need delete rights on those paths.
+
 ## To be checked
 
 - How the two files of `releases` are deleted. Whether `JF_ACCESS_TOKEN`, the account the build publishes with, may delete in
@@ -86,5 +96,3 @@ a re-run republishes it. Nothing in this repository prevents that re-run.
   not measured.
 - The line on `snapshots`, on a fresh host, since the deletion.
 - `dnf` on a host with the old package really installed: `Obsoletes` should replace it, not run.
-- Whether `Depends: porelo` needs a lower bound at the first Porelo that speaks `Build2`, so that the adapter cannot be installed
-  beside a Porelo that refuses it.

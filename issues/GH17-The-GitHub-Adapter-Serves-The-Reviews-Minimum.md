@@ -5,11 +5,11 @@
   "$schema": "issue-1.json",
   "id": "GH17",
   "title": "The GitHub Adapter Serves The Review's Minimum",
-  "state": "Accepted",
+  "state": "Estimated",
   "size": "M",
   "priority": "Medium",
-  "rank": 5,
-  "blockedBy": [],
+  "rank": 3,
+  "blockedBy": ["GH14"],
   "covers": "One person's review on GitHub: `Review1` beside `Build2` with a pull request's facts, one page of comments and one released comment written, a token lent per call and no way to a verdict; waits for porelo's `Review1` description and a two-interface `VarlinkServer`"
 }
 ```
@@ -57,6 +57,21 @@ moving `Build2`'s calls onto the client, the `java-sarif` binding, capability li
   more in the executable. Whether it stays here or moves into the client's jar is settled with the client's repository.
 - Red first, through the installed executable over recorded answers: a recorded pull request read whole; then the safety rules below.
 - `doc/index.md` and `doc/contract.md` name the methods, the losses and the measured token scopes.
+
+- Read in today's code: porelo's main has no `Review1` description and its `VarlinkServer` serves exactly one interface
+  (one `interfaceName`, refused by `GetInterfaceDescription` for any other). The `github` client already has `pull`,
+  `reviews`, `reviewComments`, `createReviewComment`, `replyReviewComment`, `issueComments`, `createIssueComment` and
+  `compare`, and the GraphQL `reviewThreads` and `threadComments`; it sends each request once and marks a write whose
+  answer was lost as sent but unanswered.
+- `Http.overNetwork` keeps its client that trusts the account's authorities private; the GitHub clients get the same
+  trust only once `Http` hands them that `HttpClient`.
+- The paging moved from `standin`'s `GitHubSource` carries [GH14](README.md#gh14)'s fix with it, so that issue goes first.
+- Red first, unit level over a socket: `GetInfo` names `org.fuin.porelo.Review1` beside `Build2`, and
+  `GetInterfaceDescription` answers its description; both fail today. The native executable is built once by the
+  workflow's `-Pnative` build; no VM.
+
+**Estimate:** 56 minutes, the measured median of M. **Blocked from outside** by porelo's written `Review1` description and
+a `VarlinkServer` that serves two interfaces, both still to be built in porelo.
 
 ## Acceptance
 

@@ -15,6 +15,7 @@ left out.
 | <a id="gh14"></a>[GH14](GH14-Stand-In-Says-A-Short-Thread-Is-Complete.md) | - | - | The stand-in counts a run as complete although a review thread's comments were not read to their end |
 | <a id="gh10"></a>[GH10](GH10-The-Forgejo-Adapter-Reads-And-Writes-Reviews.md) | - | - | Forgejo serves reviews as SARIF beside `Build2` through the `forgejo` client, preserving origin and position evidence and holding unsupported writes |
 | <a id="gh15"></a>[GH15](GH15-An-Overview-Of-Forge-Functions.md) | S | - | One documentation page says per function and forge what the forge offers and what the adapter does today, each cell no more than its marked source |
+| <a id="gh31"></a>[GH31](GH31-The-Build-Takes-Its-Downloads-From-A-Cache.md) | S | - | The Build fetches nothing from outside that a cache could hold, `rpm` included, and each of the repository's caches keeps only its newest entry |
 
 ## Accepted
 

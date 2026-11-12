@@ -19,13 +19,13 @@ left out.
 | # | Size | Blocked by | What it covers | Open questions |
 |---|---|---|---|---|
 | <a id="gh11"></a>[GH11](GH11-The-Adapters-Agent-Works-In-A-Porelo-Task.md) | S | - | porelo-adapters' agent works in a Porelo task on the move's host as `Agent Adapters`; first its workflows' publishing, `gh` and artifact upload held to `PORELO_PUBLISH` and the forge's registry read, with a workflow test | 0 |
-| <a id="gh23"></a>[GH23](GH23-The-Tests-Follow-The-Pyramid.md) | L | - | The tests follow the pyramid: the readers' mapping, the recordings' rules, the log tail, the trust choice, the review writer and the stand-in proven by unit tests over fakes, one narrow integration test each, and the workflows' inline logic in a tested command | 0 |
 
 ## Estimated
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
 | <a id="gh14"></a>[GH14](GH14-Stand-In-Says-A-Short-Thread-Is-Complete.md) | XS | - | The stand-in counts a run as complete although a review thread's comments were not read to their end |
+| <a id="gh23"></a>[GH23](GH23-The-Tests-Follow-The-Pyramid.md) | L | - | The tests follow the pyramid: the readers' mapping, the recordings' rules, the log tail, the trust choice, the review writer and the stand-in proven by unit tests over fakes, one narrow integration test each, and the workflows' inline logic in a tested command |
 | <a id="gh26"></a>[GH26](GH26-Contract-Cases-That-Cannot-Pass-Empty.md) | M | - | The published build contract suite refuses an adapter that drops a recorded run's jobs, or answers no trigger or failed test in the cases that hold them |
 | <a id="gh17"></a>[GH17](GH17-The-GitHub-Adapter-Serves-The-Reviews-Minimum.md) | M | [GH14](README.md#gh14) | One person's review on GitHub: `Review1` beside `Build2` with a pull request's facts, one page of comments and one released comment written, a token lent per call and no way to a verdict; waits for porelo's `Review1` description and a two-interface `VarlinkServer` |
 | <a id="gh15"></a>[GH15](GH15-An-Overview-Of-Forge-Functions.md) | S | - | One documentation page says per function and forge what the forge offers and what the adapter does today, each cell no more than its marked source |

@@ -5,13 +5,12 @@
   "$schema": "issue-1.json",
   "id": "GH23",
   "title": "The Tests Follow The Pyramid",
-  "state": "Analyzed",
+  "state": "Estimated",
   "size": "L",
   "priority": "Medium",
   "rank": 1,
   "blockedBy": [],
-  "covers": "The tests follow the pyramid: the readers' mapping, the recordings' rules, the log tail, the trust choice, the review writer and the stand-in proven by unit tests over fakes, one narrow integration test each, and the workflows' inline logic in a tested command",
-  "openQuestions": 0
+  "covers": "The tests follow the pyramid: the readers' mapping, the recordings' rules, the log tail, the trust choice, the review writer and the stand-in proven by unit tests over fakes, one narrow integration test each, and the workflows' inline logic in a tested command"
 }
 ```
 
@@ -88,7 +87,9 @@ only it can show.
 6. **S, unit** - the workflows' inline logic becomes commands with unit tests, so a workflow only calls them. The push
    range and the pull request's origin are the same shell in every Porelo repository, so they move into the shared
    release tool's `check-commits`, which takes the event's fields; the workflow load check and the channel rule go the
-   same way where the tool holds a sibling. What stays here is the call.
+   same way, as a `check-workflows` beside `check-actions`. The tool reads the event's fields from the event file and
+   the runner's environment. What stays here is the call; this fix is built once the tool's command is published, and
+   the other five do not wait for it.
 
 ## Acceptance
 
@@ -96,8 +97,3 @@ only it can show.
 - Every flow above has unit tests over fakes, each seen red; an integration test names what only it can show.
 - `GitHubContractTest`, `ForgejoContractTest` and `StandInTest` together take under 15 s.
 - No plan of this repository needs a VM or a runner to see a flow work.
-
-## To be checked
-
-- With the shared release tool's agent: whether `check-commits` takes the push and pull request fields, and whether the
-  workflow load check and the channel rule belong there; until then fix 6 waits and the other five are built.

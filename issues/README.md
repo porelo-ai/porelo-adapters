@@ -9,7 +9,6 @@ left out.
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
-| <a id="gh23"></a>[GH23](GH23-The-Tests-Follow-The-Pyramid.md) | - | - | The tests follow the pyramid: the audit of every suite by level with measured times, the flows proven only through integration or runner steps, and six sized fixes |
 | <a id="gh09"></a>[GH09](GH09-Review-Cases-In-The-Contract-Suite.md) | - | [GH33](README.md#gh33) | Shared `Review1` cases in `porelo-build-contract` guard SARIF fidelity and native client calls, unsupported capabilities and authorized writes without duplicates; blocks [GH02](README.md#gh02) |
 | <a id="gh13"></a>[GH13](GH13-Mutation-Testing-With-PIT.md) | - | - | A `pit` profile run by hand, with PIT and its JUnit 5 plugin pinned, and a report sorting the surviving mutants into real gaps and harmless ones |
 | <a id="gh32"></a>[GH32](GH32-The-Forgejo-Adapter-Serves-The-Reviews-Minimum.md) | - | [GH10](README.md#gh10) | One person's review on Forgejo: `Review1` beside `Build2` with a pull request's facts, one page of comments and one released comment written, as on GitHub; waits for porelo's `Review1` description and a two-interface `VarlinkServer` |
@@ -19,6 +18,7 @@ left out.
 
 | # | Size | Blocked by | What it covers | Open questions |
 |---|---|---|---|---|
+| <a id="gh23"></a>[GH23](GH23-The-Tests-Follow-The-Pyramid.md) | L | - | The tests follow the pyramid: the readers' mapping, the recordings' rules, the log tail, the trust choice, the review writer and the stand-in proven by unit tests over fakes, one narrow integration test each, and the workflows' inline logic in a tested command | 0 |
 | <a id="gh11"></a>[GH11](GH11-The-Adapters-Agent-Works-In-A-Porelo-Task.md) | S | - | porelo-adapters' agent works in a Porelo task on the move's host as `Agent Adapters`; first its workflows' publishing, `gh` and artifact upload held to `PORELO_PUBLISH` and the forge's registry read, with a workflow test | 0 |
 
 ## Estimated

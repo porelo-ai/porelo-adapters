@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH34",
   "title": "The Issue Heads Are Checked Every Day",
-  "state": "Backlog",
+  "state": "Implementing",
   "size": "XS",
   "priority": "Low",
-  "rank": 2,
+  "rank": 1,
   "blockedBy": [],
   "covers": "The daily *Shared rules check* holds every issue head to its schema and the index to its heads, with `porelo-release`'s `issues check`"
 }

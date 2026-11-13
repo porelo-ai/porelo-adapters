@@ -7,7 +7,7 @@
   "title": "The Old GitHub Package Leaves The Channels",
   "state": "Estimated",
   "size": "S",
-  "priority": "Medium",
+  "priority": "Low",
   "rank": 5,
   "blockedBy": [],
   "covers": "`porelo-build-github` leaves both channels, gone from `snapshots` with `releases` left for after the first released adapter, so `apt install 'porelo*'` installs and updates every package, on a host with the old package too"

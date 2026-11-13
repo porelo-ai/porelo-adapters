@@ -24,13 +24,13 @@ left out.
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
-| <a id="gh14"></a>[GH14](GH14-Stand-In-Says-A-Short-Thread-Is-Complete.md) | XS | - | The stand-in counts a run as complete although a review thread's comments were not read to their end |
 | <a id="gh23"></a>[GH23](GH23-The-Tests-Follow-The-Pyramid.md) | L | - | The tests follow the pyramid: the readers' mapping, the recordings' rules, the log tail, the trust choice, the review writer and the stand-in proven by unit tests over fakes, one narrow integration test each, and the workflows' inline logic in a tested command |
 | <a id="gh26"></a>[GH26](GH26-Contract-Cases-That-Cannot-Pass-Empty.md) | M | - | The published build contract suite refuses an adapter that drops a recorded run's jobs, or answers no trigger or failed test in the cases that hold them |
 | <a id="gh17"></a>[GH17](GH17-The-GitHub-Adapter-Serves-The-Reviews-Minimum.md) | M | [GH14](README.md#gh14) | One person's review on GitHub: `Review1` beside `Build2` with a pull request's facts, one page of comments and one released comment written, a token lent per call and no way to a verdict; waits for porelo's `Review1` description and a two-interface `VarlinkServer` |
 | <a id="gh15"></a>[GH15](GH15-An-Overview-Of-Forge-Functions.md) | S | - | One documentation page says per function and forge what the forge offers and what the adapter does today, each cell no more than its marked source |
-| <a id="gh16"></a>[GH16](GH16-The-Old-GitHub-Package-Leaves-The-Channels.md) | S | - | `porelo-build-github` leaves both channels, gone from `snapshots` with `releases` left for after the first released adapter, so `apt install 'porelo*'` installs and updates every package, on a host with the old package too |
 | <a id="gh10"></a>[GH10](GH10-Forgejo-Reviews-Converted-Into-The-Profile.md) | M | - | A Forgejo pull request's reviews and comments read into Porelo's SARIF profile, and one released result turned into the `forgejo` client's calls, over the client's records, sharing the forge-neutral review code with the GitHub adapter |
+| <a id="gh14"></a>[GH14](GH14-Stand-In-Says-A-Short-Thread-Is-Complete.md) | XS | - | The stand-in counts a run as complete although a review thread's comments were not read to their end |
+| <a id="gh16"></a>[GH16](GH16-The-Old-GitHub-Package-Leaves-The-Channels.md) | S | - | `porelo-build-github` leaves both channels, gone from `snapshots` with `releases` left for after the first released adapter, so `apt install 'porelo*'` installs and updates every package, on a host with the old package too |
 
 ## Backlog
 

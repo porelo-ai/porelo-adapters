@@ -7,7 +7,7 @@
   "title": "The Stand-In Says A Short Thread Is Complete",
   "state": "Estimated",
   "size": "XS",
-  "priority": "Medium",
+  "priority": "Low",
   "rank": 1,
   "blockedBy": [],
   "covers": "The stand-in counts a run as complete although a review thread's comments were not read to their end"

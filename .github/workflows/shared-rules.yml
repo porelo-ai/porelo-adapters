@@ -1,6 +1,7 @@
 # Checks the documents: AGENTS.md's shared block against its hash, no citation of an issue that goes stale, a
-# documentation chapter somebody can find their way through, and the tests that read documents. Of its own because
-# the build ignores a change to Markdown alone, which is exactly the change this is for, and it leases no machine.
+# documentation chapter somebody can find their way through, the tests that read documents, and every issue head and
+# the index against each other and their schema. Of its own because the build ignores a change to Markdown alone,
+# which is exactly the change this is for, and it leases no machine.
 name: Shared rules check
 
 # Once a day, not on a push: every hand-over runs the same checks locally on its exact commit first, and a run per
@@ -32,6 +33,13 @@ jobs:
             # from Central; the tests tagged documents follow it, so a change to a page runs every test that reads one.
             - name: The documents
               run: ./mvnw -B -U -s settings.xml -Pdocuments test
+
+            # The planner's board refuses a head that breaks issue-1.json or disagrees with the index, so a fault is
+            # named here by its file and field before someone meets it there; it runs after a failed step too, so one
+            # fault hides no other.
+            - name: The issue heads
+              if: ${{ !cancelled() }}
+              run: ./mvnw -B -s settings.xml -N exec:exec@release -Drelease.args="issues check issues"
 
             # A pull request's own commits held to the shared rule on commit messages. One from outside - from another
             # repository, or opened by someone not a member - also carries its author's Signed-off-by: on each commit,

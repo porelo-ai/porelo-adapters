@@ -5,10 +5,10 @@
   "$schema": "issue-1.json",
   "id": "GH34",
   "title": "The Issue Heads Are Checked Every Day",
-  "state": "Implementing",
+  "state": "Review",
   "size": "XS",
   "priority": "Low",
-  "rank": 1,
+  "rank": 5,
   "blockedBy": [],
   "covers": "The daily *Shared rules check* holds every issue head to its schema and the index to its heads, with `porelo-release`'s `issues check`"
 }
@@ -23,7 +23,8 @@ contract, no code.
 
 ## Plan
 
-- `.github/workflows/shared-rules.yml` gains a step *The issue heads* after *The documents*, running
+- `.github/workflows/shared-rules.yml` gains a step *The issue heads* after *The documents*, also when an earlier step
+  failed, running
   `./mvnw -B -s settings.xml -N exec:exec@release -Drelease.args="issues check issues"` on the checked-out commit.
 - No test goes red first: the step is CI only. Its failure path is seen once locally by breaking one head on purpose
   (a `size` removed), reading the named file and field, and putting the head back from a copy.

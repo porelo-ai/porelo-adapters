@@ -20,7 +20,7 @@ move; then the trial move's steps, this issue worked to Review inside the task, 
 
 **What must be true.** porelo-adapters' agent works in a Porelo task on the move's host, as the project's procedure for an agent's
 move lays out, and takes this issue to
-Review inside the task with the host's Forgejo build green. It talks in the project's room as `Agent Adapters`, from
+Review inside the task with the host's Forgejo build green. It talks only in the project's room on the host's homeserver, with the operator, as `Agent Adapters`, from
 the nickname `Adapters` that porelo-project's `project.yml` is to give the repository `github`.
 
 ## Plan
@@ -63,9 +63,11 @@ Read in today's `porelo.yml`, `settings.xml` and the four workflows, against the
   - Inside the task: the five skills fetched and checked, this issue set to Review, the forge's Build and *Shared
     rules check* of the task's pull request read through the `forgejo` reader, both green, and the Build after the
     merge green with nothing published.
+  - The reading before the hand-over: a reader on the host, started apart from the task, reads the pull request's
+    diff against the repository's skills and posts its findings in the host's room; a fix amends the task's commit.
   - The move's check, red before, green after; then the way back.
-- **Not in the task:** the Artifactory and Sonatype credentials, Codex CLI and Antigravity CLI, and the VM; the reading
-  before the hand-over is done from outside, as the procedure says.
+- **Not in the task:** the Artifactory and Sonatype credentials, Codex CLI and Antigravity CLI, and the VM; nothing
+  runs between the development machine and the task.
 
 ## Acceptance
 

@@ -14,12 +14,6 @@ left out.
 | <a id="gh32"></a>[GH32](GH32-The-Forgejo-Adapter-Serves-The-Reviews-Minimum.md) | - | [GH10](README.md#gh10) | One person's review on Forgejo: `Review1` beside `Build2` with a pull request's facts, one page of comments and one released comment written, as on GitHub; waits for porelo's `Review1` description and a two-interface `VarlinkServer` |
 | <a id="gh33"></a>[GH33](GH33-The-Forgejo-Adapter-Serves-Every-Review-Operation.md) | - | [GH32](README.md#gh32) | Forgejo serves every review operation beside `Build2` through the `forgejo` client - edits, deletes, reconciled retries, the hardened SARIF reader and the shared contract cases - and `ForgejoReader`'s own HTTP calls move onto the client |
 
-## Analyzed
-
-| # | Size | Blocked by | What it covers | Open questions |
-|---|---|---|---|---|
-| <a id="gh11"></a>[GH11](GH11-The-Adapters-Agent-Works-In-A-Porelo-Task.md) | S | - | porelo-adapters' agent works in a Porelo task on the move's host as `Agent Adapters`; first its workflows' publishing, `gh` and artifact upload held to `PORELO_PUBLISH` and the forge's registry read, with a workflow test | 0 |
-
 ## Estimated
 
 | # | Size | Blocked by | What it covers |
@@ -34,9 +28,10 @@ left out.
 
 ## Backlog
 
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
-| <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH17](README.md#gh17), [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials |
+| # | Size | Blocked by | What it covers | Open questions |
+|---|---|---|---|---|
+| <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH17](README.md#gh17), [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials | - |
+| <a id="gh11"></a>[GH11](GH11-The-Adapters-Agent-Works-In-A-Porelo-Task.md) | S | - | porelo-adapters' agent works in a Porelo task on the move's host as `Agent Adapters`; first its workflows' publishing, `gh` and artifact upload held to `PORELO_PUBLISH` and the forge's registry read, with a workflow test | 0 |
 
 ## Review
 

@@ -5,7 +5,7 @@
   "$schema": "issue-1.json",
   "id": "GH11",
   "title": "The Adapters' Agent Works In A Porelo Task",
-  "state": "Analyzed",
+  "state": "Backlog",
   "size": "S",
   "priority": "Medium",
   "rank": 1,
@@ -47,9 +47,12 @@ Read in today's `porelo.yml`, `settings.xml` and the four workflows, against the
   - `settings.xml` reads Sonatype's snapshots alone. A profile active when `MAVEN_SNAPSHOTS_URL` is set adds the
     forge's registry with the read token, and the three workflows that build stop at once on a forge that names no
     registry or no token, as porelo-message-sluice's do.
+  - `build.yml`: *rpm, to read the built package* keys its cache by `ImageOS` and `ImageVersion`, which only
+    GitHub's images set, and stops where they are missing and `rpm` is not installed. Where the runner names neither,
+    the key is read from `/etc/os-release`'s `ID` and `VERSION_ID` instead.
   - `porelo.yml`'s comment says nothing reads it; Porelo builds a task's image from it today. The comment is
     corrected; its GraalVM and `shfmt` pins equal the workflows' today.
-- **Red first:** a test in `reader` reads every workflow and fails where a step or job that names
+- **Red first:** a test in `contract`, the module that ships no executable, reads every workflow and fails where a step or job that names
   `secrets.JF_ACCESS_TOKEN`, `secrets.OSS_SONATYPE_TOKEN`, `gh ` or `actions/upload-artifact` is not held to
   `vars.PORELO_PUBLISH == 'true'`. Harm prevented: a token sent to a placeholder host, or a build red on every merge on
   the forge. It is red on today's `build.yml` and `delete-runs.yml`.
@@ -74,6 +77,10 @@ Read in today's `porelo.yml`, `settings.xml` and the four workflows, against the
   the operator merges.
 
 ## To be checked
+
+- That the forge's runner image has `rpm`, or names `ImageOS` and `ImageVersion`; the key's fallback is built either way.
+- That the forge's runner serves the label `ubuntu-26.04` that the *Workflow check* runs on, and `actions/cache` with a
+  cache server; where it does not, the label or the cache is changed with the publishing steps.
 
 - **The repository alone moves.** `porelo` and `porelo-ai.github.io` move by issues of their own repositories.
 - That the forge's runner builds both native executables and their packages within the job's 30 minutes; measured

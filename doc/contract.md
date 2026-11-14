@@ -190,7 +190,7 @@ An unmatched request gets HTTP 404 and fails the case with its method and path; 
 
 ## Recorded and generated cases
 
-Recorded exchanges carry `"recorded": true` and `"source": "github.com, 2026-10-24"`.
+Recorded exchanges carry `"recorded": true` and a `"source"` naming `github.com` and the day of the capture.
 They preserve the captured status, `content-type`, rate-limit headers, and log redirect, whose signed
 location is replaced by the double's blob URL. JSON bodies retain only fields the adapter reads:
 `object.sha`, list `total_count`, run/job `id`, `name`, `status`, `conclusion`, run `event`, job `run_id` and
@@ -209,15 +209,15 @@ steps, and run URLs are omitted where the adapter does not read them; retained f
 | `many-jobs` | The real builds have nine jobs; a generated sixty-job matrix puts the failure beyond the first fifty. |
 | `shared-logs` | Fifty generated logs exceed the 2 MiB total budget; the captures do not supply this boundary case. |
 | `many-runs` | The real commits have at most three runs; sixty generated outstanding runs cross the fifty-run limit. |
-| `triggers`, `action-required`, `failed-tests` | GitHub API captures retain the real repositories and values. The failure log retains exactly its last `Build.TAIL` bytes; its signed redirect uses the replay blob placeholder. Forgejo examples are explicitly generated pending recorder output, including the unknown-status example. |
+| `triggers`, `action-required`, `failed-tests` | GitHub API captures retain the real repositories and values. The failure log retains exactly its last `Build.TAIL` bytes; its signed redirect uses the replay blob placeholder. Forgejo's `triggers` and `failed-tests` are recorder output; its `action-required` example, a status Forgejo does not know, is generated pending a capture. |
 | `log-tail` | A deterministic long log exercises multiple read windows and exposes its retained end. |
 
 Every generated file carries `"recorded": false` and a one-line `why`, including files whose API
 objects or header shapes came from a real response. Repeated exchanges inherit the enclosing file's provenance.
 Generated log downloads keep the real 302 API/200 blob shape and content types.
 
-The failed-job log files contain the final 69,632 bytes of the 383,260-byte public CI log: the expected
-64 KiB tail plus a 4 KiB prefix. Each referencing exchange gives byte counts and digests in `reduction`.
+The `failed` and `logs-failure` log files contain the final 69,632 bytes of the 383,260-byte public CI log: the
+expected 64 KiB tail plus a 4 KiB prefix; `failed-tests` keeps exactly the last 64 KiB of its log. Each referencing exchange gives byte counts and digests in `reduction`.
 The complete capture and retained bytes were checked for `ghp_`, `gho_`, `github_pat_`, and `Bearer `;
 all four counts were zero. No credential or signed URL is retained.
 
@@ -244,7 +244,7 @@ reads only the status, so its body is `{}`. Request repository names and commit 
 suite's target; response field values and log bytes are retained unchanged.
 
 Forgejo exchange files use `"recorded": true` and
-`"source": "Forgejo 17.0.0 in podman, 2026-10-24"`. Generated limits, large matrices, long logs, and transport
+a `"source"` naming `Forgejo 17.0.0 in podman` and the day of the capture. Generated limits, large matrices, long logs, and transport
 failures carry `"recorded": false` and a `why`; generated job lists remain arrays. The fifty-log case exceeds
 the 2 MiB total log budget and the long-log case exceeds 2 MiB. The failed job's measured log keeps its last
 69,632 bytes, with original and retained byte counts and SHA-256 digests in `reduction`.

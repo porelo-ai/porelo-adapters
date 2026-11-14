@@ -46,7 +46,7 @@ A fine-grained token, with access to the repositories the tasks push to, and two
 
 A refused token is reported with GitHub's own message and what was asked, such as
 `GitHub refused this credential /repos/<owner>/<name>/git/ref/heads/<branch> (403): Resource not accessible by
-personal access token`. The token is stored in Porelo's vault under the name the project file's `builds.credential`
+personal access token. A build reader needs Actions: Read and Contents: Read on <owner>/<name>`. The token is stored in Porelo's vault under the name the project file's `builds.credential`
 gives.
 
 ## Forgejo Actions

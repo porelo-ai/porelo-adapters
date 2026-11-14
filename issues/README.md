@@ -37,6 +37,7 @@ left out.
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
+| <a id="gh35"></a>[GH35](GH35-The-Docs-Say-What-The-Code-Does.md) | S | - | Every sentence of the user-facing pages - the READMEs, `doc/` but its decisions, the changelog's latest section - checked against the code; what the code does not bear out is corrected, and where the code is wrong a bug is filed instead |
 | <a id="gh29"></a>[GH29](GH29-The-Planning-Modules-Leave.md) | S | - | The `planning/` module group - `stories-git`, the planning contract suite, their docs, tests and changelog entries - leaves the repository, and nothing left names it |
 | <a id="gh24"></a>[GH24](GH24-Each-Run-Named-By-Its-Trigger-With-Its-Jobs.md) | L | - | Each run of a commit named by its workflow and its trigger (push, pull request), queued, running or finished, every job under its run, and never no run while one is outstanding; needs two optional `Build2` fields |
 | <a id="gh25"></a>[GH25](GH25-A-Failed-Job-Told-By-Its-Failed-Tests.md) | M | - | A failed job answered with its failed tests and a link to its log page instead of the log printed whole; needs two optional `Build2` fields |

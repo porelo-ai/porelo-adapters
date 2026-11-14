@@ -22,7 +22,7 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- compile: the build API and the wire it speaks, and nothing else of Porelo's. -->
+        <!-- compile: the build API and the wire it speaks; the forge client follows below. -->
 
         <dependency>
             <groupId>org.fuin.porelo</groupId>

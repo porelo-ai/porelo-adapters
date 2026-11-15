@@ -37,7 +37,6 @@ left out.
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
-| <a id="gh35"></a>[GH35](GH35-The-Docs-Say-What-The-Code-Does.md) | S | - | Every sentence of the user-facing pages - the READMEs, `doc/` but its decisions, the changelog's latest section - checked against the code; what the code does not bear out is corrected, and where the code is wrong a bug is filed instead |
 | <a id="gh29"></a>[GH29](GH29-The-Planning-Modules-Leave.md) | S | - | The `planning/` module group - `stories-git`, the planning contract suite, their docs, tests and changelog entries - leaves the repository, and nothing left names it |
 | <a id="gh24"></a>[GH24](GH24-Each-Run-Named-By-Its-Trigger-With-Its-Jobs.md) | L | - | Each run of a commit named by its workflow and its trigger (push, pull request), queued, running or finished, every job under its run, and never no run while one is outstanding; needs two optional `Build2` fields |
 | <a id="gh25"></a>[GH25](GH25-A-Failed-Job-Told-By-Its-Failed-Tests.md) | M | - | A failed job answered with its failed tests and a link to its log page instead of the log printed whole; needs two optional `Build2` fields |
@@ -47,6 +46,7 @@ left out.
 
 | # | Title | What was built |
 |---|---|---|
+| <a id="gh35"></a>GH35 | The Docs Say What The Code Does | The READMEs, `doc/index.md`, `doc/contract.md` and the changelog were read against the code, and every sentence the code did not bear out - the GitHub adapter's dependency on the `github` forge client, the recordings' sources, triggers, failed tests and log sizes, the quoted token refusal - was corrected. |
 | <a id="gh31"></a>GH31 | The Build Takes Its Downloads From A Cache | The Build takes `rpm` from the runner image or from a cache of its `.deb` files keyed by the image, calls the archive only on a miss, and leaves superseded cache entries to GitHub's seven-day eviction. |
 | <a id="gh34"></a>GH34 | The Issue Heads Are Checked Every Day | The daily *Shared rules check* runs `porelo-release issues check` over `issues/`, so an issue head off its schema or an index that disagrees with its heads fails it, named by file and field. |
 | <a id="gh30"></a>GH30 | The Packages Carry The Notices Of What They Compile In | Each adapter's `.deb` and `.rpm` carry a `THIRD-PARTY-NOTICES` file the build generates with the license and notice texts of every third-party library and of the Java runtime compiled in, and the `copyright` file and rpm license name Porelo's own libraries with their licenses. |

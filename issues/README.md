@@ -9,7 +9,7 @@ left out.
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
-| <a id="gh37"></a>[GH37](GH37-The-Stand-In-Methods-Only-Map.md) | S | - | The stand-in's Varlink methods only check and map their parameters and call one method of a review service, which holds the comment, resolve and decision use cases and is tested without a socket |
+| <a id="gh37"></a>[GH37](GH37-The-Stand-In-Methods-Only-Map.md) | S | - | The stand-in's Varlink methods only check and map their parameters and call one method of a review service, which holds the comment, resolve and decision use cases and is tested without a socket; built with the stand-in's next change |
 
 ## Accepted
 

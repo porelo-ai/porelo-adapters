@@ -10,7 +10,7 @@
   "priority": "Medium",
   "rank": 1,
   "blockedBy": [],
-  "covers": "The stand-in's Varlink methods only check and map their parameters and call one method of a review service, which holds the comment, resolve and decision use cases and is tested without a socket"
+  "covers": "The stand-in's Varlink methods only check and map their parameters and call one method of a review service, which holds the comment, resolve and decision use cases and is tested without a socket; built with the stand-in's next change"
 }
 ```
 
@@ -19,7 +19,7 @@ that ships.
 
 **What must be true.** Each of the stand-in's `Tasks1` methods checks its parameters, maps them to a record, calls one
 service method and maps the answer back; the service decides what the review does without knowing Varlink, and its
-tests call it directly.
+tests call it directly. The split is built with the stand-in's next change, not on its own before.
 
 ## Plan
 
@@ -43,7 +43,3 @@ tests call it directly.
 - No handler in `StandIn` takes a lock, reads or writes a push's state, or calls the forge; `ReviewServiceTest` covers
   each use case without a socket and goes red when the repeated-`id` check is removed.
 - `StandInReplayTest` and the operator's steps for the IDE's review display pass unchanged.
-
-## Open questions
-
-- Is a test-only tool that never ships worth this split now, or only when the stand-in changes next?

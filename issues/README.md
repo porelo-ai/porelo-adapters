@@ -33,12 +33,6 @@ left out.
 | <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH17](README.md#gh17), [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials | - |
 | <a id="gh11"></a>[GH11](GH11-The-Adapters-Agent-Works-In-A-Porelo-Task.md) | S | - | porelo-adapters' agent works in a Porelo task on the move's host as `Agent Adapters`; first its workflows' publishing, `gh` and artifact upload held to `PORELO_PUBLISH` and the forge's registry read, with a workflow test | 0 |
 
-## Implementing
-
-| # | Size | Blocked by | What it covers |
-|---|---|---|---|
-| <a id="gh36"></a>[GH36](GH36-The-Task-Image-Takes-The-Current-GraalVM-Pin.md) | XS | - | The task image in `porelo.yml` installs GraalVM 25.5.5.0.3, the pin `porelo-machines` holds, instead of the stale 25.4.4.1.1 |
-
 ## Review
 
 | # | Size | Blocked by | What it covers |
@@ -46,6 +40,7 @@ left out.
 | <a id="gh29"></a>[GH29](GH29-The-Planning-Modules-Leave.md) | S | - | The `planning/` module group - `stories-git`, the planning contract suite, their docs, tests and changelog entries - leaves the repository, and nothing left names it |
 | <a id="gh24"></a>[GH24](GH24-Each-Run-Named-By-Its-Trigger-With-Its-Jobs.md) | L | - | Each run of a commit named by its workflow and its trigger (push, pull request), queued, running or finished, every job under its run, and never no run while one is outstanding; needs two optional `Build2` fields |
 | <a id="gh25"></a>[GH25](GH25-A-Failed-Job-Told-By-Its-Failed-Tests.md) | M | - | A failed job answered with its failed tests and a link to its log page instead of the log printed whole; needs two optional `Build2` fields |
+| <a id="gh36"></a>[GH36](GH36-The-Task-Image-Takes-The-Current-GraalVM-Pin.md) | XS | - | The task image in `porelo.yml` installs GraalVM 25.5.5.0.3, the pin `porelo-machines` holds, instead of the stale 25.4.4.1.1 |
 | <a id="gh18"></a>[GH18](GH18-Every-Run-Of-A-Commit-In-The-Build-Answer.md) | M | - | Every `Build2.Build` answer of the GitHub and Forgejo readers carries `runs`, one name and result per run of the commit, queued and running too, at most 50 in the forge's order; the contract suite and its recordings hold it; waits for `porelo-build-api`'s `runs` |
 
 ## Finished

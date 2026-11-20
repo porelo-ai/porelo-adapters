@@ -32,6 +32,7 @@ left out.
 |---|---|---|---|---|
 | <a id="gh02"></a>[GH02](GH02-Review-Comments-Read-And-Written.md) | L | [GH17](README.md#gh17), [GH09](README.md#gh09) | GitHub serves `Review1` beside `Build2` as SARIF 2.1.0 through the `github` client, preserving thread and origin evidence and sending explicit authorized writes with per-call credentials | - |
 | <a id="gh11"></a>[GH11](GH11-The-Adapters-Agent-Works-In-A-Porelo-Task.md) | S | - | porelo-adapters' agent works in a Porelo task on the move's host as `Agent Adapters`; first its workflows' publishing, `gh` and artifact upload held to `PORELO_PUBLISH` and the forge's registry read, with a workflow test | 0 |
+| <a id="gh36"></a>[GH36](GH36-The-Task-Image-Takes-The-Current-GraalVM-Pin.md) | XS | - | The task image in `porelo.yml` installs GraalVM 25.5.5.0.3, the pin `porelo-machines` holds, instead of the stale 25.4.4.1.1 | - |
 
 ## Review
 

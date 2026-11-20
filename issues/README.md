@@ -5,6 +5,12 @@ issue, and who sets which state, are in [AGENTS.md](../AGENTS.md). *Open questio
 waits on the operator: the items under an issue's own *Open questions*. Its prefix is `GH`. A group with nothing in it is
 left out.
 
+## Idea
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh37"></a>[GH37](GH37-The-Stand-In-Methods-Only-Map.md) | S | - | The stand-in's Varlink methods only check and map their parameters and call one method of a review service, which holds the comment, resolve and decision use cases and is tested without a socket |
+
 ## Accepted
 
 | # | Size | Blocked by | What it covers |

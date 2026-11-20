@@ -5,7 +5,7 @@
   "$schema": "issue-1.json",
   "id": "GH38",
   "title": "The Maven Cache Keeps What A Build Fetched",
-  "state": "Backlog",
+  "state": "Implementing",
   "size": "S",
   "priority": "High",
   "rank": 1,

@@ -5,7 +5,7 @@
   "$schema": "issue-1.json",
   "id": "GH37",
   "title": "The Stand-In's Methods Only Map",
-  "state": "Analyzed",
+  "state": "Estimated",
   "size": "S",
   "priority": "Medium",
   "rank": 1,

@@ -15,7 +15,7 @@
 ```
 
 **Why this size.** review serving, SARIF conversion, delegation of existing build calls to a separate client's contract,
-and shared contract tests cross repository boundaries and require several days.
+and shared contract tests cross repository boundaries, so it takes two hours or more.
 
 **How it stands.** Beside its two issues here it waits on porelo's review contract (`Review1`, and comments on lines
 sent back to the agent), its forge review synchronization, its written SARIF profile, its hardened SARIF reader and its

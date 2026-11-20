@@ -5,7 +5,7 @@
   "$schema": "issue-1.json",
   "id": "GH36",
   "title": "The Task Image Takes The Current GraalVM Pin",
-  "state": "Backlog",
+  "state": "Implementing",
   "size": "XS",
   "priority": "Medium",
   "rank": 3,

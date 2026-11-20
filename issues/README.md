@@ -9,11 +9,16 @@ left out.
 
 | # | Size | Blocked by | What it covers |
 |---|---|---|---|
-| <a id="gh37"></a>[GH37](GH37-The-Stand-In-Methods-Only-Map.md) | S | - | The stand-in's Varlink methods only check and map their parameters and call one method of a review service, which holds the comment, resolve and decision use cases and is tested without a socket; built with the stand-in's next change |
 | <a id="gh09"></a>[GH09](GH09-Review-Cases-In-The-Contract-Suite.md) | - | [GH33](README.md#gh33) | Shared `Review1` cases in `porelo-build-contract` guard SARIF fidelity and native client calls, unsupported capabilities and authorized writes without duplicates; blocks [GH02](README.md#gh02) |
 | <a id="gh13"></a>[GH13](GH13-Mutation-Testing-With-PIT.md) | - | - | A `pit` profile run by hand, with PIT and its JUnit 5 plugin pinned, and a report sorting the surviving mutants into real gaps and harmless ones |
 | <a id="gh32"></a>[GH32](GH32-The-Forgejo-Adapter-Serves-The-Reviews-Minimum.md) | - | [GH10](README.md#gh10) | One person's review on Forgejo: `Review1` beside `Build2` with a pull request's facts, one page of comments and one released comment written, as on GitHub; waits for porelo's `Review1` description and a two-interface `VarlinkServer` |
 | <a id="gh33"></a>[GH33](GH33-The-Forgejo-Adapter-Serves-Every-Review-Operation.md) | - | [GH32](README.md#gh32) | Forgejo serves every review operation beside `Build2` through the `forgejo` client - edits, deletes, reconciled retries, the hardened SARIF reader and the shared contract cases - and `ForgejoReader`'s own HTTP calls move onto the client |
+
+## Analyzed
+
+| # | Size | Blocked by | What it covers |
+|---|---|---|---|
+| <a id="gh37"></a>[GH37](GH37-The-Stand-In-Methods-Only-Map.md) | S | - | The stand-in's Varlink methods only check and map their parameters and call one method of a review service, which holds the comment, resolve and decision use cases and is tested without a socket; built with the stand-in's next change |
 
 ## Estimated
 

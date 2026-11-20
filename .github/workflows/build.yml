@@ -34,6 +34,7 @@ jobs:
                   fetch-depth: 0
 
             - name: The pinned GraalVM
+              id: pinned-jdk
               uses: ./.github/actions/pinned-jdk
 
             # check-package-version reads the built .rpm with rpm, which the image is not promised to have; the archive is
@@ -291,3 +292,9 @@ jobs:
                           exit 1
                       fi
                   done
+
+            # Even after a failure, so what the job fetched is not asked of Central again.
+            - if: always()
+              uses: ./.github/actions/maven-cache-save
+              with:
+                  key: ${{ steps.pinned-jdk.outputs.maven-cache-key }}

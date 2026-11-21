@@ -9,4 +9,4 @@ reviewed, and what a commit carries. It is one page for every Porelo repository:
 - **Building and testing:** JDK 25, the pinned GraalVM. `./mvnw -B -s settings.xml verify` runs the tests, and `-Pnative` builds the
   executable, as [adapters/github/README.md](adapters/github/README.md) says.
 - **The contract** it answers is porelo's build reader interface, so a change to what it answers is made with porelo.
-- **Requirements** are in [issues/README.md](issues/README.md).
+- **Requirements** are in the repository's [GitHub Issues](https://github.com/porelo-ai/porelo-adapters/issues).

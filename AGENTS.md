@@ -14,7 +14,9 @@ log. It holds no secret: Porelo reads the forge token from the vault on the host
   Authorization header.
 - **A changelog entry is one YAML file under `changelog/unreleased/`** with a one-sentence `title` and a `type`.
 - **The tests tagged `documents` run alone with `./mvnw -B -s settings.xml -Pdocuments test`.**
-- **Issue prefix: `GH`**, in `issues/`.
+- **Issues are in the repository's GitHub Issues**, each named by its reference there
+  (`porelo-ai/porelo-adapters#<number>`); one carried over from the Markdown files keeps its old id (`GH`) as a fixed
+  alias.
 - **`adapters/forgejo/src/test/record/record-forgejo.sh` is shell because it drives podman to capture Forgejo responses.**
 - **Skills used:** `graal`, `java-code-review`, `test-quality`, `security-audit`, `clean-code`.
 

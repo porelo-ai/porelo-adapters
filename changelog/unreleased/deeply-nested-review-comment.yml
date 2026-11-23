@@ -1,0 +1,2 @@
+title: "The GitHub adapter reads and sends a deeply nested review comment without overflowing its stack, so one hostile comment no longer fails the read of a pull request."
+type: fixed

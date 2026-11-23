@@ -1,7 +1,9 @@
 package org.fuin.porelo.build.github.review;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -114,16 +116,52 @@ public final class ReviewText {
         return new Read(text.replace("{", "{{").replace("}", "}}"), losses, null);
     }
 
-    /** Collects what a read drops, or says why the body is held. */
+    /**
+     * Collects what a read drops, or says why the body is held, visiting the nodes in document
+     * order without recursion, since a body GitHub holds may nest tens of thousands deep.
+     */
     private static @Nullable String reduce(
-            Node node, String text, List<Edit> edits, Set<String> losses) {
+            Node root, String text, List<Edit> edits, Set<String> losses) {
+        final Deque<Node> pending = new ArrayDeque<>();
+        pending.push(root);
+        while (!pending.isEmpty()) {
+            final Node node = pending.pop();
+            final Visit visit = reduceOne(node, text, edits, losses);
+            if (visit.held() != null) {
+                return visit.held();
+            }
+            if (visit.children()) {
+                pushChildren(node, pending);
+            }
+        }
+        return null;
+    }
+
+    /** What one node of a read says: why it is held, or whether its children are read. */
+    private record Visit(@Nullable String held, boolean children) {
+        static final Visit CHILDREN = new Visit(null, true);
+        static final Visit LEAF = new Visit(null, false);
+
+        static Visit held(String why) {
+            return new Visit(why, false);
+        }
+    }
+
+    /** Pushes a node's children so that they pop in document order. */
+    private static void pushChildren(Node node, Deque<Node> pending) {
+        for (Node child = node.getLastChild(); child != null; child = child.getPrevious()) {
+            pending.push(child);
+        }
+    }
+
+    private static Visit reduceOne(Node node, String text, List<Edit> edits, Set<String> losses) {
         if (node instanceof HtmlBlock block && !isComment(block.getLiteral())) {
-            return "an HTML block, whose text GitHub shows";
+            return Visit.held("an HTML block, whose text GitHub shows");
         }
         if (node instanceof FencedCodeBlock fence) {
             final String refused = refusedCharacter(String.valueOf(fence.getInfo()));
             if (refused != null) {
-                return refused + " in a fence's info";
+                return Visit.held(refused + " in a fence's info");
             }
         }
         if (node instanceof HtmlBlock
@@ -139,12 +177,12 @@ public final class ReviewText {
                                 && text.charAt(end(span)) == '\n';
                 edits.add(new Edit(span.getInputIndex(), end(span) + (wholeLine ? 1 : 0), ""));
             }
-            return null;
+            return Visit.LEAF;
         }
         if (node instanceof Code
                 || node instanceof FencedCodeBlock
                 || node instanceof IndentedCodeBlock) {
-            return null;
+            return Visit.LEAF;
         }
         if (node instanceof Link || node instanceof Image) {
             losses.add("link-dropped");
@@ -154,7 +192,7 @@ public final class ReviewText {
             // A character reference stands for its character, so the decoded text is checked.
             final String refused = refusedCharacter(withoutEmojiSelectors(plain.getLiteral()));
             if (refused != null) {
-                return refused;
+                return Visit.held(refused);
             }
             int written = 0;
             for (final SourceSpan span : spans(node)) {
@@ -163,16 +201,10 @@ public final class ReviewText {
             }
             if (count(plain.getLiteral()) > written) {
                 // Only a written U+FE0F is dropped; a character reference to one would stay.
-                return "a character reference to U+FE0F";
+                return Visit.held("a character reference to U+FE0F");
             }
         }
-        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
-            final String held = reduce(child, text, edits, losses);
-            if (held != null) {
-                return held;
-            }
-        }
-        return null;
+        return Visit.CHILDREN;
     }
 
     /** A link or an image: the brackets and the destination go, its text stays. */
@@ -231,14 +263,27 @@ public final class ReviewText {
      * What a reader sees of a parse: its blocks, code and text, with HTML, link reference
      * definitions and the wrappers of links left out, and spaces, which dropping a tag moves, too.
      */
-    private static String shown(Node node, boolean dropped) {
+    private static String shown(Node root, boolean dropped) {
         final StringBuilder out = new StringBuilder();
-        shown(node, dropped, out);
+        // One buffer and a stack, never a buffer per level: a body may nest tens of thousands deep.
+        final Deque<Object> pending = new ArrayDeque<>();
+        pending.push(root);
+        while (!pending.isEmpty()) {
+            final Object next = pending.pop();
+            if (next instanceof Close close) {
+                close(close, out);
+            } else {
+                open((Node) next, dropped, out, pending);
+            }
+        }
         return out.toString();
     }
 
+    /** A wrapped node's end: where its wrapper and its own content begin in the buffer. */
+    private record Close(Node node, int wrapper, int content) {}
+
     /** With {@code dropped}, the HTML is what the read drops; without, HTML left is new. */
-    private static void shown(Node node, boolean dropped, StringBuilder out) {
+    private static void open(Node node, boolean dropped, StringBuilder out, Deque<Object> pending) {
         if (node instanceof HtmlBlock || node instanceof HtmlInline) {
             if (!dropped) {
                 out.append("\u0001html\u0001");
@@ -252,26 +297,36 @@ public final class ReviewText {
             out.append(withoutEmojiSelectors(plain.getLiteral()).replaceAll("[ \t]", ""));
             return;
         }
-        final StringBuilder inner = new StringBuilder();
+        final boolean wrapped = !(node instanceof Link || node instanceof Image);
+        final int wrapper = out.length();
+        if (wrapped) {
+            out.append('\u0002').append(node.getClass().getSimpleName()).append('\u0002');
+        }
+        final int content = out.length();
         if (node instanceof Code code) {
-            inner.append(code.getLiteral());
+            out.append(code.getLiteral());
         } else if (node instanceof FencedCodeBlock fence) {
-            inner.append(fence.getInfo()).append('\u0003').append(fence.getLiteral());
+            out.append(fence.getInfo()).append('\u0003').append(fence.getLiteral());
         } else if (node instanceof IndentedCodeBlock code) {
-            inner.append(code.getLiteral());
+            out.append(code.getLiteral());
         }
-        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
-            shown(child, dropped, inner);
+        if (wrapped) {
+            pending.push(new Close(node, wrapper, content));
         }
+        for (Node child = node.getLastChild(); child != null; child = child.getPrevious()) {
+            pending.push(child);
+        }
+    }
+
+    private static void close(Close close, StringBuilder out) {
         // A block left empty, a paragraph that held only an image say, is gone from the text.
-        final boolean gone = node instanceof Block && !isCode(node) && inner.isEmpty();
-        if (node instanceof Link || node instanceof Image || gone) {
-            out.append(inner);
-            return;
+        if (close.node() instanceof Block
+                && !isCode(close.node())
+                && out.length() == close.content()) {
+            out.setLength(close.wrapper());
+        } else {
+            out.append('\u0004');
         }
-        out.append('\u0002').append(node.getClass().getSimpleName()).append('\u0002');
-        out.append(inner);
-        out.append('\u0004');
     }
 
     private static String withoutEmojiSelectors(String text) {
@@ -350,8 +405,20 @@ public final class ReviewText {
         return out;
     }
 
-    /** Refuses what GitHub would render as markup, and collects the text's ranges. */
-    private static void refuseMarkup(Node node, String body, List<int[]> text) {
+    /** Refuses what GitHub would render as markup, and collects the text's ranges in order. */
+    private static void refuseMarkup(Node root, String body, List<int[]> text) {
+        final Deque<Node> pending = new ArrayDeque<>();
+        pending.push(root);
+        while (!pending.isEmpty()) {
+            final Node node = pending.pop();
+            if (refuseMarkupOne(node, body, text)) {
+                pushChildren(node, pending);
+            }
+        }
+    }
+
+    /** Refuses one node's markup; whether its children are read. */
+    private static boolean refuseMarkupOne(Node node, String body, List<int[]> text) {
         if (node instanceof HtmlBlock || node instanceof HtmlInline) {
             throw violation("HTML; code goes in a code span");
         }
@@ -377,7 +444,7 @@ public final class ReviewText {
         if (node instanceof Code
                 || node instanceof FencedCodeBlock
                 || node instanceof IndentedCodeBlock) {
-            return;
+            return false;
         }
         if (node instanceof Text) {
             for (final SourceSpan span : spans(node)) {
@@ -390,9 +457,7 @@ public final class ReviewText {
                 text.add(new int[] {span.getInputIndex(), end(span)});
             }
         }
-        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
-            refuseMarkup(child, body, text);
-        }
+        return true;
     }
 
     private static void refuseDecoded(@Nullable String first, @Nullable String second) {
@@ -409,25 +474,32 @@ public final class ReviewText {
     }
 
     /** Whether text GitHub renders still holds a mention, read across adjacent text nodes. */
-    private static boolean leftMention(Node node) {
-        final StringBuilder run = new StringBuilder();
-        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
-            if (child instanceof Text plain) {
-                run.append(plain.getLiteral());
-                continue;
+    private static boolean leftMention(Node root) {
+        final Deque<Node> pending = new ArrayDeque<>();
+        pending.push(root);
+        while (!pending.isEmpty()) {
+            final Node node = pending.pop();
+            final StringBuilder run = new StringBuilder();
+            for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
+                if (child instanceof Text plain) {
+                    run.append(plain.getLiteral());
+                    continue;
+                }
+                if (MENTION.matcher(run).find()) {
+                    return true;
+                }
+                run.setLength(0);
+                if (!(child instanceof Code
+                        || child instanceof FencedCodeBlock
+                        || child instanceof IndentedCodeBlock)) {
+                    pending.push(child);
+                }
             }
             if (MENTION.matcher(run).find()) {
                 return true;
             }
-            run.setLength(0);
-            if (!(child instanceof Code
-                            || child instanceof FencedCodeBlock
-                            || child instanceof IndentedCodeBlock)
-                    && leftMention(child)) {
-                return true;
-            }
         }
-        return MENTION.matcher(run).find();
+        return false;
     }
 
     /** Wraps each mention in a range in a code span that touches no backslash or backtick. */

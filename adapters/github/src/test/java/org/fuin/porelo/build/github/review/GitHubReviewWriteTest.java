@@ -475,6 +475,26 @@ class GitHubReviewWriteTest {
                                         .isEqualTo(ReviewRefusal.Reason.TOO_LARGE));
     }
 
+    // Harm: one deeply nested message crashes the release of every comment sent with it.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {">", "> ", "[", "- ", "1. ", "*", "`", "](", "  "})
+    void aDeeplyNestedMessageOfGitHubsMostCharactersIsSentOrRefusedInTime(String unit) {
+        final String message = unit.repeat(65_535 / unit.length()) + "x";
+
+        org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(60),
+                () -> {
+                    try {
+                        assertThat(ReviewText.toForge(message)).as("sent").isNotEmpty();
+                    } catch (ReviewRefusal refused) {
+                        assertThat(refused.reason())
+                                .as("refused by the walk over the markup, not before it")
+                                .isNotEqualTo(ReviewRefusal.Reason.TOO_LARGE);
+                    }
+                });
+    }
+
     // Harm: a comment GitHub would take on a long block is refused.
     @Test
     void aRegionOfAHundredAndFiftyLinesIsSent() {

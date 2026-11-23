@@ -362,6 +362,31 @@ class GitHubReviewReadTest {
         assertThat(read.held()).as("65,536 characters, 131,072 UTF-16 units, are read").isEmpty();
     }
 
+    // Harm: one hostile comment GitHub holds crashes the read of the whole pull request.
+    // The bound catches a hang, not the parser's cost: 65,536 "<" take seconds on a loaded host.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {">", "> ", "[", "- ", "1. ", "*", "`", "<", "](", "  "})
+    void aDeeplyNestedBodyOfGitHubsMostCharactersIsReadOrHeldInTime(String unit) {
+        final String body = unit.repeat(65_536 / unit.length());
+
+        final GitHubReviewRead.Read read =
+                org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                        java.time.Duration.ofSeconds(60),
+                        () ->
+                                read(
+                                        List.of(),
+                                        List.of(),
+                                        List.of(
+                                                GitHubAnswers.issueComment(
+                                                        c -> c.put("body", body))),
+                                        List.of()));
+
+        assertThat(read.results().size() + read.held().size())
+                .as("the comment is read or held, never lost")
+                .isEqualTo(1);
+    }
+
     // Harm: a body larger than GitHub hands out floods every reader of the document.
     @Test
     void aBodyOverGitHubsMostCharactersIsHeld() {

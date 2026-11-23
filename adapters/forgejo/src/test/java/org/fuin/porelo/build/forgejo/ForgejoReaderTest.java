@@ -593,9 +593,12 @@ class ForgejoReaderTest {
                 .isInstanceOfSatisfying(
                         BuildRefused.class,
                         e ->
-                                assertThat(e.reason())
-                                        .as("no answer")
-                                        .isEqualTo(BuildRefused.Reason.UNREACHABLE));
+                                assertThat(e)
+                                        .as("no answer, as the call's time ran out")
+                                        .returns(
+                                                BuildRefused.Reason.UNREACHABLE,
+                                                BuildRefused::reason)
+                                        .hasMessageContaining("the call's time ran out"));
         assertThat(requests)
                 .as("one request a minute for five minutes times the factor, the call's all")
                 .hasSize(pages);

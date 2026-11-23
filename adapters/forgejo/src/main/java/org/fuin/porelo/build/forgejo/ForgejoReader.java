@@ -216,6 +216,7 @@ public final class ForgejoReader implements BuildReader {
         asked.put("title", title == null ? subject(target, repository, branch) : title);
         final Http.Response opened;
         try {
+            // A POST cut off by the call's time may still have opened it; a retry finds it open.
             opened =
                     http.post(
                             URI.create(requireApi(target) + repository.path() + "/pulls"),

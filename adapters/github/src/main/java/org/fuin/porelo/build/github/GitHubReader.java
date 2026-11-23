@@ -456,7 +456,11 @@ public final class GitHubReader implements BuildReader {
             return http.get(uri, headers, tail);
         } catch (IOException ex) {
             throw new BuildRefused(
-                    BuildRefused.Reason.UNREACHABLE, "GitHub did not answer: " + ex.getMessage());
+                    BuildRefused.Reason.UNREACHABLE,
+                    "GitHub did not answer: "
+                            + (ex.getMessage() == null
+                                    ? ex.getClass().getSimpleName()
+                                    : ex.getMessage()));
         }
     }
 

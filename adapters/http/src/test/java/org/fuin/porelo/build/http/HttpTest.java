@@ -197,6 +197,28 @@ class HttpTest {
                 .isBetween(java.time.Duration.ofMillis(1_500), java.time.Duration.ofSeconds(15));
     }
 
+    // Harm: a transport narrowed twice that keeps the longer time outlasts the call's bound.
+    @Test
+    void aTransportNarrowedTwiceWaitsNoLongerThanTheShorterTime() {
+        final long end = System.nanoTime() + java.time.Duration.ofSeconds(2).toNanos();
+        final Http call =
+                http.within(() -> java.time.Duration.ofNanos(end - System.nanoTime()))
+                        .within(() -> java.time.Duration.ofSeconds(60));
+        final URI uri = URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/silent");
+        final long start = System.nanoTime();
+
+        org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(30),
+                () ->
+                        org.assertj.core.api.Assertions.assertThatThrownBy(
+                                        () -> call.get(uri, Map.of(), 0))
+                                .as("the shorter time holds")
+                                .hasMessageContaining("the call's time ran out"));
+        assertThat(java.time.Duration.ofNanos(System.nanoTime() - start))
+                .as("after the 2 s, not the 60 s")
+                .isLessThan(java.time.Duration.ofSeconds(15));
+    }
+
     // Harm: a request sent after its call's time ran out keeps the forge busy for nothing.
     @Test
     void noRequestIsSentOnceItsCallHasNoTimeLeft() {

@@ -203,7 +203,7 @@ public interface Http {
                                 request.timeout(headersWait).build(),
                                 HttpResponse.BodyHandlers.ofInputStream());
             } catch (HttpTimeoutException ex) {
-                throw ranOut(headersWait.compareTo(wait) < 0, ex);
+                throw ranOut(left, ex);
             }
             final Map<String, List<String>> named = new LinkedHashMap<>();
             answer.headers()
@@ -214,7 +214,7 @@ public interface Http {
                 try {
                     return new Response(answer.statusCode(), named, within(bodyWait, body, tail));
                 } catch (HttpTimeoutException ex) {
-                    throw ranOut(bodyWait.compareTo(wait) < 0, ex);
+                    throw ranOut(left, ex);
                 }
             }
         } catch (InterruptedException ex) {
@@ -240,10 +240,13 @@ public interface Http {
         return rest.compareTo(wait) < 0 ? rest : wait;
     }
 
-    /** The timeout as it is, or as the call's when the call's time was what cut the wait. */
+    /**
+     * The timeout as the call's when the call has all but run out, else as it is: a connect that
+     * timed out with time left is the forge's, never the call's.
+     */
     private static HttpTimeoutException ranOut(
-            final boolean byCall, final HttpTimeoutException timeout) {
-        if (!byCall) {
+            final @Nullable Supplier<Duration> left, final HttpTimeoutException timeout) {
+        if (left == null || left.get().compareTo(Duration.ofSeconds(1)) >= 0) {
             return timeout;
         }
         final HttpTimeoutException ran = new HttpTimeoutException("the call's time ran out");

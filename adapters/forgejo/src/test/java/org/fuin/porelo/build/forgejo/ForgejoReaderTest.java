@@ -579,13 +579,9 @@ class ForgejoReaderTest {
         }
     }
 
-    private long pullPages() {
-        return requests.stream().filter(uri -> uri.toString().contains("/pulls?")).count();
-    }
-
     @ParameterizedTest
     @CsvSource({"services=1.0, 5", "services=2.0, 10"})
-    void aPullRequestListThatNeverEndsIsGivenUpAtTheReadingDeadline(
+    void aPullRequestListThatNeverEndsIsGivenUpAtTheCallDeadline(
             final String line, final int pages) {
         // A forge that counts more than it hands out would hold the call forever.
         reader = reader(LimitFactors.parse(line));
@@ -600,13 +596,13 @@ class ForgejoReaderTest {
                                 assertThat(e.reason())
                                         .as("no answer")
                                         .isEqualTo(BuildRefused.Reason.UNREACHABLE));
-        assertThat(pullPages())
-                .as("one page a minute for five minutes times the factor")
-                .isEqualTo(pages);
+        assertThat(requests)
+                .as("one request a minute for five minutes times the factor, the call's all")
+                .hasSize(pages);
     }
 
     @Test
-    void aRunListThatNeverEndsIsGivenUpAtTheReadingDeadline() {
+    void aRunListThatNeverEndsIsGivenUpAtTheCallDeadline() {
         // A forge that counts more runs than it hands out would hold the call, and grow it,
         // forever.
         clock.step = Duration.ofMinutes(1);
@@ -624,9 +620,12 @@ class ForgejoReaderTest {
                 .isInstanceOfSatisfying(
                         BuildRefused.class,
                         e ->
-                                assertThat(e.reason())
-                                        .as("no answer")
-                                        .isEqualTo(BuildRefused.Reason.UNREACHABLE));
-        assertThat(requests).as("five pages in five minutes").hasSize(5);
+                                assertThat(e)
+                                        .as("no answer, as the call's time ran out")
+                                        .returns(
+                                                BuildRefused.Reason.UNREACHABLE,
+                                                BuildRefused::reason)
+                                        .hasMessageContaining("the call's time ran out"));
+        assertThat(requests).as("five requests in five minutes").hasSize(5);
     }
 }

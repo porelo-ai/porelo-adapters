@@ -32,6 +32,7 @@ class HttpTest {
     private final java.util.concurrent.ExecutorService handlers =
             java.util.concurrent.Executors.newCachedThreadPool();
     private Http http;
+    private final AtomicInteger silentAsked = new AtomicInteger();
 
     @TempDir Path directory;
 
@@ -53,6 +54,7 @@ class HttpTest {
         server.createContext(
                 "/silent",
                 exchange -> {
+                    silentAsked.incrementAndGet();
                     try {
                         Thread.sleep(30_000);
                     } catch (InterruptedException ex) {
@@ -171,6 +173,45 @@ class HttpTest {
         assertThat(java.time.Duration.ofNanos(System.nanoTime() - start))
                 .as("after 0.1 times 60 s, not before")
                 .isBetween(java.time.Duration.ofMillis(5_500), java.time.Duration.ofSeconds(15));
+    }
+
+    // Harm: a call that waits past Porelo's own bound loses the forge's words to a bare timeout.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"/silent", "/trickle"})
+    void aRequestWaitsNoLongerThanItsCallHasLeft(final String path) throws Exception {
+        final long end = System.nanoTime() + java.time.Duration.ofSeconds(2).toNanos();
+        final Http call = http.within(() -> java.time.Duration.ofNanos(end - System.nanoTime()));
+        final URI uri = URI.create("http://127.0.0.1:" + server.getAddress().getPort() + path);
+        final long start = System.nanoTime();
+
+        org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(30),
+                () ->
+                        org.assertj.core.api.Assertions.assertThatThrownBy(
+                                        () -> call.get(uri, Map.of(), 0))
+                                .as("the request is given up when the call's time runs out")
+                                .isInstanceOf(java.net.http.HttpTimeoutException.class)
+                                .hasMessageContaining("the call's time ran out"));
+        assertThat(java.time.Duration.ofNanos(System.nanoTime() - start))
+                .as("after the 2 s the call had left, not the request's own 60 s")
+                .isBetween(java.time.Duration.ofMillis(1_500), java.time.Duration.ofSeconds(15));
+    }
+
+    // Harm: a request sent after its call's time ran out keeps the forge busy for nothing.
+    @Test
+    void noRequestIsSentOnceItsCallHasNoTimeLeft() {
+        final Http call = http.within(() -> java.time.Duration.ZERO);
+        final URI uri = URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/silent");
+
+        org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(30),
+                () ->
+                        org.assertj.core.api.Assertions.assertThatThrownBy(
+                                        () -> call.get(uri, Map.of(), 0))
+                                .as("the request is refused before it is sent")
+                                .isInstanceOf(java.net.http.HttpTimeoutException.class)
+                                .hasMessageContaining("the call's time ran out"));
+        assertThat(silentAsked.get()).as("the forge was not asked").isZero();
     }
 
     @Test

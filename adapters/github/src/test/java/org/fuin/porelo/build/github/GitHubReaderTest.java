@@ -222,6 +222,89 @@ class GitHubReaderTest {
                         new Build.Run("Build", "failure", null, "1"));
     }
 
+    // Harm: a call that outlasts Porelo's own bound loses GitHub's words to a bare timeout.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"services=1.0, 5", "services=2.0, 10"})
+    void aCallIsGivenUpAtItsDeadlineTimesTheServicesFactor(final String line, final int most) {
+        thousandRuns();
+        final Instant[] now = {NOW};
+        final Clock stepping =
+                new Clock() {
+                    @Override
+                    public ZoneOffset getZone() {
+                        return ZoneOffset.UTC;
+                    }
+
+                    @Override
+                    public Clock withZone(final java.time.ZoneId zone) {
+                        return this;
+                    }
+
+                    @Override
+                    public Instant instant() {
+                        return now[0];
+                    }
+                };
+        final GitHubReader slow =
+                new GitHubReader(
+                                given ->
+                                        (uri, headers, tail) -> {
+                                            // Each answer takes a minute.
+                                            now[0] = now[0].plus(java.time.Duration.ofMinutes(1));
+                                            asked.add(Map.entry(uri, headers));
+                                            return answers.get(uri.toString());
+                                        },
+                                stepping,
+                                org.fuin.porelo.wire.LimitFactors.DEFAULT)
+                        .withLimits(org.fuin.porelo.wire.LimitFactors.parse(line));
+
+        assertThatThrownBy(() -> slow.build(TARGET, COMMIT, Build.Logs.FAILURE))
+                .as("the call did not end in time")
+                .isInstanceOfSatisfying(
+                        BuildRefused.class,
+                        e -> {
+                            assertThat(e.reason())
+                                    .as("no answer")
+                                    .isEqualTo(BuildRefused.Reason.UNREACHABLE);
+                            assertThat(e.getMessage())
+                                    .as("says the call's time ran out")
+                                    .contains("the call's time ran out");
+                        });
+        assertThat(asked)
+                .as("one request a minute for five minutes times the factor")
+                .hasSize(most);
+
+        asked.clear();
+        assertThat(slow.head(TARGET, "main")).as("the next call has its own time").isEmpty();
+    }
+
+    /** Ten full pages of a commit's runs, all it has, each run with an empty job list. */
+    private void thousandRuns() {
+        final String path = "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT;
+        for (int page = 1; page <= 10; page++) {
+            final StringBuilder runs = new StringBuilder();
+            for (int each = 0; each < 100; each++) {
+                runs.append(each == 0 ? "" : ",")
+                        .append("{\"id\":")
+                        .append(page * 1000 + each)
+                        .append(",\"name\":\"W")
+                        .append(page * 1000 + each)
+                        .append("\",\"status\":\"completed\",\"conclusion\":\"success\"}");
+                answer(
+                        "/repos/porelo-ai/porelo/actions/runs/"
+                                + (page * 1000 + each)
+                                + "/jobs?per_page=100&page=1",
+                        200,
+                        "{\"total_count\":0,\"jobs\":[]}");
+            }
+            answer(
+                    path + "&per_page=100&page=" + page,
+                    200,
+                    "{\"total_count\":1000,\"workflow_runs\":[" + runs + "]}");
+        }
+        answer("/repos/porelo-ai/porelo/git/ref/heads/main", 200, "{\"object\":{\"sha\":\"\"}}");
+    }
+
     @Test
     void moreRunsThanGitHubListsAreNoVerdict() {
         final String path = "/repos/porelo-ai/porelo/actions/runs?head_sha=" + COMMIT;

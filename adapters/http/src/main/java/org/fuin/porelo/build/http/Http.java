@@ -16,6 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import org.fuin.porelo.wire.LimitFactors;
 import org.jspecify.annotations.Nullable;
 
@@ -28,6 +29,38 @@ public interface Http {
 
     /** How long one request may wait for its answer's headers, before {@code limits.services}. */
     Duration REQUEST = Duration.ofSeconds(60);
+
+    /**
+     * How long one call of Porelo's, all of its requests together, may take, before {@code
+     * limits.services}; Porelo's own bound on a call lies above it, so this answer arrives first.
+     */
+    Duration CALL = Duration.ofSeconds(300);
+
+    /**
+     * Returns this transport for one call that must end in time.
+     *
+     * @param left How much of the call's time is left, asked before and while each request waits.
+     * @return The transport.
+     */
+    default Http within(final Supplier<Duration> left) {
+        final Http whole = this;
+        return new Http() {
+            @Override
+            public Response get(final URI uri, final Map<String, String> headers, final int tail)
+                    throws IOException {
+                cut(REQUEST, left);
+                return whole.get(uri, headers, tail);
+            }
+
+            @Override
+            public Response post(
+                    final URI uri, final Map<String, String> headers, final String json)
+                    throws IOException {
+                cut(REQUEST, left);
+                return whole.post(uri, headers, json);
+            }
+        };
+    }
 
     /**
      * Sends a GET and follows no redirect.
@@ -104,16 +137,19 @@ public interface Http {
                         .followRedirects(HttpClient.Redirect.NEVER)
                         .connectTimeout(limits.services(CONNECT))
                         .build();
+        return network(client, request, null);
+    }
+
+    private static Http network(
+            final HttpClient client,
+            final Duration request,
+            final @Nullable Supplier<Duration> left) {
         return new Http() {
             @Override
             public Response get(final URI uri, final Map<String, String> headers, final int tail)
                     throws IOException {
                 return send(
-                        client,
-                        HttpRequest.newBuilder(uri).timeout(request).GET(),
-                        headers,
-                        tail,
-                        request);
+                        client, HttpRequest.newBuilder(uri).GET(), headers, tail, request, left);
             }
 
             @Override
@@ -123,14 +159,28 @@ public interface Http {
                 return send(
                         client,
                         HttpRequest.newBuilder(uri)
-                                .timeout(request)
                                 .header("Content-Type", "application/json")
                                 .POST(
                                         HttpRequest.BodyPublishers.ofString(
                                                 json, java.nio.charset.StandardCharsets.UTF_8)),
                         headers,
                         0,
-                        request);
+                        request,
+                        left);
+            }
+
+            @Override
+            public Http within(final Supplier<Duration> more) {
+                return network(
+                        client,
+                        request,
+                        left == null
+                                ? more
+                                : () -> {
+                                    final Duration one = left.get();
+                                    final Duration other = more.get();
+                                    return one.compareTo(other) < 0 ? one : other;
+                                });
             }
         };
     }
@@ -140,23 +190,65 @@ public interface Http {
             final HttpRequest.Builder request,
             final Map<String, String> headers,
             final int tail,
-            final Duration reading)
+            final Duration wait,
+            final @Nullable Supplier<Duration> left)
             throws IOException {
         headers.forEach(request::header);
         try {
-            final HttpResponse<InputStream> answer =
-                    client.send(request.build(), HttpResponse.BodyHandlers.ofInputStream());
+            final Duration headersWait = cut(wait, left);
+            final HttpResponse<InputStream> answer;
+            try {
+                answer =
+                        client.send(
+                                request.timeout(headersWait).build(),
+                                HttpResponse.BodyHandlers.ofInputStream());
+            } catch (HttpTimeoutException ex) {
+                throw ranOut(headersWait.compareTo(wait) < 0, ex);
+            }
             final Map<String, List<String>> named = new LinkedHashMap<>();
             answer.headers()
                     .map()
                     .forEach((name, values) -> named.put(name.toLowerCase(Locale.ROOT), values));
             try (InputStream body = answer.body()) {
-                return new Response(answer.statusCode(), named, within(reading, body, tail));
+                final Duration bodyWait = cut(wait, left);
+                try {
+                    return new Response(answer.statusCode(), named, within(bodyWait, body, tail));
+                } catch (HttpTimeoutException ex) {
+                    throw ranOut(bodyWait.compareTo(wait) < 0, ex);
+                }
             }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             throw new IOException("interrupted", ex);
         }
+    }
+
+    /**
+     * Returns the shorter of a wait and what is left of its call.
+     *
+     * @throws HttpTimeoutException When nothing is left.
+     */
+    private static Duration cut(final Duration wait, final @Nullable Supplier<Duration> left)
+            throws HttpTimeoutException {
+        if (left == null) {
+            return wait;
+        }
+        final Duration rest = left.get();
+        if (!rest.isPositive()) {
+            throw new HttpTimeoutException("the call's time ran out");
+        }
+        return rest.compareTo(wait) < 0 ? rest : wait;
+    }
+
+    /** The timeout as it is, or as the call's when the call's time was what cut the wait. */
+    private static HttpTimeoutException ranOut(
+            final boolean byCall, final HttpTimeoutException timeout) {
+        if (!byCall) {
+            return timeout;
+        }
+        final HttpTimeoutException ran = new HttpTimeoutException("the call's time ran out");
+        ran.initCause(timeout);
+        return ran;
     }
 
     /**

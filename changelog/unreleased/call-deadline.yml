@@ -1,0 +1,2 @@
+title: Each call of a build adapter, all its requests together, ends within 300 seconds times the services factor, so its answer reaches Porelo before Porelo's own bound.
+type: fixed

@@ -38,30 +38,46 @@ public final class ForgejoReader implements BuildReader {
             List.of("waiting", "blocked", "running", "failure", "cancelled", "success", "skipped");
     private static final int PER_PAGE = 50;
 
-    /** How long reading one list may take, page after page, before {@code limits.services}. */
-    static final Duration READING = Duration.ofMinutes(5);
-
     private final Function<LimitFactors, Http> transport;
     private final Http http;
     private final Clock clock;
-    private final Duration reading;
+
+    /** How long one call may take, {@link Http#CALL} times {@code limits.services}. */
+    private final Duration call;
 
     /**
      * Creates a reader with an HTTP transport.
      *
      * @param transport Makes how each request is sent, its deadlines scaled by the factors given;
      *     redirects must not be followed.
-     * @param clock What the reading of a list is timed by.
+     * @param clock What a call is timed by.
      * @param limits The time factors, whose {@code services} scales each deadline.
      */
     public ForgejoReader(
             final Function<LimitFactors, Http> transport,
             final Clock clock,
             final LimitFactors limits) {
+        this(transport, clock, limits.services(Http.CALL), transport.apply(limits));
+    }
+
+    private ForgejoReader(
+            final Function<LimitFactors, Http> transport,
+            final Clock clock,
+            final Duration call,
+            final Http http) {
         this.transport = transport;
-        this.http = transport.apply(limits);
         this.clock = clock;
-        this.reading = limits.services(READING);
+        this.call = call;
+        this.http = http;
+    }
+
+    /**
+     * Returns a reader for one call, each of whose requests waits no longer than the call has left.
+     */
+    private ForgejoReader oneCall() {
+        final Instant end = clock.instant().plus(call);
+        return new ForgejoReader(
+                transport, clock, call, http.within(() -> Duration.between(clock.instant(), end)));
     }
 
     /** Returns this reader with the deadlines Porelo's limits line scales. */
@@ -90,6 +106,10 @@ public final class ForgejoReader implements BuildReader {
     /** Returns the head commit of the named branch, or an empty string when absent. */
     @Override
     public String head(final Target target, final String branch) {
+        return oneCall().headWithin(target, branch);
+    }
+
+    private String headWithin(final Target target, final String branch) {
         requireApi(target);
         final Repository repository = repository(target);
         if (!BRANCH.matcher(branch).matches() || branch.contains("..")) {
@@ -115,6 +135,10 @@ public final class ForgejoReader implements BuildReader {
     /** Reads the commit's aggregate verdict, bounded run and job lists, and requested log tails. */
     @Override
     public Build build(final Target target, final String commit, final Build.Logs logs) {
+        return oneCall().buildWithin(target, commit, logs);
+    }
+
+    private Build buildWithin(final Target target, final String commit, final Build.Logs logs) {
         requireApi(target);
         final Repository repository = repository(target);
         if (!commit.matches("[0-9a-f]{40}"))
@@ -171,6 +195,11 @@ public final class ForgejoReader implements BuildReader {
     @Override
     public PullRequest openPullRequest(
             final Target target, final String branch, final @Nullable String title) {
+        return oneCall().openPullRequestWithin(target, branch, title);
+    }
+
+    private PullRequest openPullRequestWithin(
+            final Target target, final String branch, final @Nullable String title) {
         requireApi(target);
         final Repository repository = repository(target);
         if (!BRANCH.matcher(branch).matches() || branch.contains("..")) {
@@ -196,6 +225,9 @@ public final class ForgejoReader implements BuildReader {
                                     "Accept",
                                     "application/json"),
                             Json.write(asked));
+        } catch (java.net.http.HttpTimeoutException ex) {
+            // A timeout's words are the transport's own, never the forge's or an address.
+            throw unreachable("Forgejo did not answer: " + ex.getMessage());
         } catch (IOException ex) {
             throw unreachable("Forgejo did not answer: " + ex.getClass().getSimpleName());
         }
@@ -212,7 +244,6 @@ public final class ForgejoReader implements BuildReader {
         final String path = repository.path() + "/pulls?state=open&limit=" + PER_PAGE + "&page=";
         long seen = 0;
         long first = -1;
-        final Instant end = clock.instant().plus(reading);
         for (int page = 1; ; page++) {
             final Http.Response response = api(target, path + page, 0);
             refuse(response);
@@ -238,14 +269,6 @@ public final class ForgejoReader implements BuildReader {
             if (entries.isEmpty() || entries.size() < PER_PAGE || seen >= first) {
                 return null;
             }
-            inTime(end, "Forgejo's open pull requests");
-        }
-    }
-
-    /** Refuses a list still not whole at its deadline, so a forge that counts wrong ends. */
-    private void inTime(final Instant end, final String list) {
-        if (!clock.instant().isBefore(end)) {
-            throw unreachable(list + " did not end within " + reading.toSeconds() + " s");
         }
     }
 
@@ -280,7 +303,6 @@ public final class ForgejoReader implements BuildReader {
                         + PER_PAGE
                         + "&page=";
         long first = -1;
-        final Instant end = clock.instant().plus(reading);
         for (int page = 1; ; page++) {
             final Http.Response response = api(target, path + page, 0);
             refuse(response);
@@ -296,7 +318,6 @@ public final class ForgejoReader implements BuildReader {
             // A short page can have a successor; only total_count says the list is whole.
             if (entries.isEmpty() || runs.size() > total)
                 throw unreachable("Forgejo returned an incomplete run list");
-            inTime(end, "Forgejo's run list");
         }
     }
 
@@ -420,6 +441,9 @@ public final class ForgejoReader implements BuildReader {
                             "Accept",
                             "application/json"),
                     tail);
+        } catch (java.net.http.HttpTimeoutException ex) {
+            // A timeout's words are the transport's own, never the forge's or an address.
+            throw unreachable("Forgejo did not answer: " + ex.getMessage());
         } catch (IOException ex) {
             throw unreachable("Forgejo did not answer: " + ex.getClass().getSimpleName());
         }

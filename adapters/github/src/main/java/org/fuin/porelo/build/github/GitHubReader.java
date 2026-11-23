@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -71,20 +72,41 @@ public final class GitHubReader implements BuildReader {
 
     private final Clock clock;
 
+    /** How long one call may take, {@link Http#CALL} times {@code limits.services}. */
+    private final Duration call;
+
     /**
      * Constructor.
      *
      * @param transport Makes how a GET is sent, its deadlines scaled by the factors given.
-     * @param clock What time it is, for how long a rate limit lasts.
+     * @param clock What time it is, for how long a rate limit lasts and what a call has left.
      * @param limits The time factors, whose {@code services} scales each deadline.
      */
     public GitHubReader(
             final Function<LimitFactors, Http> transport,
             final Clock clock,
             final LimitFactors limits) {
+        this(transport, clock, limits.services(Http.CALL), transport.apply(limits));
+    }
+
+    private GitHubReader(
+            final Function<LimitFactors, Http> transport,
+            final Clock clock,
+            final Duration call,
+            final Http http) {
         this.transport = transport;
-        this.http = transport.apply(limits);
         this.clock = clock;
+        this.call = call;
+        this.http = http;
+    }
+
+    /**
+     * Returns a reader for one call, each of whose requests waits no longer than the call has left.
+     */
+    private GitHubReader oneCall() {
+        final Instant end = clock.instant().plus(call);
+        return new GitHubReader(
+                transport, clock, call, http.within(() -> Duration.between(clock.instant(), end)));
     }
 
     /** Returns this reader with the deadlines Porelo's limits line scales. */
@@ -113,6 +135,10 @@ public final class GitHubReader implements BuildReader {
     /** Returns the head commit of the named branch, or an empty string when absent. */
     @Override
     public String head(final Target target, final String branch) {
+        return oneCall().headWithin(target, branch);
+    }
+
+    private String headWithin(final Target target, final String branch) {
         final Repository repository = repository(target);
         if (!BRANCH.matcher(branch).matches() || branch.contains("..")) {
             throw new IllegalArgumentException("'" + branch + "' is not a branch Porelo names");
@@ -140,6 +166,10 @@ public final class GitHubReader implements BuildReader {
     /** Reads the commit's aggregate verdict, bounded run and job lists, and requested log tails. */
     @Override
     public Build build(final Target target, final String commit, final Build.Logs logs) {
+        return oneCall().buildWithin(target, commit, logs);
+    }
+
+    private Build buildWithin(final Target target, final String commit, final Build.Logs logs) {
         final Repository repository = repository(target);
         if (!commit.matches("[0-9a-f]{40}")) {
             return Build.unknown("'" + commit + "' is not a full commit sha");

@@ -420,6 +420,56 @@ class GitHubReviewReadTest {
                 .isLessThan(1.5);
     }
 
+    // Harm: a fence the cheap block-only search finds otherwise than the full parse makes a reader
+    // apply code as a suggestion that GitHub shows as text, or miss the suggestion it shows.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(
+            strings = {
+                "[a]: https://example.org\n```suggestion\nx\n```\n",
+                "[^1]: note\n    ```suggestion\nx\n```\n",
+                "[^1]: note\n```suggestion\nx\n```\n",
+                "[^1]: ```suggestion\n    x\n    ```\n",
+                "[^1]: note\n\n    ```suggestion\n    x\n    ```\n",
+                "| a | b |\n|---|---|\n| 1 | 2 |\n```suggestion\nx\n```\n",
+                "> ```suggestion\nlazy\n```\n",
+                "    ```suggestion\nx\n    ```\n",
+                "   ```suggestion\nx\n   ```\n",
+                "<pre>\n```suggestion\nx\n```\n</pre>\n",
+                "```suggestion\nunclosed\n",
+                "~~~suggestion\nx\n~~~\nprose <b>x</b> [l](u)\n```\ny\n```\n",
+                "- item\n  ```suggestion\n  x\n  ```\n",
+                "para\n```suggestion\nx\n```\n````\n```\n````\n"
+            })
+    void aFenceIsFoundWhereTheFullParseFindsIt(String body) {
+        final org.commonmark.node.Node root =
+                org.commonmark.parser.Parser.builder()
+                        .extensions(
+                                List.of(
+                                        org.commonmark.ext.gfm.tables.TablesExtension.create(),
+                                        org.commonmark.ext.footnotes.FootnotesExtension.create()))
+                        .includeSourceSpans(
+                                org.commonmark.parser.IncludeSourceSpans.BLOCKS_AND_INLINES)
+                        .build()
+                        .parse(body);
+        final List<List<Integer>> expected = new java.util.ArrayList<>();
+        for (org.commonmark.node.Node child = root.getFirstChild();
+                child != null;
+                child = child.getNext()) {
+            if (child instanceof org.commonmark.node.FencedCodeBlock) {
+                final var spans = child.getSourceSpans();
+                final var last = spans.get(spans.size() - 1);
+                expected.add(
+                        List.of(
+                                spans.get(0).getInputIndex(),
+                                last.getInputIndex() + last.getLength()));
+            }
+        }
+
+        assertThat(ReviewText.fences(body).stream().map(f -> List.of(f[0], f[1])).toList())
+                .as("the same top-level fences at the same places as the full parse")
+                .isEqualTo(expected);
+    }
+
     // Harm: a body larger than GitHub hands out floods every reader of the document.
     @Test
     void aBodyOverGitHubsMostCharactersIsHeld() {

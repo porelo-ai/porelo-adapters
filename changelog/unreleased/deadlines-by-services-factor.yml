@@ -1,0 +1,2 @@
+title: "Both build adapters scale their request deadlines, and the Forgejo adapter its 5-minute limit on reading one list, by the services factor of Porelo's limits line."
+type: changed

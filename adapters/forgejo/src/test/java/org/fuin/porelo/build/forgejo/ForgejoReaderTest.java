@@ -6,6 +6,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -17,6 +22,7 @@ import org.fuin.porelo.build.api.PullRequest;
 import org.fuin.porelo.build.api.Target;
 import org.fuin.porelo.build.http.Http;
 import org.fuin.porelo.wire.Json;
+import org.fuin.porelo.wire.LimitFactors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -33,21 +39,52 @@ class ForgejoReaderTest {
             new Target("git@forge.example:core/probe.git", API, "test-token");
     private final Map<String, Http.Response> answers = new LinkedHashMap<>();
     private final List<URI> requests = new ArrayList<>();
-    private final ForgejoReader reader =
-            new ForgejoReader(
-                    (uri, headers, tail) -> {
-                        requests.add(uri);
-                        assertThat(headers.get("Authorization"))
-                                .as("every API request uses Forgejo token authorization")
-                                .isEqualTo("token " + TARGET.token());
-                        assertThat(uri.getScheme() + "://" + uri.getAuthority())
-                                .as("the token stays at the API origin")
-                                .isEqualTo("https://forge.example");
-                        final Http.Response response = answers.get(uri.toString());
-                        if (response == null)
-                            throw new IOException("No fixture for " + uri.getPath());
-                        return response;
-                    });
+    private final StepClock clock = new StepClock();
+    private ForgejoReader reader = reader(LimitFactors.DEFAULT);
+
+    /** A clock each request moves on by its step, so a reading's time is the pages it took. */
+    private static final class StepClock extends Clock {
+        private Instant now = Instant.parse("2026-11-23T08:00:00Z");
+        private Duration step = Duration.ZERO;
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(final ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return now;
+        }
+    }
+
+    private ForgejoReader reader(final LimitFactors limits) {
+        return new ForgejoReader(
+                        given ->
+                                (uri, headers, tail) -> {
+                                    clock.now = clock.now.plus(clock.step);
+                                    requests.add(uri);
+                                    assertThat(headers.get("Authorization"))
+                                            .as(
+                                                    "every API request uses Forgejo token authorization")
+                                            .isEqualTo("token " + TARGET.token());
+                                    assertThat(uri.getScheme() + "://" + uri.getAuthority())
+                                            .as("the token stays at the API origin")
+                                            .isEqualTo("https://forge.example");
+                                    final Http.Response response = answers.get(uri.toString());
+                                    if (response == null)
+                                        throw new IOException("No fixture for " + uri.getPath());
+                                    return response;
+                                },
+                        clock,
+                        LimitFactors.DEFAULT)
+                .withLimits(limits);
+    }
 
     private void answer(final String path, final int status, final Object body) {
         answers.put(
@@ -524,5 +561,72 @@ class ForgejoReaderTest {
         assertThat(build(Build.Logs.NONE).verdict())
                 .as("the failed run is the last of %s", total)
                 .isEqualTo(Build.FAILURE);
+    }
+
+    /** Thirty full pages of pull requests from other branches, each counting more than exist. */
+    private void endlessPullRequests() {
+        answer(REPO, 200, Map.of("default_branch", "main"));
+        for (int page = 1; page <= 30; page++) {
+            final List<Map<String, Object>> pulls = new ArrayList<>();
+            for (int i = 1; i <= 50; i++)
+                pulls.add(pull(page * 100 + i, "other-" + page + "-" + i));
+            answers.put(
+                    API + REPO + "/pulls?state=open&limit=50&page=" + page,
+                    new Http.Response(
+                            200,
+                            Map.of("x-total-count", List.of("999999999999999999")),
+                            Json.write(pulls).getBytes(StandardCharsets.UTF_8)));
+        }
+    }
+
+    private long pullPages() {
+        return requests.stream().filter(uri -> uri.toString().contains("/pulls?")).count();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"services=1.0, 5", "services=2.0, 10"})
+    void aPullRequestListThatNeverEndsIsGivenUpAtTheReadingDeadline(
+            final String line, final int pages) {
+        // A forge that counts more than it hands out would hold the call forever.
+        reader = reader(LimitFactors.parse(line));
+        clock.step = Duration.ofMinutes(1);
+        endlessPullRequests();
+
+        assertThatThrownBy(() -> reader.openPullRequest(TARGET, "work", "Work"))
+                .as("the list did not end in time, and nothing is opened")
+                .isInstanceOfSatisfying(
+                        BuildRefused.class,
+                        e ->
+                                assertThat(e.reason())
+                                        .as("no answer")
+                                        .isEqualTo(BuildRefused.Reason.UNREACHABLE));
+        assertThat(pullPages())
+                .as("one page a minute for five minutes times the factor")
+                .isEqualTo(pages);
+    }
+
+    @Test
+    void aRunListThatNeverEndsIsGivenUpAtTheReadingDeadline() {
+        // A forge that counts more runs than it hands out would hold the call, and grow it,
+        // forever.
+        clock.step = Duration.ofMinutes(1);
+        for (int page = 1; page <= 30; page++) {
+            final List<Map<String, Object>> runs = new ArrayList<>();
+            for (int i = 1; i <= 50; i++) runs.add(run(page * 100 + i, "success"));
+            answer(
+                    RUNS.replace("page=1", "page=" + page),
+                    200,
+                    Map.of("total_count", 999_999_999_999L, "workflow_runs", runs));
+        }
+
+        assertThatThrownBy(() -> build(Build.Logs.NONE))
+                .as("the run list did not end in time")
+                .isInstanceOfSatisfying(
+                        BuildRefused.class,
+                        e ->
+                                assertThat(e.reason())
+                                        .as("no answer")
+                                        .isEqualTo(BuildRefused.Reason.UNREACHABLE));
+        assertThat(requests).as("five pages in five minutes").hasSize(5);
     }
 }

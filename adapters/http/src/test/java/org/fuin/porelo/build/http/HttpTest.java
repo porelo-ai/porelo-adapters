@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.fuin.porelo.build.api.Build;
+import org.fuin.porelo.wire.LimitFactors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,13 +29,15 @@ class HttpTest {
             "\nERROR the test failed here\n".getBytes(StandardCharsets.UTF_8);
 
     private HttpServer server;
+    private final java.util.concurrent.ExecutorService handlers =
+            java.util.concurrent.Executors.newCachedThreadPool();
     private Http http;
 
     @TempDir Path directory;
 
     @BeforeEach
     void serve() throws Exception {
-        http = Http.overNetwork(directory.resolve("absent.pem"));
+        http = Http.overNetwork(directory.resolve("absent.pem"), LimitFactors.DEFAULT);
         server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
         server.createContext(
                 "/log",
@@ -47,12 +50,24 @@ class HttpTest {
                         out.write(END);
                     }
                 });
+        server.createContext(
+                "/silent",
+                exchange -> {
+                    try {
+                        Thread.sleep(30_000);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                    exchange.close();
+                });
+        server.setExecutor(handlers);
         server.start();
     }
 
     @AfterEach
     void stop() {
         server.stop(0);
+        handlers.shutdownNow();
     }
 
     private URI log() {
@@ -70,6 +85,51 @@ class HttpTest {
         assertThat(new String(answer.body(), StandardCharsets.UTF_8))
                 .as("and it is the end")
                 .endsWith("ERROR the test failed here\n");
+    }
+
+    @Test
+    void aSilentForgeIsGivenUpAtTheDeadlineTimesTheServicesFactor() throws Exception {
+        // A slow network is met by the factor: too short a deadline refuses every answer, too long
+        // a one holds the reader on a forge that never answers.
+        final Http quick =
+                Http.overNetwork(
+                        directory.resolve("absent.pem"), LimitFactors.parse("services=0.1"));
+        final URI silent =
+                URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/silent");
+        final long start = System.nanoTime();
+
+        org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(20),
+                () ->
+                        org.assertj.core.api.Assertions.assertThatThrownBy(
+                                        () -> quick.get(silent, Map.of(), 0))
+                                .as("the silent forge is given up")
+                                .isInstanceOf(java.net.http.HttpTimeoutException.class));
+        assertThat(java.time.Duration.ofNanos(System.nanoTime() - start))
+                .as("after 0.1 times 60 s, not before")
+                .isBetween(java.time.Duration.ofMillis(5_500), java.time.Duration.ofSeconds(15));
+    }
+
+    @Test
+    void aSilentForgeIsGivenUpOnAPostAtTheDeadlineTimesTheServicesFactor() throws Exception {
+        // Opening a pull request waits on the same forge as a read, and must end as soon.
+        final Http quick =
+                Http.overNetwork(
+                        directory.resolve("absent.pem"), LimitFactors.parse("services=0.1"));
+        final URI silent =
+                URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/silent");
+        final long start = System.nanoTime();
+
+        org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(20),
+                () ->
+                        org.assertj.core.api.Assertions.assertThatThrownBy(
+                                        () -> quick.post(silent, Map.of(), "{}"))
+                                .as("the silent forge is given up")
+                                .isInstanceOf(java.net.http.HttpTimeoutException.class));
+        assertThat(java.time.Duration.ofNanos(System.nanoTime() - start))
+                .as("after 0.1 times 60 s, not before")
+                .isBetween(java.time.Duration.ofMillis(5_500), java.time.Duration.ofSeconds(15));
     }
 
     @Test

@@ -13,10 +13,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.fuin.porelo.wire.LimitFactors;
 
 /** One HTTP GET, or a POST, and its answer: the transport shared by forge adapters. */
 @FunctionalInterface
 public interface Http {
+
+    /** How long a connection may take to open, before {@code limits.services}. */
+    Duration CONNECT = Duration.ofSeconds(15);
+
+    /** How long one request may wait for its answer's headers, before {@code limits.services}. */
+    Duration REQUEST = Duration.ofSeconds(60);
 
     /**
      * Sends a GET and follows no redirect.
@@ -69,10 +76,11 @@ public interface Http {
     /**
      * Returns a GET transport trusting public roots and the account's configured authorities.
      *
+     * @param limits The time factors, whose {@code services} scales each deadline.
      * @return It.
      */
-    static Http overNetwork() {
-        return overNetwork(TrustedCertificates.file(System.getenv()));
+    static Http overNetwork(final LimitFactors limits) {
+        return overNetwork(TrustedCertificates.file(System.getenv()), limits);
     }
 
     /**
@@ -80,25 +88,24 @@ public interface Http {
      * GET.
      *
      * @param certificates The account's PEM certificates; a missing regular file adds no authority.
+     * @param limits The time factors, whose {@code services} scales each deadline.
      * @return The transport.
      * @throws IllegalStateException When the certificates cannot be read or contain no certificate.
      */
-    static Http overNetwork(final Path certificates) {
+    static Http overNetwork(final Path certificates, final LimitFactors limits) {
+        final Duration request = limits.services(REQUEST);
         final HttpClient client =
                 HttpClient.newBuilder()
                         .sslContext(TrustedCertificates.context(certificates))
                         .followRedirects(HttpClient.Redirect.NEVER)
-                        .connectTimeout(Duration.ofSeconds(15))
+                        .connectTimeout(limits.services(CONNECT))
                         .build();
         return new Http() {
             @Override
             public Response get(final URI uri, final Map<String, String> headers, final int tail)
                     throws IOException {
                 return send(
-                        client,
-                        HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(60)).GET(),
-                        headers,
-                        tail);
+                        client, HttpRequest.newBuilder(uri).timeout(request).GET(), headers, tail);
             }
 
             @Override
@@ -108,7 +115,7 @@ public interface Http {
                 return send(
                         client,
                         HttpRequest.newBuilder(uri)
-                                .timeout(Duration.ofSeconds(60))
+                                .timeout(request)
                                 .header("Content-Type", "application/json")
                                 .POST(
                                         HttpRequest.BodyPublishers.ofString(

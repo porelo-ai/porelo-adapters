@@ -39,15 +39,17 @@ class GitHubReaderTest {
 
     private GitHubReader reader() {
         return new GitHubReader(
-                (uri, headers, tail) -> {
-                    asked.add(Map.entry(uri, headers));
-                    final Http.Response answer = answers.get(uri.toString());
-                    if (answer == null) {
-                        throw new IOException("nothing at " + uri);
-                    }
-                    return answer;
-                },
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                given ->
+                        (uri, headers, tail) -> {
+                            asked.add(Map.entry(uri, headers));
+                            final Http.Response answer = answers.get(uri.toString());
+                            if (answer == null) {
+                                throw new IOException("nothing at " + uri);
+                            }
+                            return answer;
+                        },
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                org.fuin.porelo.wire.LimitFactors.DEFAULT);
     }
 
     private void answer(final String path, final int status, final String body) {
@@ -346,5 +348,27 @@ class GitHubReaderTest {
         assertThat(reader().head(new Target(TARGET.upstream(), "", "t"), "main"))
                 .as("asked of api.github.com")
                 .isEqualTo(COMMIT);
+    }
+
+    @Test
+    void theFactorsPoreloHandsInMakeTheTransport() {
+        // Without them every deadline stays its default, and a slow forge is refused whatever is
+        // set.
+        final List<org.fuin.porelo.wire.LimitFactors> made = new ArrayList<>();
+        final org.fuin.porelo.wire.LimitFactors slow =
+                org.fuin.porelo.wire.LimitFactors.parse("services=3.0");
+
+        new GitHubReader(
+                        given -> {
+                            made.add(given);
+                            return (uri, headers, tail) -> {
+                                throw new IOException("not asked");
+                            };
+                        },
+                        Clock.fixed(NOW, ZoneOffset.UTC),
+                        org.fuin.porelo.wire.LimitFactors.DEFAULT)
+                .withLimits(slow);
+
+        assertThat(made).as("the served reader's transport has the factors").last().isEqualTo(slow);
     }
 }

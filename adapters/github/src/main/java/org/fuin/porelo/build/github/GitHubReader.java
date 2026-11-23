@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.fuin.porelo.build.api.Build;
@@ -22,6 +23,7 @@ import org.fuin.porelo.build.http.FailedTests;
 import org.fuin.porelo.build.http.Http;
 import org.fuin.porelo.wire.Json;
 import org.fuin.porelo.wire.JsonException;
+import org.fuin.porelo.wire.LimitFactors;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -63,6 +65,8 @@ public final class GitHubReader implements BuildReader {
     /** The most pages of a list read: GitHub lists at most 1000 runs of one commit. */
     private static final int MOST_PAGES = 10;
 
+    private final Function<LimitFactors, Http> transport;
+
     private final Http http;
 
     private final Clock clock;
@@ -70,12 +74,23 @@ public final class GitHubReader implements BuildReader {
     /**
      * Constructor.
      *
-     * @param http How a GET is sent.
+     * @param transport Makes how a GET is sent, its deadlines scaled by the factors given.
      * @param clock What time it is, for how long a rate limit lasts.
+     * @param limits The time factors, whose {@code services} scales each deadline.
      */
-    public GitHubReader(final Http http, final Clock clock) {
-        this.http = http;
+    public GitHubReader(
+            final Function<LimitFactors, Http> transport,
+            final Clock clock,
+            final LimitFactors limits) {
+        this.transport = transport;
+        this.http = transport.apply(limits);
         this.clock = clock;
+    }
+
+    /** Returns this reader with the deadlines Porelo's limits line scales. */
+    @Override
+    public GitHubReader withLimits(final LimitFactors limits) {
+        return new GitHubReader(transport, clock, limits);
     }
 
     /**
@@ -84,7 +99,9 @@ public final class GitHubReader implements BuildReader {
      * @param arguments As every reader takes them.
      */
     public static void main(final String[] arguments) {
-        BuildMain.run(new GitHubReader(Http.overNetwork(), Clock.systemUTC()), arguments);
+        BuildMain.run(
+                new GitHubReader(Http::overNetwork, Clock.systemUTC(), LimitFactors.DEFAULT),
+                arguments);
     }
 
     /** Returns the forge this reader implements. */

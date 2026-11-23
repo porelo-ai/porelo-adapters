@@ -25,14 +25,17 @@ class RunDetailsTest {
     private final Map<String, Http.Response> answers = new LinkedHashMap<>();
     private final ForgejoReader reader =
             new ForgejoReader(
-                    (uri, headers, tail) -> {
-                        requests.add(uri);
-                        final Http.Response answer =
-                                answers.get(uri.toString().substring(API.length()));
-                        if (answer == null)
-                            throw new AssertionError("No answer for " + uri.getPath());
-                        return answer;
-                    });
+                    given ->
+                            (uri, headers, tail) -> {
+                                requests.add(uri);
+                                final Http.Response answer =
+                                        answers.get(uri.toString().substring(API.length()));
+                                if (answer == null)
+                                    throw new AssertionError("No answer for " + uri.getPath());
+                                return answer;
+                            },
+                    java.time.Clock.systemUTC(),
+                    org.fuin.porelo.wire.LimitFactors.DEFAULT);
 
     private void answer(final String path, final Object body) {
         answers.put(

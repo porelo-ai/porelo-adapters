@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
+import org.fuin.porelo.wire.LimitFactors;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -54,7 +55,8 @@ class HttpsTest {
     void theConfiguredAuthorityLetsTheLocalForgeAnswer() throws Exception {
         // Refusing the account's authority prevents a build verdict from reaching the task.
         final Http.Response answer =
-                Http.overNetwork(directory.resolve("ca.pem")).get(verdict(), Map.of(), 0);
+                Http.overNetwork(directory.resolve("ca.pem"), LimitFactors.DEFAULT)
+                        .get(verdict(), Map.of(), 0);
 
         assertThat(answer.status()).as("the local forge answers over trusted TLS").isEqualTo(200);
         assertThat(new String(answer.body(), StandardCharsets.UTF_8))
@@ -66,7 +68,9 @@ class HttpsTest {
     void aMissingFileDoesNotTrustTheLocalForge() {
         assertThatThrownBy(
                         () ->
-                                Http.overNetwork(directory.resolve("absent.pem"))
+                                Http.overNetwork(
+                                                directory.resolve("absent.pem"),
+                                                LimitFactors.DEFAULT)
                                         .get(verdict(), Map.of(), 0))
                 .as("a private forge is refused until its authority is configured")
                 .isInstanceOf(SSLHandshakeException.class);
@@ -74,7 +78,10 @@ class HttpsTest {
 
     @Test
     void aDirectoryDoesNotAddAnyAuthority() {
-        assertThatThrownBy(() -> Http.overNetwork(directory).get(verdict(), Map.of(), 0))
+        assertThatThrownBy(
+                        () ->
+                                Http.overNetwork(directory, LimitFactors.DEFAULT)
+                                        .get(verdict(), Map.of(), 0))
                 .as("only a regular certificate file may add trust")
                 .isInstanceOf(SSLHandshakeException.class);
     }
@@ -83,7 +90,9 @@ class HttpsTest {
     void anUnrelatedAuthorityDoesNotTrustTheLocalForge() throws Exception {
         assertThatThrownBy(
                         () ->
-                                Http.overNetwork(directory.resolve("other.pem"))
+                                Http.overNetwork(
+                                                directory.resolve("other.pem"),
+                                                LimitFactors.DEFAULT)
                                         .get(verdict(), Map.of(), 0))
                 .as("adding one authority must not trust certificates signed by another")
                 .isInstanceOf(SSLHandshakeException.class);
@@ -97,7 +106,10 @@ class HttpsTest {
                 Files.readString(directory.resolve("other.pem"))
                         + Files.readString(directory.resolve("ca.pem")));
 
-        assertThat(Http.overNetwork(bundle).get(verdict(), Map.of(), 0).status())
+        assertThat(
+                        Http.overNetwork(bundle, LimitFactors.DEFAULT)
+                                .get(verdict(), Map.of(), 0)
+                                .status())
                 .as("the CA is trusted even when it is not the bundle's first certificate")
                 .isEqualTo(200);
     }

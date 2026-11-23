@@ -26,15 +26,17 @@ class RunDetailsTest {
     private final Map<String, Http.Response> answers = new LinkedHashMap<>();
     private final GitHubReader reader =
             new GitHubReader(
-                    (uri, headers, tail) -> {
-                        requests.add(uri);
-                        final Http.Response answer =
-                                answers.get(uri.toString().substring(API.length()));
-                        if (answer == null)
-                            throw new AssertionError("No answer for " + uri.getPath());
-                        return answer;
-                    },
-                    Clock.systemUTC());
+                    given ->
+                            (uri, headers, tail) -> {
+                                requests.add(uri);
+                                final Http.Response answer =
+                                        answers.get(uri.toString().substring(API.length()));
+                                if (answer == null)
+                                    throw new AssertionError("No answer for " + uri.getPath());
+                                return answer;
+                            },
+                    Clock.systemUTC(),
+                    org.fuin.porelo.wire.LimitFactors.DEFAULT);
 
     private void answer(final String path, final Object body) {
         answers.put(

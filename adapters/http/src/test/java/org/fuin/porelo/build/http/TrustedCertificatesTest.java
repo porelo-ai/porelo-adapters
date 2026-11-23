@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import javax.net.ssl.SSLContext;
+import org.fuin.porelo.wire.LimitFactors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,7 +29,7 @@ class TrustedCertificatesTest {
             throws Exception {
         final Path file = Files.writeString(directory.resolve("ca-certificates.pem"), contents);
 
-        assertThatThrownBy(() -> Http.overNetwork(file))
+        assertThatThrownBy(() -> Http.overNetwork(file, LimitFactors.DEFAULT))
                 .as("a broken authority configuration must stop the reader and explain the repair")
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining(file.toString())

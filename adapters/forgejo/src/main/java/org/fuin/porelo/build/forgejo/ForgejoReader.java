@@ -32,7 +32,6 @@ public final class ForgejoReader implements BuildReader {
     private static final List<String> STATUSES =
             List.of("waiting", "blocked", "running", "failure", "cancelled", "success", "skipped");
     private static final int PER_PAGE = 50;
-    private static final int MOST_PAGES = 20;
     private final Http http;
 
     /**
@@ -183,9 +182,15 @@ public final class ForgejoReader implements BuildReader {
             final String base) {
         final String path = repository.path() + "/pulls?state=open&limit=" + PER_PAGE + "&page=";
         long seen = 0;
-        for (int page = 1; page <= MOST_PAGES; page++) {
+        long first = -1;
+        for (int page = 1; ; page++) {
             final Http.Response response = api(target, path + page, 0);
             refuse(response);
+            final String total = response.header("x-total-count");
+            if (!total.matches("[0-9]{1,18}"))
+                throw unreachable("Forgejo did not say how many pull requests are open");
+            // The first page's count bounds the reading, so a list that keeps growing ends.
+            if (first < 0) first = Long.parseLong(total);
             final List<Map<?, ?>> entries = entries(json(response));
             for (final Map<?, ?> pull : entries) {
                 final Map<?, ?> head = object(pull.get("head"));
@@ -200,15 +205,10 @@ public final class ForgejoReader implements BuildReader {
                 }
             }
             seen += entries.size();
-            final String total = response.header("x-total-count");
-            if (entries.isEmpty()
-                    || entries.size() < PER_PAGE
-                    || total.matches("[0-9]+") && seen >= Long.parseLong(total)) {
+            if (entries.isEmpty() || entries.size() < PER_PAGE || seen >= first) {
                 return null;
             }
         }
-        throw unreachable(
-                "Forgejo's open pull requests exceed " + MOST_PAGES + " pages; none was opened");
     }
 
     /** The first line of the branch's newest commit's message. */
@@ -241,11 +241,16 @@ public final class ForgejoReader implements BuildReader {
                         + "&limit="
                         + PER_PAGE
                         + "&page=";
-        for (int page = 1; page <= MOST_PAGES; page++) {
+        long first = -1;
+        for (int page = 1; ; page++) {
             final Http.Response response = api(target, path + page, 0);
             refuse(response);
             final Map<?, ?> result = object(json(response));
             final long total = nonnegative(result.get("total_count"));
+            if (first < 0) first = total;
+            // A list that changed while it was read has no single verdict, and one that keeps
+            // growing would never end.
+            if (total != first) throw unreachable("Forgejo's run list changed while it was read");
             final List<Map<?, ?>> entries = entries(result.get("workflow_runs"));
             runs.addAll(entries);
             if (runs.size() == total) return runs;
@@ -253,8 +258,6 @@ public final class ForgejoReader implements BuildReader {
             if (entries.isEmpty() || runs.size() > total)
                 throw unreachable("Forgejo returned an incomplete run list");
         }
-        throw unreachable(
-                "Forgejo run list exceeds " + MOST_PAGES + " pages; its verdict is incomplete");
     }
 
     private List<Build.Job> jobs(

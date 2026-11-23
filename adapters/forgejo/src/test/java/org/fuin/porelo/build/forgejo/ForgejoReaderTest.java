@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import org.fuin.porelo.build.api.Build;
 import org.fuin.porelo.build.api.BuildRefused;
+import org.fuin.porelo.build.api.PullRequest;
 import org.fuin.porelo.build.api.Target;
 import org.fuin.porelo.build.http.Http;
 import org.fuin.porelo.wire.Json;
@@ -418,5 +419,110 @@ class ForgejoReaderTest {
                                 assertThat(e.reason())
                                         .as("the probe did not answer")
                                         .isEqualTo(BuildRefused.Reason.UNREACHABLE));
+    }
+
+    private static Map<String, Object> pull(final int number, final String branch) {
+        return Map.of(
+                "html_url",
+                "https://forge.example/core/probe/pulls/" + number,
+                "head",
+                Map.of("ref", branch, "repo", Map.of("full_name", "core/probe")),
+                "base",
+                Map.of("ref", "main"));
+    }
+
+    @Test
+    void anOpenPullRequestBeyondTheThousandthIsFoundAndNotOpenedTwice() {
+        // A busy repository must not get a second pull request for the same branch.
+        final int pages = 21;
+        answer(REPO, 200, Map.of("default_branch", "main"));
+        for (int page = 1; page <= pages; page++) {
+            final List<Map<String, Object>> pulls = new ArrayList<>();
+            for (int i = 0; i < 50; i++) {
+                final int number = (page - 1) * 50 + i + 1;
+                pulls.add(pull(number, page == pages && i == 49 ? "work" : "other-" + number));
+            }
+            answers.put(
+                    API + REPO + "/pulls?state=open&limit=50&page=" + page,
+                    new Http.Response(
+                            200,
+                            Map.of("x-total-count", List.of(String.valueOf(pages * 50))),
+                            Json.write(pulls).getBytes(StandardCharsets.UTF_8)));
+        }
+        assertThat(reader.openPullRequest(TARGET, "work", null))
+                .as("the open pull request on page 21 is returned, none is opened")
+                .isEqualTo(
+                        new PullRequest(
+                                "https://forge.example/core/probe/pulls/" + pages * 50, false));
+    }
+
+    @Test
+    void pullRequestsWithoutTheirCountAreUnreachable() {
+        // Without the count, full pages that never end would hold the call forever.
+        answer(REPO, 200, Map.of("default_branch", "main"));
+        answer(REPO + "/pulls?state=open&limit=50&page=1", 200, List.of(pull(1, "other")));
+        assertThatThrownBy(() -> reader.openPullRequest(TARGET, "work", "Work"))
+                .as("an uncounted list is no answer, and nothing is opened")
+                .isInstanceOfSatisfying(
+                        BuildRefused.class,
+                        e ->
+                                assertThat(e.reason())
+                                        .as("incomplete response")
+                                        .isEqualTo(BuildRefused.Reason.UNREACHABLE));
+    }
+
+    @Test
+    void aRunListWhoseCountChangesWhileReadIsUnreachable() {
+        // A count that grows with every page would keep the reading going forever.
+        answer(RUNS, 200, Map.of("total_count", 2, "workflow_runs", List.of(run(1, "success"))));
+        answer(
+                RUNS.replace("page=1", "page=2"),
+                200,
+                Map.of("total_count", 3, "workflow_runs", List.of(run(2, "success"))));
+        assertThatThrownBy(() -> build(Build.Logs.NONE))
+                .as("a list that moved has no verdict")
+                .isInstanceOfSatisfying(
+                        BuildRefused.class,
+                        e ->
+                                assertThat(e.reason())
+                                        .as("incomplete response")
+                                        .isEqualTo(BuildRefused.Reason.UNREACHABLE));
+        assertThat(requests)
+                .as("the reading stopped at the page whose count moved")
+                .doesNotContain(URI.create(API + RUNS.replace("page=1", "page=3")));
+    }
+
+    @Test
+    void aCommitWithMoreThanAThousandRunsIsReadToItsLastRun() {
+        // A failed run past the thousandth must still decide the verdict.
+        final int pages = 21;
+        final int total = pages * 50;
+        for (int page = 1; page <= pages; page++) {
+            final List<Map<String, Object>> runs = new ArrayList<>();
+            for (int i = 0; i < 50; i++) {
+                final int id = (page - 1) * 50 + i + 1;
+                runs.add(run(id, id == total ? "failure" : "success"));
+            }
+            answer(
+                    RUNS.replace("page=1", "page=" + page),
+                    200,
+                    Map.of("total_count", total, "workflow_runs", runs));
+        }
+        for (int id = 1; id <= total; id++) {
+            answer(
+                    REPO + "/actions/runs/" + id + "/jobs",
+                    200,
+                    List.of(
+                            Map.of(
+                                    "id",
+                                    id,
+                                    "name",
+                                    "test",
+                                    "status",
+                                    id == total ? "failure" : "success")));
+        }
+        assertThat(build(Build.Logs.NONE).verdict())
+                .as("the failed run is the last of %s", total)
+                .isEqualTo(Build.FAILURE);
     }
 }

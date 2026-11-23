@@ -1,0 +1,2 @@
+title: The Forgejo adapter reads a repository's open pull requests and a commit's runs to their end, instead of refusing past 1000 of either.
+type: fixed

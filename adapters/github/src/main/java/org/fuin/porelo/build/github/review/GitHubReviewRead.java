@@ -224,7 +224,7 @@ public final class GitHubReviewRead {
                 newSide && !outdated && comment.line() != null
                         ? Suggestion.of(comment.body())
                         : Suggestion.none(comment.body());
-        result.putObject("message").put("text", text(suggestion.text(), losses));
+        result.putObject("message").put("text", text(suggestion.read(), losses));
         suggestion.lost().forEach(loss -> losses.merge(loss, 1, Integer::sum));
         final boolean file = comment.subjectType() == PullRequestReviewComment.SubjectTypeEnum.FILE;
         final Integer line = comment.line();
@@ -488,7 +488,10 @@ public final class GitHubReviewRead {
     }
 
     private static String text(String body, Map<String, Integer> losses) {
-        final ReviewText.Read read = ReviewText.fromForge(body);
+        return text(ReviewText.fromForge(body), losses);
+    }
+
+    private static String text(ReviewText.Read read, Map<String, Integer> losses) {
         if (read.isHeld()) {
             throw new HeldItem("the body holds " + read.held());
         }
@@ -561,11 +564,11 @@ public final class GitHubReviewRead {
         return result;
     }
 
-    /** What a comment's body says: its text, and the one suggestion it makes, if any. */
-    private record Suggestion(String text, @Nullable String fix, Set<String> lost) {
+    /** What a comment's body says: the read of its text, and the one suggestion it makes. */
+    private record Suggestion(ReviewText.Read read, @Nullable String fix, Set<String> lost) {
 
         static Suggestion none(String body) {
-            return new Suggestion(body, null, Set.of());
+            return new Suggestion(ReviewText.fromForge(body), null, Set.of());
         }
 
         /** Only a fence standing in prose is a suggestion; one quoted in a longer fence is code. */
@@ -591,8 +594,9 @@ public final class GitHubReviewRead {
             final ReviewText.Read beside = ReviewText.fromForge(rest);
             final boolean nothingElse = rest.isEmpty() || "an empty body".equals(beside.held());
             return nothingElse
-                    ? new Suggestion("Suggested change.", fix, beside.losses())
-                    : new Suggestion(rest, fix, Set.of());
+                    ? new Suggestion(
+                            ReviewText.fromForge("Suggested change."), fix, beside.losses())
+                    : new Suggestion(beside, fix, Set.of());
         }
 
         /** A fence's lines when it is a closed suggestion fence, else {@code null}. */

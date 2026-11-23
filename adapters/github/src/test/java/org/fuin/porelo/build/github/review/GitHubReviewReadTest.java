@@ -387,6 +387,39 @@ class GitHubReviewReadTest {
                 .isEqualTo(1);
     }
 
+    // Harm: a commenter makes every read of a pull request cost minutes, since commonmark's parse
+    // of many "<" is quadratic; a read must parse such a body once, not once per check.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"", "```suggestion\nx\n```\n"})
+    void aCommentCostlyToParseIsReadAtTheCostOfOneParse(String fence) {
+        final String body = fence + "<".repeat(32_768);
+        final org.commonmark.parser.Parser parser =
+                org.commonmark.parser.Parser.builder()
+                        .extensions(
+                                List.of(
+                                        org.commonmark.ext.gfm.tables.TablesExtension.create(),
+                                        org.commonmark.ext.footnotes.FootnotesExtension.create()))
+                        .includeSourceSpans(
+                                org.commonmark.parser.IncludeSourceSpans.BLOCKS_AND_INLINES)
+                        .build();
+        long parse = Long.MAX_VALUE;
+        long read = Long.MAX_VALUE;
+        // The least of three runs each, so a loaded host slows both alike.
+        for (int run = 0; run < 3; run++) {
+            final long start = System.nanoTime();
+            parser.parse(body);
+            final long parsed = System.nanoTime();
+            final GitHubReviewRead.Read answer = oneComment(c -> c.put("body", body), t -> {});
+            parse = Math.min(parse, parsed - start);
+            read = Math.min(read, System.nanoTime() - parsed);
+            assertThat(answer.results()).as("the comment is read").hasSize(1);
+        }
+
+        assertThat((double) read / parse)
+                .as("a read costs about one parse of the body, not two or more")
+                .isLessThan(1.5);
+    }
+
     // Harm: a body larger than GitHub hands out floods every reader of the document.
     @Test
     void aBodyOverGitHubsMostCharactersIsHeld() {

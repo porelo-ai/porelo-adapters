@@ -58,6 +58,14 @@ public final class ReviewText {
                     .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
                     .build();
 
+    /** Blocks alone: a fence needs no inline parse, whose cost grows with the square of "<". */
+    private static final Parser BLOCKS =
+            Parser.builder()
+                    .extensions(List.of(TablesExtension.create(), FootnotesExtension.create()))
+                    .includeSourceSpans(IncludeSourceSpans.BLOCKS)
+                    .inlineParserFactory(context -> (lines, node) -> {})
+                    .build();
+
     private ReviewText() {}
 
     /** What a forge's text became: the profile's text and what was lost, or why it is held. */
@@ -100,7 +108,7 @@ public final class ReviewText {
         }
         final String text = apply(lines, edits);
         // Dropping a tag can join the pieces of another, or turn text into code: read it again.
-        if (!shown(parse(text), false).equals(shown(parsed, true))) {
+        if (!edits.isEmpty() && !shown(parse(text), false).equals(shown(parsed, true))) {
             return new Read(null, losses, "markup that reads otherwise once its HTML is dropped");
         }
         final String refused = refusedCharacter(text);
@@ -595,7 +603,8 @@ public final class ReviewText {
      */
     static List<int[]> fences(String text) {
         final List<int[]> out = new ArrayList<>();
-        for (Node child = parse(text).getFirstChild(); child != null; child = child.getNext()) {
+        final Node root = BLOCKS.parse(text);
+        for (Node child = root.getFirstChild(); child != null; child = child.getNext()) {
             if (child instanceof FencedCodeBlock) {
                 out.add(new int[] {start(child), end(child)});
             }

@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
@@ -13,7 +14,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.fuin.porelo.wire.LimitFactors;
+import org.jspecify.annotations.Nullable;
 
 /** One HTTP GET, or a POST, and its answer: the transport shared by forge adapters. */
 @FunctionalInterface
@@ -105,7 +110,11 @@ public interface Http {
             public Response get(final URI uri, final Map<String, String> headers, final int tail)
                     throws IOException {
                 return send(
-                        client, HttpRequest.newBuilder(uri).timeout(request).GET(), headers, tail);
+                        client,
+                        HttpRequest.newBuilder(uri).timeout(request).GET(),
+                        headers,
+                        tail,
+                        request);
             }
 
             @Override
@@ -121,7 +130,8 @@ public interface Http {
                                         HttpRequest.BodyPublishers.ofString(
                                                 json, java.nio.charset.StandardCharsets.UTF_8)),
                         headers,
-                        0);
+                        0,
+                        request);
             }
         };
     }
@@ -130,7 +140,8 @@ public interface Http {
             final HttpClient client,
             final HttpRequest.Builder request,
             final Map<String, String> headers,
-            final int tail)
+            final int tail,
+            final Duration reading)
             throws IOException {
         headers.forEach(request::header);
         try {
@@ -141,15 +152,62 @@ public interface Http {
                     .map()
                     .forEach((name, values) -> named.put(name.toLowerCase(Locale.ROOT), values));
             try (InputStream body = answer.body()) {
-                return new Response(
-                        answer.statusCode(),
-                        named,
-                        tail > 0 ? tail(body, tail) : body.readAllBytes());
+                return new Response(answer.statusCode(), named, within(reading, body, tail));
             }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             throw new IOException("interrupted", ex);
         }
+    }
+
+    /**
+     * Reads a body, closing it at the deadline so a trickling forge cannot hold the read.
+     *
+     * @param reading The deadline, counted from the headers' arrival.
+     * @param body The body.
+     * @param tail The most of its end that is kept, or 0 for all of it.
+     * @return What was read.
+     * @throws HttpTimeoutException When the body did not end within the deadline.
+     * @throws IOException When the stream fails.
+     */
+    private static byte[] within(final Duration reading, final InputStream body, final int tail)
+            throws IOException {
+        final AtomicBoolean settled = new AtomicBoolean();
+        CompletableFuture.runAsync(
+                () -> {
+                    if (settled.compareAndSet(false, true)) {
+                        try {
+                            body.close();
+                        } catch (IOException ignored) {
+                            // The read that the close cuts off reports the deadline instead.
+                        }
+                    }
+                },
+                CompletableFuture.delayedExecutor(reading.toNanos(), TimeUnit.NANOSECONDS));
+        final byte[] read;
+        try {
+            read = tail > 0 ? tail(body, tail) : body.readAllBytes();
+        } catch (IOException ex) {
+            if (!settled.compareAndSet(false, true)) {
+                throw late(reading, ex);
+            }
+            throw ex;
+        }
+        if (!settled.compareAndSet(false, true)) {
+            throw late(reading, null);
+        }
+        return read;
+    }
+
+    private static HttpTimeoutException late(
+            final Duration reading, final @Nullable IOException cause) {
+        final HttpTimeoutException late =
+                new HttpTimeoutException(
+                        "the answer's body did not end within " + reading.toSeconds() + " s");
+        if (cause != null) {
+            late.initCause(cause);
+        }
+        return late;
     }
 
     /**

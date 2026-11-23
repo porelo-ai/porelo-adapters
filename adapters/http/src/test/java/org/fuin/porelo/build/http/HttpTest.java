@@ -60,6 +60,20 @@ class HttpTest {
                     }
                     exchange.close();
                 });
+        server.createContext(
+                "/trickle",
+                exchange -> {
+                    exchange.sendResponseHeaders(200, 1_000_000);
+                    try (OutputStream out = exchange.getResponseBody()) {
+                        for (int i = 0; i < 1_000_000; i++) {
+                            out.write('x');
+                            out.flush();
+                            Thread.sleep(5_000);
+                        }
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                });
         server.setExecutor(handlers);
         server.start();
     }
@@ -130,6 +144,30 @@ class HttpTest {
         assertThat(java.time.Duration.ofNanos(System.nanoTime() - start))
                 .as("after 0.1 times 60 s, not before")
                 .isBetween(java.time.Duration.ofMillis(5_500), java.time.Duration.ofSeconds(15));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = {0, Build.TAIL})
+    void aTricklingBodyIsGivenUpAtTheDeadlineTimesTheServicesFactor(final int tail)
+            throws Exception {
+        // A byte every 5 s holds a read past the 6 s deadline, which must cut it off, not await it.
+        final Http quick =
+                Http.overNetwork(
+                        directory.resolve("absent.pem"), LimitFactors.parse("services=0.1"));
+        final URI trickle =
+                URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/trickle");
+        final long start = System.nanoTime();
+
+        org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(30),
+                () ->
+                        org.assertj.core.api.Assertions.assertThatThrownBy(
+                                        () -> quick.get(trickle, Map.of(), tail))
+                                .as("the trickling body is given up")
+                                .isInstanceOf(java.net.http.HttpTimeoutException.class));
+        assertThat(java.time.Duration.ofNanos(System.nanoTime() - start))
+                .as("after 0.1 times 60 s, not before")
+                .isBetween(java.time.Duration.ofMillis(5_500), java.time.Duration.ofSeconds(9));
     }
 
     @Test

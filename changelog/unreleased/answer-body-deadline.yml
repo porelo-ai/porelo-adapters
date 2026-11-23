@@ -1,0 +1,2 @@
+title: An adapter gives up an answer whose body does not end within 60 seconds times the services factor, so a forge that trickles a body cannot hold a request forever.
+type: fixed

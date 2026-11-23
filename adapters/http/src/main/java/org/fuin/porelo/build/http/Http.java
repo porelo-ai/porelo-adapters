@@ -16,7 +16,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.fuin.porelo.wire.LimitFactors;
 import org.jspecify.annotations.Nullable;
 
@@ -172,28 +171,29 @@ public interface Http {
      */
     private static byte[] within(final Duration reading, final InputStream body, final int tail)
             throws IOException {
-        final AtomicBoolean settled = new AtomicBoolean();
-        CompletableFuture.runAsync(
-                () -> {
-                    if (settled.compareAndSet(false, true)) {
+        // orTimeout drops its timer once completed, so an answer in time leaves nothing pending.
+        final CompletableFuture<Void> deadline =
+                new CompletableFuture<Void>().orTimeout(reading.toNanos(), TimeUnit.NANOSECONDS);
+        deadline.whenComplete(
+                (ended, late) -> {
+                    if (late != null) {
                         try {
                             body.close();
                         } catch (IOException ignored) {
                             // The read that the close cuts off reports the deadline instead.
                         }
                     }
-                },
-                CompletableFuture.delayedExecutor(reading.toNanos(), TimeUnit.NANOSECONDS));
+                });
         final byte[] read;
         try {
             read = tail > 0 ? tail(body, tail) : body.readAllBytes();
         } catch (IOException ex) {
-            if (!settled.compareAndSet(false, true)) {
+            if (!deadline.complete(null)) {
                 throw late(reading, ex);
             }
             throw ex;
         }
-        if (!settled.compareAndSet(false, true)) {
+        if (!deadline.complete(null)) {
             throw late(reading, null);
         }
         return read;

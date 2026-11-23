@@ -7,6 +7,7 @@ What holds and why: one row per decision, and its full text below.
 | Review conversion | [Review text is parsed, not modeled](#review-text-is-parsed-not-modeled) |
 | Review conversion | [A fence that may not be what it seems is held or refused](#a-fence-that-may-not-be-what-it-seems-is-held-or-refused) |
 | Review conversion | [What the conversion leaves unchecked](#what-the-conversion-leaves-unchecked) |
+| Review conversion | [The review profile takes what GitHub takes](#the-review-profile-takes-what-github-takes) |
 | Stand-in | [The stand-in sends a comment at once, and a sent comment is one result](#the-stand-in-sends-a-comment-at-once-and-a-sent-comment-is-one-result) |
 | Stand-in | [What the stand-in leaves unguarded, as a test tool](#what-the-stand-in-leaves-unguarded-as-a-test-tool) |
 | Publishing | [Publish speaks to Artifactory with inline curl](#publish-speaks-to-artifactory-with-inline-curl) |
@@ -44,6 +45,19 @@ the answer.
 - `message.markdown` is never sent, so its length is held only by the document's limits.
 - A fix with columns in its `deletedRegion` is refused `AdapterRefused` before the columns' type is checked, a refusal
   either way.
+
+## The review profile takes what GitHub takes
+
+No bound of the conversion refuses a comment GitHub holds, since a held comment is lost from the review and leaves the
+read incomplete.
+
+- A body holds at most 65,536 characters, GitHub's own maximum, counted as Unicode scalar values on the body as GitHub
+  holds it. The message's doubled braces do not count, so a body of 65,536 braces is a message of 131,072 characters.
+- A line anchor may span any number of lines, and a suggestion may hold any number of lines of any length.
+- A path has no length bound, because git has none: a commit with a path of 70,000 bytes is accepted by git 2.53 and
+  passes `git fsck --strict`. Every other path check stays.
+- The conversion bounds no whole document. A page of 100 comments of 65,536 braces holds 13 million characters of
+  message, so the reader of a document must bound it above that.
 
 ## The stand-in sends a comment at once, and a sent comment is one result
 

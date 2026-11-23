@@ -32,9 +32,6 @@ import org.jspecify.annotations.Nullable;
  */
 public final class GitHubReviewRead {
 
-    /** A line anchor spans at most this many lines. */
-    public static final int LINE_SPAN_LIMIT = 100;
-
     private static final JsonNodeFactory NODES = JsonNodeFactory.instance;
 
     private static final DateTimeFormatter UTC =
@@ -323,9 +320,6 @@ public final class GitHubReviewRead {
         if (start < 1 || end < start) {
             throw new HeldItem("start_line and line are not a span");
         }
-        if (end - start + 1 > LINE_SPAN_LIMIT) {
-            throw new HeldItem("a span over " + LINE_SPAN_LIMIT + " lines");
-        }
     }
 
     private static void original(
@@ -360,17 +354,6 @@ public final class GitHubReviewRead {
         final String refused = ReviewText.refusedCharacter(inserted);
         if (refused != null) {
             throw new HeldItem("the suggestion holds " + refused);
-        }
-        final String[] lines = inserted.split("\n", -1);
-        if (lines.length > end - start + 1 + GitHubReviewWrite.FIX_EXTRA_LINES
-                || inserted.getBytes(java.nio.charset.StandardCharsets.UTF_8).length
-                        > ReviewText.BODY_LIMIT
-                || java.util.Arrays.stream(lines)
-                        .anyMatch(
-                                l ->
-                                        l.codePointCount(0, l.length())
-                                                > GitHubReviewWrite.FIX_LINE_LIMIT)) {
-            throw new HeldItem("a suggestion over the profile's limits");
         }
         final ObjectNode change =
                 result.putArray("fixes").addObject().putArray("artifactChanges").addObject();

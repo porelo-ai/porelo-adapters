@@ -1,6 +1,5 @@
 package org.fuin.porelo.build.github.review;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,8 +34,8 @@ import org.jspecify.annotations.Nullable;
  */
 public final class ReviewText {
 
-    /** A message body, at most this many UTF-8 bytes. */
-    public static final int BODY_LIMIT = 8 * 1024;
+    /** A body as the forge holds it, braces single: at most GitHub's most characters. */
+    public static final int BODY_LIMIT = 65_536;
 
     /** A display name, at most this many Unicode scalar values. */
     public static final int DISPLAY_NAME_LIMIT = 128;
@@ -109,12 +108,10 @@ public final class ReviewText {
         if (text.isBlank()) {
             return new Read(null, losses, "an empty body");
         }
-        final String doubled = text.replace("{", "{{").replace("}", "}}");
-        // The limit is the message's, which holds the doubled braces.
-        if (doubled.getBytes(StandardCharsets.UTF_8).length > BODY_LIMIT) {
-            return new Read(null, losses, "a body over " + BODY_LIMIT + " bytes");
+        if (overLimit(text)) {
+            return new Read(null, losses, "a body over " + BODY_LIMIT + " characters");
         }
-        return new Read(doubled, losses, null);
+        return new Read(text.replace("{", "{{").replace("}", "}}"), losses, null);
     }
 
     /** Collects what a read drops, or says why the body is held. */
@@ -325,13 +322,13 @@ public final class ReviewText {
         if (refused != null) {
             throw new ReviewRefusal(ReviewRefusal.Reason.UNSAFE_TEXT, refused, "message.text");
         }
-        if (message.getBytes(StandardCharsets.UTF_8).length > BODY_LIMIT) {
+        final String body = undoubleBraces(message);
+        if (overLimit(body)) {
             throw new ReviewRefusal(
                     ReviewRefusal.Reason.TOO_LARGE,
-                    "over " + BODY_LIMIT + " bytes",
+                    "over " + BODY_LIMIT + " characters",
                     "message.text");
         }
-        final String body = undoubleBraces(message);
         final List<int[]> text = new ArrayList<>();
         refuseMarkup(parse(body), body, text);
         // Longer than every backtick run of the body, so no stray backtick pairs with it.
@@ -341,10 +338,10 @@ public final class ReviewText {
             escapeMentions(body, range[0], range[1], marks, edits);
         }
         final String out = apply(body, edits);
-        if (out.getBytes(StandardCharsets.UTF_8).length > BODY_LIMIT) {
+        if (overLimit(out)) {
             throw new ReviewRefusal(
                     ReviewRefusal.Reason.TOO_LARGE,
-                    "over " + BODY_LIMIT + " bytes once its mentions are code spans",
+                    "over " + BODY_LIMIT + " characters once its mentions are code spans",
                     "message.text");
         }
         if (leftMention(parse(out))) {
@@ -494,6 +491,10 @@ public final class ReviewText {
                 || (cp >= 0xE0100 && cp <= 0xE01EF)
                 || (cp >= 0xFDD0 && cp <= 0xFDEF)
                 || (cp & 0xFFFE) == 0xFFFE;
+    }
+
+    private static boolean overLimit(String body) {
+        return body.codePointCount(0, body.length()) > BODY_LIMIT;
     }
 
     private static String undoubleBraces(String message) {

@@ -10,12 +10,6 @@ import java.nio.charset.StandardCharsets;
  */
 public final class RepositoryPath {
 
-    /** At most this many UTF-8 bytes decoded. */
-    public static final int DECODED_LIMIT = 1024;
-
-    /** At most this many ASCII bytes encoded. */
-    public static final int ENCODED_LIMIT = 3072;
-
     private static final char[] HEX = "0123456789ABCDEF".toCharArray();
 
     private RepositoryPath() {}
@@ -38,9 +32,6 @@ public final class RepositoryPath {
                 out.append('%').append(HEX[c >> 4]).append(HEX[c & 0xF]);
             }
         }
-        if (out.length() > ENCODED_LIMIT) {
-            throw new IllegalArgumentException("A path over " + ENCODED_LIMIT + " encoded bytes");
-        }
         return out.toString();
     }
 
@@ -52,9 +43,6 @@ public final class RepositoryPath {
      * @throws IllegalArgumentException If the profile refuses it.
      */
     public static String path(String uri) {
-        if (uri.length() > ENCODED_LIMIT) {
-            throw new IllegalArgumentException("A URI over " + ENCODED_LIMIT + " bytes");
-        }
         final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         for (int i = 0; i < uri.length(); i++) {
             final char c = uri.charAt(i);
@@ -84,7 +72,6 @@ public final class RepositoryPath {
 
     private static void check(String path) {
         if (path.isEmpty()
-                || path.getBytes(StandardCharsets.UTF_8).length > DECODED_LIMIT
                 || path.startsWith("/")
                 || path.indexOf('\\') >= 0
                 || path.indexOf('%') >= 0

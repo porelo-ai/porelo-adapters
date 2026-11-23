@@ -341,7 +341,7 @@ class GitHubReviewWriteTest {
     @Test
     void aBodyOverTheLimitWithItsRuleIdIsRefused() {
         final ObjectNode result = finding("R".repeat(100));
-        ((ObjectNode) result.get("message")).put("text", "x".repeat(8150));
+        ((ObjectNode) result.get("message")).put("text", "x".repeat(65_500));
 
         assertThatThrownBy(() -> GitHubReviewWrite.render(result))
                 .as("the whole body counts")
@@ -416,14 +416,18 @@ class GitHubReviewWriteTest {
     // Harm: escaping mentions grows a body past GitHub's limit after the limit was checked.
     @Test
     void aBodyOverTheLimitOnceItsMentionsAreEscapedIsRefused() {
-        assertThatThrownBy(() -> ReviewText.toForge("x " + "`".repeat(2000) + " @a @b"))
+        assertThatThrownBy(() -> ReviewText.toForge("x " + "`".repeat(30_000) + " @a @b"))
                 .as("the body sent counts")
                 .isInstanceOfSatisfying(
                         ReviewRefusal.class,
-                        r ->
-                                assertThat(r.reason())
-                                        .as("too large")
-                                        .isEqualTo(ReviewRefusal.Reason.TOO_LARGE));
+                        r -> {
+                            assertThat(r.reason())
+                                    .as("too large")
+                                    .isEqualTo(ReviewRefusal.Reason.TOO_LARGE);
+                            assertThat(r.getMessage())
+                                    .as("refused after the mentions became code spans")
+                                    .contains("once its mentions");
+                        });
     }
 
     // Harm: markup inside code is code; refusing it would refuse every review of HTML.
@@ -448,20 +452,61 @@ class GitHubReviewWriteTest {
                 .isInstanceOf(ReviewRefusal.class);
     }
 
-    // Harm: a body whose braces a read doubles past the limit is held on every later read.
+    // Harm: a comment GitHub would take is refused, so a finding never reaches the pull request.
     @Test
-    void aBodyOverTheLimitOnceItsBracesAreDoubledIsRefused() {
-        final ObjectNode result = finding("R".repeat(100));
-        ((ObjectNode) result.get("message")).put("text", "{{".repeat(4080));
+    void aBodyOfGitHubsMostCharactersIsSentThoughItsBracesAreDoubled() {
+        final ObjectNode result = line("{{".repeat(65_536), "", "");
 
-        assertThatThrownBy(() -> GitHubReviewWrite.render(result))
-                .as("the body a read gives back counts")
+        assertThat(GitHubReviewWrite.render(result).body())
+                .as("65,536 braces, one character each on GitHub")
+                .hasSize(65_536);
+    }
+
+    // Harm: a body GitHub refuses is sent, and the release fails on GitHub's answer instead.
+    @Test
+    void aBodyOneCharacterOverGitHubsMostIsRefused() {
+        assertThatThrownBy(() -> GitHubReviewWrite.render(line("x".repeat(65_537), "", "")))
+                .as("65,537 characters")
                 .isInstanceOfSatisfying(
                         ReviewRefusal.class,
                         r ->
                                 assertThat(r.reason())
                                         .as("too large")
                                         .isEqualTo(ReviewRefusal.Reason.TOO_LARGE));
+    }
+
+    // Harm: a comment GitHub would take on a long block is refused.
+    @Test
+    void aRegionOfAHundredAndFiftyLinesIsSent() {
+        final ObjectNode result = line("x", "", "");
+        ((ObjectNode) result.at("/locations/0/physicalLocation/region"))
+                .put("startLine", 1)
+                .put("endLine", 150);
+
+        final GitHubReviewWrite.Rendered rendered = GitHubReviewWrite.render(result);
+        final var sent = wire(GitHubReviewWrite.reviewCommentRequest(rendered, "a".repeat(40)));
+        assertThat(sent.path("start_line").asInt()).as("first line").isEqualTo(1);
+        assertThat(sent.path("line").asInt()).as("last line").isEqualTo(150);
+    }
+
+    // Harm: a suggestion GitHub would take is refused, so its fix never reaches the author.
+    @Test
+    void aLongSuggestionOnTwoLinesIsSent() {
+        final String inserted = ("y".repeat(1000) + "\n").repeat(49) + "y".repeat(1000);
+        final ObjectNode result =
+                line(
+                        "x",
+                        "",
+                        """
+                        "fixes":[{"artifactChanges":[{"artifactLocation":{"uri":"src/Gate.java"},
+                          "replacements":[{"deletedRegion":{"startLine":12,"endLine":13},
+                            "insertedContent":{"text":%s}}]}]}],
+                        """
+                                .formatted(GitHubAnswers.JSON.valueToTree(inserted)));
+
+        assertThat(GitHubReviewWrite.render(result).body())
+                .as("fifty lines of a thousand characters in the suggestion")
+                .endsWith("```suggestion\n" + inserted + "\n```");
     }
 
     // Harm: an inverted region is stored and served as SARIF no reader can place.

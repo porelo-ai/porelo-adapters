@@ -313,28 +313,105 @@ class GitHubReviewReadTest {
                 .isEqualTo("");
     }
 
-    // Harm: an oversized suggestion becomes a fix no write may carry back, or floods a reader.
+    // Harm: a suggestion GitHub took is lost from the review, and the read is never complete.
     @Test
-    void aSuggestionOverItsLimitsIsHeld() {
+    void aLongSuggestionReplacingOneLineIsReadAsItsFix() {
+        final String inserted = ("y".repeat(1000) + "\n").repeat(49) + "y".repeat(1000);
         final GitHubReviewRead.Read read =
-                oneComment(
-                        c -> c.put("body", "```suggestion\n" + "x\n".repeat(50) + "```"), t -> {});
+                oneComment(c -> c.put("body", "```suggestion\n" + inserted + "\n```"), t -> {});
 
-        assertThat(read.results()).as("over the anchor plus ten lines").isEmpty();
-        assertThat(read.held()).as("the comment is held").hasSize(1);
+        assertThat(read.held()).as("nothing is held").isEmpty();
+        assertThat(
+                        read.results()
+                                .get(0)
+                                .at("/fixes/0/artifactChanges/0/replacements/0/insertedContent")
+                                .path("text")
+                                .asText())
+                .as("fifty lines of a thousand characters replace one line")
+                .isEqualTo(inserted);
     }
 
-    // Harm: a message over the profile's limit is refused by every reader of the document.
+    // Harm: a comment GitHub took is lost from the review, and the read is never complete.
     @Test
-    void aBodyOverTheLimitOnceItsBracesAreDoubledIsHeld() {
+    void aBodyOfGitHubsMostCharactersIsReadThoughItsBracesDouble() {
         final GitHubReviewRead.Read read =
                 read(
                         List.of(),
                         List.of(),
-                        List.of(GitHubAnswers.issueComment(c -> c.put("body", "{".repeat(5000)))),
+                        List.of(GitHubAnswers.issueComment(c -> c.put("body", "{".repeat(65_536)))),
                         List.of());
 
-        assertThat(read.held()).as("10000 bytes once doubled").hasSize(1);
+        assertThat(read.held()).as("GitHub's largest body is read").isEmpty();
+        assertThat(read.results().get(0).at("/message/text").asText())
+                .as("the message holds every brace doubled")
+                .hasSize(131_072);
+    }
+
+    // Harm: a comment GitHub took is lost when its characters are counted as UTF-16 units.
+    @Test
+    void aBodyOfGitHubsMostCharactersOutsideTheBasicPlaneIsRead() {
+        final GitHubReviewRead.Read read =
+                read(
+                        List.of(),
+                        List.of(),
+                        List.of(
+                                GitHubAnswers.issueComment(
+                                        c -> c.put("body", "\uD83D\uDE00".repeat(65_536)))),
+                        List.of());
+
+        assertThat(read.held()).as("65,536 characters, 131,072 UTF-16 units, are read").isEmpty();
+    }
+
+    // Harm: a body larger than GitHub hands out floods every reader of the document.
+    @Test
+    void aBodyOverGitHubsMostCharactersIsHeld() {
+        final GitHubReviewRead.Read read =
+                read(
+                        List.of(),
+                        List.of(),
+                        List.of(
+                                GitHubAnswers.issueComment(
+                                        c -> c.put("body", "\u00e9".repeat(65_537)))),
+                        List.of());
+
+        assertThat(read.held()).as("one character over is held").hasSize(1);
+    }
+
+    // Harm: a comment on a file git and GitHub hold is lost from the review.
+    @Test
+    void aCommentOnAPathOfTwentyThousandBytesIsRead() {
+        final String path = ("d".repeat(199) + "/").repeat(100) + "Gate.java";
+        final GitHubReviewRead.Read read =
+                oneComment(c -> c.put("path", path), t -> t.put("path", path));
+
+        assertThat(read.held()).as("nothing is held").isEmpty();
+        assertThat(
+                        RepositoryPath.path(
+                                read.results()
+                                        .get(0)
+                                        .at("/locations/0/physicalLocation/artifactLocation/uri")
+                                        .asText()))
+                .as("the whole path")
+                .isEqualTo(path);
+    }
+
+    // Harm: a comment GitHub took on a long block is lost from the review.
+    @Test
+    void aCommentOnAHundredAndFiftyLinesIsRead() {
+        final GitHubReviewRead.Read read =
+                oneComment(
+                        c ->
+                                c.put("start_line", 1)
+                                        .put("original_start_line", 1)
+                                        .put("start_side", "RIGHT")
+                                        .put("line", 150)
+                                        .put("original_line", 150),
+                        t -> t.put("line", 150).put("startDiffSide", "RIGHT"));
+
+        assertThat(read.held()).as("nothing is held").isEmpty();
+        assertThat(read.results().get(0).at("/locations/0/physicalLocation/region/endLine").asInt())
+                .as("the anchor ends on line 150")
+                .isEqualTo(150);
     }
 
     // Harm: one URI the profile refuses makes a reader refuse the whole page.

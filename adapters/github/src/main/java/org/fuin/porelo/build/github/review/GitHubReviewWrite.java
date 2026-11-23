@@ -22,12 +22,6 @@ import org.jspecify.annotations.Nullable;
  */
 public final class GitHubReviewWrite {
 
-    /** A suggestion replaces at most this many lines more than its anchor has. */
-    public static final int FIX_EXTRA_LINES = 10;
-
-    /** A suggestion's line holds at most this many Unicode scalar values. */
-    public static final int FIX_LINE_LIMIT = 400;
-
     private static final Set<String> RESULT_FIELDS =
             Set.of(
                     "kind",
@@ -142,13 +136,11 @@ public final class GitHubReviewWrite {
             throw refusal("message.markdown is a string", "message.markdown");
         }
         body.append(ReviewText.toForge(text(message, "text")));
-        // What a read gives back as the message: the body without its suggestion fence.
-        final String readBack = body.toString().replace("{", "{{").replace("}", "}}");
-        if (readBack.getBytes(java.nio.charset.StandardCharsets.UTF_8).length
-                > ReviewText.BODY_LIMIT) {
+        // GitHub holds the whole body, rule ID and suggestion fence included.
+        if (body.codePointCount(0, body.length()) > ReviewText.BODY_LIMIT) {
             throw new ReviewRefusal(
                     ReviewRefusal.Reason.TOO_LARGE,
-                    "the body over " + ReviewText.BODY_LIMIT + " bytes",
+                    "the body over " + ReviewText.BODY_LIMIT + " characters",
                     "message.text");
         }
         if (result.has("relatedLocations")) {
@@ -321,8 +313,8 @@ public final class GitHubReviewWrite {
         }
         final int start = line(region, "startLine");
         final int end = region.has("endLine") ? line(region, "endLine") : start;
-        if (end < start || end - start + 1 > GitHubReviewRead.LINE_SPAN_LIMIT) {
-            throw refusal("a region of 1 to 100 lines", "region");
+        if (end < start) {
+            throw refusal("a region that ends before it starts", "region");
         }
         if (region.has("startColumn") || region.has("endColumn")) {
             for (final String column : List.of("startColumn", "endColumn")) {
@@ -401,30 +393,15 @@ public final class GitHubReviewWrite {
             throw outside("the replacement inserts no text");
         }
         final String inserted = insertedContent.path("text").asText();
-        checkInserted(inserted, end - start + 1);
+        checkInserted(inserted);
         final String marks = "`".repeat(Math.max(3, longestRun(inserted, '`') + 1));
         return marks + "suggestion\n" + inserted + "\n" + marks;
     }
 
-    private static void checkInserted(String inserted, int anchorLines) {
+    private static void checkInserted(String inserted) {
         final String refused = ReviewText.refusedCharacter(inserted);
         if (refused != null) {
             throw new ReviewRefusal(ReviewRefusal.Reason.UNSAFE_TEXT, refused, "fixes");
-        }
-        final String[] lines = inserted.split("\n", -1);
-        if (lines.length > anchorLines + FIX_EXTRA_LINES
-                || inserted.getBytes(java.nio.charset.StandardCharsets.UTF_8).length
-                        > ReviewText.BODY_LIMIT) {
-            throw new ReviewRefusal(
-                    ReviewRefusal.Reason.TOO_LARGE, "a suggestion over its limits", "fixes");
-        }
-        for (final String line : lines) {
-            if (line.codePointCount(0, line.length()) > FIX_LINE_LIMIT) {
-                throw new ReviewRefusal(
-                        ReviewRefusal.Reason.TOO_LARGE,
-                        "a suggestion line over " + FIX_LINE_LIMIT,
-                        "fixes");
-            }
         }
     }
 

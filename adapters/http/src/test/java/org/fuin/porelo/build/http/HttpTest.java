@@ -236,6 +236,63 @@ class HttpTest {
         assertThat(silentAsked.get()).as("the forge was not asked").isZero();
     }
 
+    // Harm: a reader stopped while it reads a body loses its interrupt and reads on, holding the
+    // host's call past its stop.
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = {0, Build.TAIL})
+    void aBodyReadInterruptedKeepsItsThreadsInterrupt(final int tail) throws Exception {
+        final URI trickle =
+                URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/trickle");
+        final java.util.concurrent.atomic.AtomicReference<Throwable> thrown =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        final java.util.concurrent.atomic.AtomicBoolean interrupted =
+                new java.util.concurrent.atomic.AtomicBoolean();
+        final Thread reader =
+                new Thread(
+                        () -> {
+                            try {
+                                http.get(trickle, Map.of(), tail);
+                            } catch (Throwable ex) {
+                                thrown.set(ex);
+                            }
+                            interrupted.set(Thread.currentThread().isInterrupted());
+                        });
+        reader.setDaemon(true);
+        reader.start();
+        try {
+            // The trickle sends its headers and one byte, then waits 20 s; the interrupt lands
+            // only once the reader reads the body, since one in the headers' wait takes another
+            // path.
+            final long until = System.nanoTime() + java.time.Duration.ofSeconds(10).toNanos();
+            while (!readsBody(reader) && System.nanoTime() < until) {
+                Thread.sleep(10);
+            }
+            assertThat(readsBody(reader)).as("the reader reads the body").isTrue();
+            reader.interrupt();
+            reader.join(10_000);
+        } finally {
+            reader.interrupt();
+            reader.join(10_000);
+        }
+
+        assertThat(reader.isAlive()).as("the interrupted read ended").isFalse();
+        assertThat(thrown.get())
+                .as("the read ended by the interrupt")
+                .isInstanceOf(java.io.IOException.class)
+                .isNotInstanceOf(java.net.http.HttpTimeoutException.class)
+                .hasRootCauseInstanceOf(InterruptedException.class);
+        assertThat(interrupted.get()).as("its thread is still interrupted").isTrue();
+    }
+
+    /** Whether a thread waits in the transport's body read. */
+    private static boolean readsBody(final Thread thread) {
+        return Arrays.stream(thread.getStackTrace())
+                .anyMatch(
+                        frame ->
+                                frame.getClassName().equals(Http.class.getName())
+                                        && frame.getMethodName().equals("within"));
+    }
+
     @Test
     void anAnswerAskedWholeIsWhole() throws Exception {
         assertThat(http.get(log(), Map.of(), 0).body())

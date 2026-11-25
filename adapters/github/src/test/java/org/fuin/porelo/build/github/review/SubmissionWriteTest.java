@@ -227,13 +227,79 @@ class SubmissionWriteTest {
     @Test
     void aTextAndFixOverGitHubsLimitAreRefusedBeforeAnyCall() {
         final ObjectNode result = comment();
-        ((ObjectNode) result.get("message")).put("text", "a".repeat(40_000));
-        result.set("fixes", fix("doc/a%20b.md", 10, 12, "b".repeat(30_000)));
+        ((ObjectNode) result.get("message")).put("text", "a".repeat(63_000));
+        result.set("fixes", fix("doc/a%20b.md", 10, 12, ("b".repeat(400) + "\n").repeat(10)));
 
         assertThatThrownBy(() -> SubmissionWrite.render(result, COMMIT))
                 .as("GitHub would refuse the body with 422")
                 .isInstanceOf(ReviewRefusal.class)
                 .hasMessageContaining("text and fix over");
+    }
+
+    @Test
+    void aFixOfMoreThanTenExtraLinesIsRefused() {
+        final ObjectNode result = comment();
+        result.set("fixes", fix("doc/a%20b.md", 10, 12, "x\n".repeat(14)));
+
+        assertThatThrownBy(() -> SubmissionWrite.render(result, COMMIT))
+                .as("three anchored lines take at most thirteen")
+                .isInstanceOf(ReviewRefusal.class)
+                .hasMessageContaining("lines");
+    }
+
+    @Test
+    void aFixLineOverFourHundredCharactersIsRefused() {
+        final ObjectNode result = comment();
+        result.set("fixes", fix("doc/a%20b.md", 10, 12, "\uD83D\uDE00".repeat(401) + "\n"));
+
+        assertThatThrownBy(() -> SubmissionWrite.render(result, COMMIT))
+                .as("the bound counts Unicode scalar values, not UTF-16 units")
+                .isInstanceOf(ReviewRefusal.class)
+                .hasMessageContaining("400");
+    }
+
+    @Test
+    void aFixOverEightKibibytesIsRefused() {
+        final ObjectNode result = comment();
+        result.set("fixes", fix("doc/a%20b.md", 10, 12, ("é".repeat(380) + "\n").repeat(11)));
+
+        assertThatThrownBy(() -> SubmissionWrite.render(result, COMMIT))
+                .as("eleven lines of 380 two-byte characters are over 8192 bytes")
+                .isInstanceOf(ReviewRefusal.class)
+                .hasMessageContaining("8192");
+    }
+
+    @Test
+    void aFixAtEveryBoundIsWritten() {
+        final ObjectNode result = comment();
+        final String line = "\uD83D\uDE00".repeat(400) + "\n";
+        result.set("fixes", fix("doc/a%20b.md", 10, 12, "a\n".repeat(12) + "b".repeat(400) + "\n"));
+        final ObjectNode wide = comment();
+        wide.set("fixes", fix("doc/a%20b.md", 10, 12, line + ("é".repeat(300) + "\n").repeat(9)));
+
+        assertThat(SubmissionWrite.render(result, COMMIT).body())
+                .as("thirteen lines for three, the last 400 long")
+                .contains("b".repeat(400));
+        assertThat(SubmissionWrite.render(wide, COMMIT).body())
+                .as("ten lines, the first 400 scalar values of four bytes, under 8192 bytes")
+                .contains(line);
+    }
+
+    @Test
+    void aFixOfExactlyEightKibibytesIsWrittenAndOneByteMoreIsNot() {
+        final String tenWide = ("é".repeat(400) + "\n").repeat(10);
+        final ObjectNode at = comment();
+        at.set("fixes", fix("doc/a%20b.md", 10, 12, tenWide + "a".repeat(181) + "\n"));
+        final ObjectNode past = comment();
+        past.set("fixes", fix("doc/a%20b.md", 10, 12, tenWide + "a".repeat(182) + "\n"));
+
+        assertThat(SubmissionWrite.render(at, COMMIT).body())
+                .as("8192 bytes of UTF-8, its last line feed counted")
+                .contains("a".repeat(181));
+        assertThatThrownBy(() -> SubmissionWrite.render(past, COMMIT))
+                .as("8193 bytes")
+                .isInstanceOf(ReviewRefusal.class)
+                .hasMessageContaining("8192");
     }
 
     private static ObjectNode comment() {

@@ -3,6 +3,7 @@ package org.fuin.porelo.build.github.review;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 import java.util.regex.Pattern;
+import org.fuin.porelo.build.api.review.ProfileCheck;
 import org.fuin.porelo.forge.github.GitHubClient;
 import org.fuin.porelo.forge.github.model.PullRequestReviewComment;
 import org.fuin.porelo.forge.github.model.PullsCreateReplyForReviewCommentRequest;
@@ -16,6 +17,12 @@ import org.jspecify.annotations.Nullable;
  * {@code suggestion} fence on the new side.
  */
 public final class SubmissionWrite {
+
+    private static final int FIX_BYTES = ProfileCheck.MAX_TEXT_BYTES;
+
+    private static final int FIX_EXTRA_LINES = ProfileCheck.EXTRA_REPLACEMENT_LINES;
+
+    private static final int FIX_LINE = ProfileCheck.MAX_REPLACEMENT_LINE;
 
     private static final Pattern THREAD = Pattern.compile("[1-9][0-9]{0,18}");
 
@@ -219,10 +226,29 @@ public final class SubmissionWrite {
         // last.
         final String lines =
                 inserted.endsWith("\n") ? inserted.substring(0, inserted.length() - 1) : inserted;
+        bounded(lines, inserted, end - start + 1);
         return marks
                 + "suggestion\n"
                 + (lines.isEmpty() && inserted.isEmpty() ? "" : lines + "\n")
                 + marks;
+    }
+
+    /** Holds a suggestion to profile 2's bounds, which GitHub would otherwise take or refuse. */
+    private static void bounded(String lines, String inserted, int anchored) {
+        if (inserted.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > FIX_BYTES) {
+            throw refusal("a fix over " + FIX_BYTES + " bytes", "fixes");
+        }
+        final String[] each = lines.isEmpty() ? new String[0] : lines.split("\n", -1);
+        if (each.length > anchored + FIX_EXTRA_LINES) {
+            throw refusal(
+                    "a fix of more lines than its anchor's and " + FIX_EXTRA_LINES + " more",
+                    "fixes");
+        }
+        for (final String line : each) {
+            if (line.codePointCount(0, line.length()) > FIX_LINE) {
+                throw refusal("a fix line over " + FIX_LINE + " characters", "fixes");
+            }
+        }
     }
 
     private static int longestRun(String text) {

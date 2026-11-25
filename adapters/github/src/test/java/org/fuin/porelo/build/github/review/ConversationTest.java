@@ -58,6 +58,9 @@ class ConversationTest {
                 .isEqualTo("771002");
         assertThat(reply.at("/properties/porelo~1forgeAccountName").asText())
                 .isEqualTo("example-author");
+        assertThat(reply.at("/properties/porelo~1createdAt").asText())
+                .as("when GitHub says it was written, in whole seconds of UTC")
+                .isEqualTo("2026-10-30T09:14:02Z");
         final JsonNode old = results.get(2);
         assertThat(old.at("/properties/porelo~1diffSide").asText()).isEqualTo("old");
         assertThat(old.at("/properties/porelo~1threadState").asText()).isEqualTo("resolved");
@@ -133,6 +136,28 @@ class ConversationTest {
 
         assertThat(read.held()).as("the root and its two replies").isEqualTo(3);
         assertThat(read.results()).hasSize(2);
+    }
+
+    @Test
+    void aCommentsTimeIsItsCreationInWholeSecondsOfUtc() {
+        final List<ObjectNode> results =
+                Conversation.read(
+                                HOST,
+                                answers(
+                                        c -> {
+                                            if (c.get("id").asLong() == 102) {
+                                                c.put(
+                                                        "created_at",
+                                                        "2026-10-30T11:14:02.789+02:00");
+                                                c.put("updated_at", "2026-11-02T08:00:00Z");
+                                            }
+                                        },
+                                        t -> {}))
+                        .results();
+
+        assertThat(results.get(1).at("/properties/porelo~1createdAt").asText())
+                .as("converted to UTC, its fraction cut, never the edit time")
+                .isEqualTo("2026-10-30T09:14:02Z");
     }
 
     @Test

@@ -191,6 +191,13 @@ public final class Conversation {
         properties.put("porelo/sourceKind", "forge-account");
         properties.put("porelo/forgeAccountId", Long.toString(user.id()));
         properties.put("porelo/forgeAccountName", user.login());
+        // Whole seconds in UTC: when it was written, never when it was last edited.
+        properties.put(
+                "porelo/createdAt",
+                comment.createdAt()
+                        .toInstant()
+                        .truncatedTo(java.time.temporal.ChronoUnit.SECONDS)
+                        .toString());
         return result;
     }
 

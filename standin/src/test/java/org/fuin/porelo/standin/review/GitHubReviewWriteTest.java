@@ -1,9 +1,11 @@
-package org.fuin.porelo.build.github.review;
+package org.fuin.porelo.standin.review;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.fuin.porelo.build.github.review.ReviewRefusal;
+import org.fuin.porelo.build.github.review.ReviewText;
 import org.junit.jupiter.api.Test;
 
 class GitHubReviewWriteTest {

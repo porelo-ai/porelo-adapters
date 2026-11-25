@@ -1,2 +1,2 @@
-title: The GitHub adapter carries the conversion of GitHub's reviews, comments and threads to and from Porelo's SARIF review profile, through the forge clients, not yet served to Porelo.
+title: The GitHub adapter serves Porelo's review contract beside the build contract on the same socket, reading a pull request's facts and its line comments as pages of review profile 2 and writing one released comment or reply with exactly one GitHub call.
 type: added

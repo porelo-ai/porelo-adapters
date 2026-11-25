@@ -90,6 +90,23 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- The github client's recorded answers and the HttpClient that replays them. -->
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-forge-client-github</artifactId>
+            <version>${porelo.forge-clients.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- The review profile's fixtures. -->
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-build-api</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <profiles>

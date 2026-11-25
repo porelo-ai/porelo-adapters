@@ -7,12 +7,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntFunction;
-import org.fuin.porelo.build.github.review.GitHubReviewRead;
-import org.fuin.porelo.build.github.review.ReviewDocument;
 import org.fuin.porelo.forge.github.GitHubClient;
 import org.fuin.porelo.forge.github.GitHubGraphQl;
 import org.fuin.porelo.forge.github.Page;
 import org.fuin.porelo.forge.github.model.PullRequest;
+import org.fuin.porelo.standin.review.GitHubReviewRead;
+import org.fuin.porelo.standin.review.ReviewDocument;
 import org.jspecify.annotations.Nullable;
 
 /**

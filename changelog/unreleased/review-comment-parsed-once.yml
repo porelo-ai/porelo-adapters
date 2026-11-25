@@ -1,2 +1,0 @@
-title: The GitHub adapter parses a review comment's Markdown once per read instead of up to five times, so a comment costly to parse no longer multiplies a pull request's read time.
-type: fixed

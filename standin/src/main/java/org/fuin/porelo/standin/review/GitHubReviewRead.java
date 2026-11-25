@@ -1,4 +1,4 @@
-package org.fuin.porelo.build.github.review;
+package org.fuin.porelo.standin.review;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
+import org.fuin.porelo.build.github.review.RepositoryPath;
+import org.fuin.porelo.build.github.review.ReviewText;
 import org.fuin.porelo.forge.github.GitHubGraphQl;
 import org.fuin.porelo.forge.github.model.AuthorAssociation;
 import org.fuin.porelo.forge.github.model.IssueComment;

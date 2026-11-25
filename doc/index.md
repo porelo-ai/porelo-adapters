@@ -49,6 +49,26 @@ A refused token is reported with GitHub's own message and what was asked, such a
 personal access token. A build reader needs Actions: Read and Contents: Read on <owner>/<name>`. The token is stored in Porelo's vault under the name the project file's `builds.credential`
 gives.
 
+## A pull request's review
+
+Beside the build, the GitHub adapter serves one person's review of a pull request in Porelo's review profile 2:
+
+- **A pull request's facts**: its repository, head, base, merge base, state, and whether GitHub counts it approved at
+  its head: every reviewer's last verdict on that commit is an approval.
+- **The open pull request of a branch**, if there is one; it never opens one.
+- **Its conversation, page by page**: each line comment and each reply as one result, written by its GitHub account,
+  at most 100 results and 1 MiB a page. A thread is named by its first comment's REST ID.
+- **One released comment or reply**, written with exactly one call and never repeated: when GitHub's answer is
+  lost, the answer is `WriteOutcomeUnknown`, and Porelo decides.
+
+It never approves, requests changes, resolves a thread or merges. What profile 2 cannot carry is left out and the
+page says `partial`: a comment on a file or an outdated line, a span over 100 lines, a text over 8192 bytes or with a
+character the profile refuses. A submission asking for what GitHub cannot write, such as a general comment, is
+refused with `NotInProfile` before any call.
+
+The token is lent for each call and kept by neither side. It needs **Pull requests: Read and write** for the
+conversation and the comments, and **Contents: Read** for the merge base.
+
 ## Forgejo Actions
 
 Install `porelo-adapter-forgejo` from the same package repository as Porelo. It provides

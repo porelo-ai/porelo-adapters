@@ -130,14 +130,36 @@ public interface Http {
      * @throws IllegalStateException When the certificates cannot be read or contain no certificate.
      */
     static Http overNetwork(final Path certificates, final LimitFactors limits) {
-        final Duration request = limits.services(REQUEST);
-        final HttpClient client =
-                HttpClient.newBuilder()
-                        .sslContext(TrustedCertificates.context(certificates))
-                        .followRedirects(HttpClient.Redirect.NEVER)
-                        .connectTimeout(limits.services(CONNECT))
-                        .build();
-        return network(client, request, null);
+        return network(trusting(certificates, limits), limits.services(REQUEST), null);
+    }
+
+    /**
+     * Returns the client this transport sends with, for a forge client that builds its own
+     * requests: it trusts public roots and the account's configured authorities, follows no
+     * redirect and bounds each connect.
+     *
+     * @param limits The time factors, whose {@code services} scales the connect bound.
+     * @return The client.
+     * @throws IllegalStateException When the certificates cannot be read or contain no certificate.
+     */
+    static HttpClient trusting(final LimitFactors limits) {
+        return trusting(TrustedCertificates.file(System.getenv()), limits);
+    }
+
+    /**
+     * Returns the client this transport sends with, trusting the given authorities too.
+     *
+     * @param certificates The account's PEM certificates; a missing regular file adds no authority.
+     * @param limits The time factors, whose {@code services} scales the connect bound.
+     * @return The client.
+     * @throws IllegalStateException When the certificates cannot be read or contain no certificate.
+     */
+    static HttpClient trusting(final Path certificates, final LimitFactors limits) {
+        return HttpClient.newBuilder()
+                .sslContext(TrustedCertificates.context(certificates))
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .connectTimeout(limits.services(CONNECT))
+                .build();
     }
 
     private static Http network(

@@ -567,6 +567,8 @@ public final class ReviewText {
         final int type = Character.getType(cp);
         return type == Character.CONTROL
                 || type == Character.FORMAT
+                || type == Character.LINE_SEPARATOR
+                || type == Character.PARAGRAPH_SEPARATOR
                 || (cp >= 0xFE00 && cp <= 0xFE0F)
                 || (cp >= 0xE0100 && cp <= 0xE01EF)
                 || (cp >= 0xFDD0 && cp <= 0xFDEF)
@@ -601,7 +603,7 @@ public final class ReviewText {
      * @param text Markdown, line ends {@code \n}.
      * @return Each block's start and end in the text, from its opening line to its closing one.
      */
-    static List<int[]> fences(String text) {
+    public static List<int[]> fences(String text) {
         final List<int[]> out = new ArrayList<>();
         final Node root = BLOCKS.parse(text);
         for (Node child = root.getFirstChild(); child != null; child = child.getNext()) {
@@ -612,12 +614,25 @@ public final class ReviewText {
         return out;
     }
 
-    /** CommonMark's blank: spaces and tabs only, no other white space. */
-    static boolean onlySpacesAndTabs(String text) {
+    /**
+     * Tells whether a text is CommonMark's blank: spaces and tabs only, no other white space.
+     *
+     * @param text What to look at.
+     * @return {@code true} if blank.
+     */
+    public static boolean onlySpacesAndTabs(String text) {
         return text.chars().allMatch(c -> c == ' ' || c == '\t');
     }
 
-    static int runOf(String text, int i, char c) {
+    /**
+     * Counts how often a character repeats from a position on.
+     *
+     * @param text Where to look.
+     * @param i The first position.
+     * @param c The character.
+     * @return The length of the run.
+     */
+    public static int runOf(String text, int i, char c) {
         int n = 0;
         while (i + n < text.length() && text.charAt(i + n) == c) {
             n++;

@@ -62,6 +62,55 @@
 
         </profile>
 
+        <!-- A snapshot repository named by the environment: the host's forge, or a hand-over of another repository's
+             snapshot for a test against it. -->
+
+        <profile>
+
+            <id>forge</id>
+
+            <activation>
+                <property>
+                    <name>env.MAVEN_SNAPSHOTS_URL</name>
+                </property>
+            </activation>
+
+            <repositories>
+
+                <repository>
+                    <id>porelo-forge-snapshots</id>
+                    <name>The forge's snapshot repository</name>
+                    <url>${env.MAVEN_SNAPSHOTS_URL}</url>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                        <updatePolicy>always</updatePolicy>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+
+            </repositories>
+
+            <pluginRepositories>
+
+                <pluginRepository>
+                    <id>porelo-forge-snapshots</id>
+                    <name>The forge's snapshot repository</name>
+                    <url>${env.MAVEN_SNAPSHOTS_URL}</url>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                        <updatePolicy>always</updatePolicy>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </pluginRepository>
+
+            </pluginRepositories>
+
+        </profile>
+
     </profiles>
 
     <activeProfiles>

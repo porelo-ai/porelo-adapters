@@ -13,9 +13,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.Pattern;
-import org.fuin.porelo.build.github.review.GitHubReviewWrite;
 import org.fuin.porelo.build.github.review.ReviewRefusal;
 import org.fuin.porelo.build.github.review.ReviewText;
+import org.fuin.porelo.standin.review.GitHubReviewWrite;
 
 /**
  * A person's comment as a client submits it: read with the profile's limits, held to what a

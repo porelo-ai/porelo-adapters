@@ -1,4 +1,4 @@
-package org.fuin.porelo.build.github.review;
+package org.fuin.porelo.standin.review;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;

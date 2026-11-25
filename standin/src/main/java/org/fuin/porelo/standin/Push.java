@@ -10,8 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.fuin.porelo.build.github.review.GitHubReviewRead;
-import org.fuin.porelo.build.github.review.GitHubReviewWrite;
+import org.fuin.porelo.standin.review.GitHubReviewRead;
+import org.fuin.porelo.standin.review.GitHubReviewWrite;
 import org.jspecify.annotations.Nullable;
 
 /**

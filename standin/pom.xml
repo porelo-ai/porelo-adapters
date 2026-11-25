@@ -77,6 +77,16 @@
     </dependencies>
 
     <build>
+        <!-- The stand-in's review conversion names its real build version, written here by the build. -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>src/main/resources-filtered</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <!-- 'exec:java -Dstandin.args="..."' runs it; see README.md. -->
             <plugin>

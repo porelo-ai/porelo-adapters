@@ -18,7 +18,12 @@ import org.fuin.porelo.build.api.Build;
 import org.fuin.porelo.build.api.BuildMain;
 import org.fuin.porelo.build.api.BuildReader;
 import org.fuin.porelo.build.api.BuildRefused;
+import org.fuin.porelo.build.api.ConversationPage;
+import org.fuin.porelo.build.api.ForgeAccess;
+import org.fuin.porelo.build.api.ReviewFacts;
+import org.fuin.porelo.build.api.ReviewReader;
 import org.fuin.porelo.build.api.Target;
+import org.fuin.porelo.build.github.review.GitHubReviewReader;
 import org.fuin.porelo.build.http.BuildFields;
 import org.fuin.porelo.build.http.FailedTests;
 import org.fuin.porelo.build.http.Http;
@@ -34,7 +39,7 @@ import org.jspecify.annotations.Nullable;
  * <p>A job's log is behind a redirect to a host of GitHub's blob storage; the request there carries
  * no header at all, so the token stays with GitHub's API.
  */
-public final class GitHubReader implements BuildReader {
+public final class GitHubReader implements BuildReader, ReviewReader {
 
     /** GitHub's own address for its API. */
     public static final String API = "https://api.github.com";
@@ -75,6 +80,10 @@ public final class GitHubReader implements BuildReader {
     /** How long one call may take, {@link Http#CALL} times {@code limits.services}. */
     private final Duration call;
 
+    private final Function<LimitFactors, ReviewReader> reviews;
+
+    private final ReviewReader review;
+
     /**
      * Constructor.
      *
@@ -86,18 +95,50 @@ public final class GitHubReader implements BuildReader {
             final Function<LimitFactors, Http> transport,
             final Clock clock,
             final LimitFactors limits) {
-        this(transport, clock, limits.services(Http.CALL), transport.apply(limits));
+        this(transport, clock, limits, GitHubReader::reviewOverNetwork);
+    }
+
+    private static ReviewReader reviewOverNetwork(final LimitFactors limits) {
+        // One client per limits: each holds a selector thread and has read the certificates.
+        final java.net.http.HttpClient client = Http.trusting(limits);
+        return new GitHubReviewReader(() -> client, limits.services(Http.REQUEST));
+    }
+
+    /**
+     * Constructor for a reader whose review calls go through the given reader.
+     *
+     * @param transport Makes how a GET is sent, its deadlines scaled by the factors given.
+     * @param clock What time it is, for how long a rate limit lasts and what a call has left.
+     * @param limits The time factors, whose {@code services} scales each deadline.
+     * @param reviews Makes what answers the review contract, its deadlines scaled by the factors.
+     */
+    public GitHubReader(
+            final Function<LimitFactors, Http> transport,
+            final Clock clock,
+            final LimitFactors limits,
+            final Function<LimitFactors, ReviewReader> reviews) {
+        this(
+                transport,
+                clock,
+                limits.services(Http.CALL),
+                transport.apply(limits),
+                reviews,
+                reviews.apply(limits));
     }
 
     private GitHubReader(
             final Function<LimitFactors, Http> transport,
             final Clock clock,
             final Duration call,
-            final Http http) {
+            final Http http,
+            final Function<LimitFactors, ReviewReader> reviews,
+            final ReviewReader review) {
         this.transport = transport;
+        this.reviews = reviews;
         this.clock = clock;
         this.call = call;
         this.http = http;
+        this.review = review;
     }
 
     /**
@@ -106,13 +147,18 @@ public final class GitHubReader implements BuildReader {
     private GitHubReader oneCall() {
         final Instant end = clock.instant().plus(call);
         return new GitHubReader(
-                transport, clock, call, http.within(() -> Duration.between(clock.instant(), end)));
+                transport,
+                clock,
+                call,
+                http.within(() -> Duration.between(clock.instant(), end)),
+                reviews,
+                review);
     }
 
     /** Returns this reader with the deadlines Porelo's limits line scales. */
     @Override
     public GitHubReader withLimits(final LimitFactors limits) {
-        return new GitHubReader(transport, clock, limits);
+        return new GitHubReader(transport, clock, limits, reviews);
     }
 
     /**
@@ -124,6 +170,32 @@ public final class GitHubReader implements BuildReader {
         BuildMain.run(
                 new GitHubReader(Http::overNetwork, Clock.systemUTC(), LimitFactors.DEFAULT),
                 arguments);
+    }
+
+    /** Returns a pull request's facts, as {@link GitHubReviewReader} reads them. */
+    @Override
+    public ReviewFacts pullRequest(final ForgeAccess access, final String url) {
+        return review.pullRequest(access, url);
+    }
+
+    /** Returns the open pull request from a branch, opening none. */
+    @Override
+    public @Nullable String pullRequestOf(
+            final ForgeAccess access, final String upstream, final String branch) {
+        return review.pullRequestOf(access, upstream, branch);
+    }
+
+    /** Returns one page of a pull request's conversation. */
+    @Override
+    public ConversationPage comments(
+            final ForgeAccess access, final String url, final @Nullable String cursor) {
+        return review.comments(access, url, cursor);
+    }
+
+    /** Writes one released result, once. */
+    @Override
+    public String post(final ForgeAccess access, final String url, final String document) {
+        return review.post(access, url, document);
     }
 
     /** Returns the forge this reader implements. */

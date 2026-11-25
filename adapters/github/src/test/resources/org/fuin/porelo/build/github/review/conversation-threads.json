@@ -1,0 +1,93 @@
+[
+ {
+  "id": "PRRT_1",
+  "isResolved": false,
+  "isOutdated": false,
+  "path": "src/main/java/Gate.java",
+  "line": 12,
+  "diffSide": "RIGHT",
+  "startDiffSide": null,
+  "resolvedBy": null,
+  "comments": {
+   "nodes": [
+    {
+     "id": "PRRC_101",
+     "databaseId": 101,
+     "body": "Use the constant [here]{0}.",
+     "createdAt": "2026-10-30T09:14:02Z",
+     "author": {
+      "login": "example-reviewer",
+      "id": "U",
+      "databaseId": 583231
+     }
+    },
+    {
+     "id": "PRRC_102",
+     "databaseId": 102,
+     "body": "Done \\ thanks.",
+     "createdAt": "2026-10-30T09:14:02Z",
+     "author": {
+      "login": "example-author",
+      "id": "U",
+      "databaseId": 771002
+     }
+    }
+   ],
+   "pageInfo": {
+    "hasNextPage": false,
+    "endCursor": "Y3Vyc29y"
+   }
+  }
+ },
+ {
+  "id": "PRRT_2",
+  "isResolved": true,
+  "isOutdated": false,
+  "path": "doc/a b.md",
+  "line": 4,
+  "diffSide": "LEFT",
+  "startDiffSide": null,
+  "resolvedBy": null,
+  "comments": {
+   "nodes": [
+    {
+     "id": "PRRC_201",
+     "databaseId": 201,
+     "body": "Old line read wrong.",
+     "createdAt": "2026-10-30T09:14:02Z",
+     "author": {
+      "login": "example-reviewer",
+      "id": "U",
+      "databaseId": 583231
+     }
+    },
+    {
+     "id": "PRRC_202",
+     "databaseId": 202,
+     "body": "Agreed.",
+     "createdAt": "2026-10-30T09:14:02Z",
+     "author": {
+      "login": "example-author",
+      "id": "U",
+      "databaseId": 771002
+     }
+    },
+    {
+     "id": "PRRC_203",
+     "databaseId": 203,
+     "body": "And again.",
+     "createdAt": "2026-10-30T09:14:02Z",
+     "author": {
+      "login": "example-reviewer",
+      "id": "U",
+      "databaseId": 583231
+     }
+    }
+   ],
+   "pageInfo": {
+    "hasNextPage": false,
+    "endCursor": "Y3Vyc29y"
+   }
+  }
+ }
+]

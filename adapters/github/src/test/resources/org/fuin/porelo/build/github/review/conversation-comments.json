@@ -1,0 +1,285 @@
+[
+ {
+  "url": "https://api.github.com/repos/example-org/example-repo/pulls/comments/101",
+  "pull_request_review_id": 5722360485,
+  "id": 101,
+  "node_id": "PRRC_101",
+  "diff_hunk": "@@ -10,3 +10,3 @@",
+  "path": "src/main/java/Gate.java",
+  "commit_id": "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd",
+  "original_commit_id": "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd",
+  "user": {
+   "login": "example-reviewer",
+   "id": 583231,
+   "node_id": "U_583231",
+   "type": "User",
+   "site_admin": false,
+   "avatar_url": "https://avatars.githubusercontent.com/u/583231",
+   "gravatar_id": "",
+   "url": "https://api.github.com/users/example-reviewer",
+   "html_url": "https://github.com/example-reviewer",
+   "followers_url": "x",
+   "following_url": "x",
+   "gists_url": "x",
+   "starred_url": "x",
+   "subscriptions_url": "x",
+   "organizations_url": "x",
+   "repos_url": "x",
+   "events_url": "x",
+   "received_events_url": "x"
+  },
+  "body": "Use the constant [here]{0}.",
+  "created_at": "2026-10-30T09:14:02Z",
+  "updated_at": "2026-10-30T09:15:40Z",
+  "html_url": "https://github.com/example-org/example-repo/pull/17#discussion_r101",
+  "pull_request_url": "https://api.github.com/repos/example-org/example-repo/pulls/17",
+  "_links": {
+   "self": {
+    "href": "x"
+   },
+   "html": {
+    "href": "x"
+   },
+   "pull_request": {
+    "href": "x"
+   }
+  },
+  "start_line": 10,
+  "original_start_line": 10,
+  "start_side": "RIGHT",
+  "line": 12,
+  "original_line": 12,
+  "side": "RIGHT",
+  "author_association": "MEMBER",
+  "original_position": 3,
+  "position": 3,
+  "subject_type": "line"
+ },
+ {
+  "url": "https://api.github.com/repos/example-org/example-repo/pulls/comments/102",
+  "pull_request_review_id": 5722360485,
+  "id": 102,
+  "node_id": "PRRC_102",
+  "diff_hunk": "@@ -10,3 +10,3 @@",
+  "path": "src/main/java/Gate.java",
+  "commit_id": "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd",
+  "original_commit_id": "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd",
+  "user": {
+   "login": "example-author",
+   "id": 771002,
+   "node_id": "U_771002",
+   "type": "User",
+   "site_admin": false,
+   "avatar_url": "https://avatars.githubusercontent.com/u/771002",
+   "gravatar_id": "",
+   "url": "https://api.github.com/users/example-author",
+   "html_url": "https://github.com/example-author",
+   "followers_url": "x",
+   "following_url": "x",
+   "gists_url": "x",
+   "starred_url": "x",
+   "subscriptions_url": "x",
+   "organizations_url": "x",
+   "repos_url": "x",
+   "events_url": "x",
+   "received_events_url": "x"
+  },
+  "body": "Done \\ thanks.",
+  "created_at": "2026-10-30T09:14:02Z",
+  "updated_at": "2026-10-30T09:15:40Z",
+  "html_url": "https://github.com/example-org/example-repo/pull/17#discussion_r102",
+  "pull_request_url": "https://api.github.com/repos/example-org/example-repo/pulls/17",
+  "_links": {
+   "self": {
+    "href": "x"
+   },
+   "html": {
+    "href": "x"
+   },
+   "pull_request": {
+    "href": "x"
+   }
+  },
+  "start_line": 10,
+  "original_start_line": 10,
+  "start_side": "RIGHT",
+  "line": 12,
+  "original_line": 12,
+  "side": "RIGHT",
+  "author_association": "MEMBER",
+  "original_position": 3,
+  "position": 3,
+  "subject_type": "line",
+  "in_reply_to_id": 101
+ },
+ {
+  "url": "https://api.github.com/repos/example-org/example-repo/pulls/comments/201",
+  "pull_request_review_id": 5722360485,
+  "id": 201,
+  "node_id": "PRRC_201",
+  "diff_hunk": "@@ -10,3 +10,3 @@",
+  "path": "doc/a b.md",
+  "commit_id": "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd",
+  "original_commit_id": "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd",
+  "user": {
+   "login": "example-reviewer",
+   "id": 583231,
+   "node_id": "U_583231",
+   "type": "User",
+   "site_admin": false,
+   "avatar_url": "https://avatars.githubusercontent.com/u/583231",
+   "gravatar_id": "",
+   "url": "https://api.github.com/users/example-reviewer",
+   "html_url": "https://github.com/example-reviewer",
+   "followers_url": "x",
+   "following_url": "x",
+   "gists_url": "x",
+   "starred_url": "x",
+   "subscriptions_url": "x",
+   "organizations_url": "x",
+   "repos_url": "x",
+   "events_url": "x",
+   "received_events_url": "x"
+  },
+  "body": "Old line read wrong.",
+  "created_at": "2026-10-30T09:14:02Z",
+  "updated_at": "2026-10-30T09:15:40Z",
+  "html_url": "https://github.com/example-org/example-repo/pull/17#discussion_r201",
+  "pull_request_url": "https://api.github.com/repos/example-org/example-repo/pulls/17",
+  "_links": {
+   "self": {
+    "href": "x"
+   },
+   "html": {
+    "href": "x"
+   },
+   "pull_request": {
+    "href": "x"
+   }
+  },
+  "start_line": null,
+  "original_start_line": null,
+  "start_side": null,
+  "line": 4,
+  "original_line": 4,
+  "side": "LEFT",
+  "author_association": "MEMBER",
+  "original_position": 3,
+  "position": 3,
+  "subject_type": "line"
+ },
+ {
+  "url": "https://api.github.com/repos/example-org/example-repo/pulls/comments/202",
+  "pull_request_review_id": 5722360485,
+  "id": 202,
+  "node_id": "PRRC_202",
+  "diff_hunk": "@@ -10,3 +10,3 @@",
+  "path": "doc/a b.md",
+  "commit_id": "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd",
+  "original_commit_id": "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd",
+  "user": {
+   "login": "example-author",
+   "id": 771002,
+   "node_id": "U_771002",
+   "type": "User",
+   "site_admin": false,
+   "avatar_url": "https://avatars.githubusercontent.com/u/771002",
+   "gravatar_id": "",
+   "url": "https://api.github.com/users/example-author",
+   "html_url": "https://github.com/example-author",
+   "followers_url": "x",
+   "following_url": "x",
+   "gists_url": "x",
+   "starred_url": "x",
+   "subscriptions_url": "x",
+   "organizations_url": "x",
+   "repos_url": "x",
+   "events_url": "x",
+   "received_events_url": "x"
+  },
+  "body": "Agreed.",
+  "created_at": "2026-10-30T09:14:02Z",
+  "updated_at": "2026-10-30T09:15:40Z",
+  "html_url": "https://github.com/example-org/example-repo/pull/17#discussion_r202",
+  "pull_request_url": "https://api.github.com/repos/example-org/example-repo/pulls/17",
+  "_links": {
+   "self": {
+    "href": "x"
+   },
+   "html": {
+    "href": "x"
+   },
+   "pull_request": {
+    "href": "x"
+   }
+  },
+  "start_line": null,
+  "original_start_line": null,
+  "start_side": null,
+  "line": 4,
+  "original_line": 4,
+  "side": "LEFT",
+  "author_association": "MEMBER",
+  "original_position": 3,
+  "position": 3,
+  "subject_type": "line",
+  "in_reply_to_id": 201
+ },
+ {
+  "url": "https://api.github.com/repos/example-org/example-repo/pulls/comments/203",
+  "pull_request_review_id": 5722360485,
+  "id": 203,
+  "node_id": "PRRC_203",
+  "diff_hunk": "@@ -10,3 +10,3 @@",
+  "path": "doc/a b.md",
+  "commit_id": "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd",
+  "original_commit_id": "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd",
+  "user": {
+   "login": "example-reviewer",
+   "id": 583231,
+   "node_id": "U_583231",
+   "type": "User",
+   "site_admin": false,
+   "avatar_url": "https://avatars.githubusercontent.com/u/583231",
+   "gravatar_id": "",
+   "url": "https://api.github.com/users/example-reviewer",
+   "html_url": "https://github.com/example-reviewer",
+   "followers_url": "x",
+   "following_url": "x",
+   "gists_url": "x",
+   "starred_url": "x",
+   "subscriptions_url": "x",
+   "organizations_url": "x",
+   "repos_url": "x",
+   "events_url": "x",
+   "received_events_url": "x"
+  },
+  "body": "And again.",
+  "created_at": "2026-10-30T09:14:02Z",
+  "updated_at": "2026-10-30T09:15:40Z",
+  "html_url": "https://github.com/example-org/example-repo/pull/17#discussion_r203",
+  "pull_request_url": "https://api.github.com/repos/example-org/example-repo/pulls/17",
+  "_links": {
+   "self": {
+    "href": "x"
+   },
+   "html": {
+    "href": "x"
+   },
+   "pull_request": {
+    "href": "x"
+   }
+  },
+  "start_line": null,
+  "original_start_line": null,
+  "start_side": null,
+  "line": 4,
+  "original_line": 4,
+  "side": "LEFT",
+  "author_association": "MEMBER",
+  "original_position": 3,
+  "position": 3,
+  "subject_type": "line",
+  "in_reply_to_id": 201
+ }
+]

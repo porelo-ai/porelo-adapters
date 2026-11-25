@@ -73,7 +73,7 @@ public final class GitHubReviewReader implements ReviewReader {
                 };
         if (state == ReviewFacts.State.MERGED && facts.mergeCommit() == null) {
             throw new IllegalStateException(
-                    "this adapter does not read a merged pull request's merge commit yet");
+                    "a merged pull request's facts were read without its merge commit");
         }
         final PullRequestFacts.Account account = facts.account();
         return new ReviewFacts(

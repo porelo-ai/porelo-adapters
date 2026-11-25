@@ -43,13 +43,14 @@ class GitHubReviewTest {
         assertThat(results.size()).as("the root comment and its reply").isEqualTo(2);
         assertThat(results.get(1).at("/properties/porelo~1replyTo").asText())
                 .as("the reply names its thread by the root's REST ID")
-                .isEqualTo("4467633645");
+                .isEqualTo(recordedRoot());
         assertThat(results.get(1).at("/properties/porelo~1forgeAccountName").asText())
                 .isEqualTo("fixture-user");
         assertThat(page.document().at("/runs/0/properties/porelo~1pullRequest").asText())
                 .isEqualTo(PULL);
         assertThat(page.document().at("/runs/0/versionControlProvenance/0/revisionId").asText())
-                .isEqualTo("ddb2cdaa1ee183a0c5a021a6a9145a3b8a53a7cf");
+                .as("the recorded head")
+                .isEqualTo(recordedHead());
         assertThat(page.cursor()).isNull();
     }
 
@@ -238,6 +239,25 @@ class GitHubReviewTest {
                         name ->
                                 name.matches(
                                         "(?i).*(approve|verdict|requestChanges|resolve|merge).*"));
+    }
+
+    /** The head of the recorded pull request, as GitHub answered it when it was recorded. */
+    private static String recordedHead() throws IOException {
+        return JSON.readTree(ReplayHttpClient.recorded("pull").iterator().next().body())
+                .at("/head/sha")
+                .asText();
+    }
+
+    /** The REST ID of the recorded thread's root, which its first reply names. */
+    private static String recordedRoot() throws IOException {
+        for (final JsonNode comment :
+                JSON.readTree(
+                        ReplayHttpClient.recorded("reviewComments").iterator().next().body())) {
+            if (comment.hasNonNull("in_reply_to_id")) {
+                return comment.get("in_reply_to_id").asText();
+            }
+        }
+        throw new IllegalStateException("the recording holds no reply");
     }
 
     private static ReplayHttpClient recorded(String... names) throws IOException {

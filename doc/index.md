@@ -54,7 +54,8 @@ gives.
 Beside the build, the GitHub adapter serves one person's review of a pull request in Porelo's review profile 2:
 
 - **A pull request's facts**: its repository, head, base, merge base, state, and whether GitHub counts it approved at
-  its head: every reviewer's last verdict on that commit is an approval.
+  its head: every reviewer's last verdict on that commit is an approval. Once merged, also its merge commit and the
+  branch it went onto; once merged or closed, when.
 - **The open pull request of a branch**, if there is one; it never opens one.
 - **Its conversation, page by page**: each line comment and each reply as one result, written by its GitHub account,
   at most 100 results and 1 MiB a page. A thread is named by its first comment's REST ID.

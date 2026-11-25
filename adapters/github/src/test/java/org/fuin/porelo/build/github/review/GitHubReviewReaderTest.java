@@ -56,7 +56,7 @@ class GitHubReviewReaderTest {
         assertThat(facts.account())
                 .as("the account the token stands for")
                 .isEqualTo(new ReviewFacts.Account("1", "fixture-user"));
-        assertThat(facts.head()).isEqualTo("ddb2cdaa1ee183a0c5a021a6a9145a3b8a53a7cf");
+        assertThat(facts.head()).as("the recorded head").isEqualTo(recordedHead());
     }
 
     @Test
@@ -75,6 +75,51 @@ class GitHubReviewReaderTest {
         assertThat(facts.decidedAt())
                 .as("GitHub's closed_at, given exactly when closed")
                 .isEqualTo(java.time.Instant.parse("2026-11-05T09:30:00Z"));
+    }
+
+    @Test
+    void aMergedPullRequestNamesItsMergeCommitAndTheBranchItWentOnto() throws IOException {
+        final ReplayHttpClient http = new ReplayHttpClient();
+        for (final ReplayHttpClient.Answer answer : ReplayHttpClient.recorded("pull")) {
+            final ObjectNode pull = (ObjectNode) JSON.readTree(answer.body());
+            pull.put("state", "closed")
+                    .put("merged", true)
+                    .put("merged_at", "2026-11-05T10:00:00Z")
+                    .put("closed_at", "2026-11-05T10:00:00Z");
+            http.answer(answer.status(), answer.headers(), JSON.writeValueAsString(pull));
+        }
+        http.recording("compare").recording("reviews").recording("mergeCommit").recording("user");
+
+        final ReviewFacts facts = new GitHubReviewReader(() -> http).pullRequest(ACCESS, PULL);
+
+        assertThat(facts.state()).isEqualTo(ReviewFacts.State.MERGED);
+        assertThat(facts.mergeCommit())
+                .as("GitHub's merge commit, read by GraphQL")
+                .isEqualTo("3253c2baeea3009e177c8001ec67c7915686a2c2");
+        assertThat(facts.mergedHead()).as("the base branch the merge went onto").isNotBlank();
+        assertThat(facts.decidedAt())
+                .as("GitHub's merged_at")
+                .isEqualTo(java.time.Instant.parse("2026-11-05T10:00:00Z"));
+        assertThat(http.requests().get(3).uri().getPath())
+                .as("GraphQL beside the Enterprise Server's REST base")
+                .isEqualTo("/api/graphql");
+    }
+
+    @Test
+    void aMergedPullRequestGitHubNamesNoMergeCommitForFailsClosed() throws IOException {
+        final ReplayHttpClient http = new ReplayHttpClient();
+        for (final ReplayHttpClient.Answer answer : ReplayHttpClient.recorded("pull")) {
+            final ObjectNode pull = (ObjectNode) JSON.readTree(answer.body());
+            pull.put("state", "closed")
+                    .put("merged", true)
+                    .put("merged_at", "2026-11-05T10:00:00Z");
+            http.answer(answer.status(), answer.headers(), JSON.writeValueAsString(pull));
+        }
+        http.recording("compare").recording("reviews").recording("mergeCommitOpen");
+
+        assertThatThrownBy(() -> new GitHubReviewReader(() -> http).pullRequest(ACCESS, PULL))
+                .as("merged by REST, not merged by GraphQL: no guess")
+                .isNotInstanceOf(ForgeReviewRefused.class);
     }
 
     @Test
@@ -196,6 +241,13 @@ class GitHubReviewReaderTest {
                 .extracting(e -> ((ForgeReviewRefused) e).reason())
                 .isEqualTo(ForgeReviewRefused.Reason.NO_SUCH_PULL_REQUEST);
         assertThat(http.requests().get(0).uri().getHost()).isEqualTo("api.github.com");
+    }
+
+    /** The head of the recorded pull request, as GitHub answered it when it was recorded. */
+    private static String recordedHead() throws IOException {
+        return JSON.readTree(ReplayHttpClient.recorded("pull").iterator().next().body())
+                .at("/head/sha")
+                .asText();
     }
 
     private static ReplayHttpClient recorded(String... names) {

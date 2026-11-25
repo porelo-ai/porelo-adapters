@@ -58,7 +58,14 @@ public final class GitHubReview {
         return reading(
                 () -> {
                     final PullRequestFacts facts = new PullRequestFacts(rest(base));
-                    return facts.read(token, address).with(facts.account(token));
+                    PullRequestFacts.Facts read = facts.read(token, address);
+                    if ("merged".equals(read.state())) {
+                        read =
+                                read.withMergeCommit(
+                                        PullRequestFacts.mergeCommit(
+                                                graphQl(base), token, address));
+                    }
+                    return read.with(facts.account(token));
                 },
                 ReviewFailure.Kind.NO_SUCH_PULL_REQUEST);
     }

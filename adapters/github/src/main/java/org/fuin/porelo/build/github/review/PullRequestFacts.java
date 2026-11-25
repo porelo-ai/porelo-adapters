@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.fuin.porelo.forge.github.GitHubClient;
+import org.fuin.porelo.forge.github.GitHubGraphQl;
 import org.fuin.porelo.forge.github.model.PullRequest;
 import org.fuin.porelo.forge.github.model.PullRequestReview;
 import org.fuin.porelo.forge.github.model.PullRequestSimple;
@@ -26,6 +27,8 @@ public final class PullRequestFacts {
                     "/([A-Za-z0-9._-]{1,100})/([A-Za-z0-9._-]{1,100})/pull/([1-9][0-9]{0,8})");
 
     private static final Pattern COMMIT = Pattern.compile("[0-9a-f]{40}");
+
+    private static final Pattern MERGE_COMMIT = Pattern.compile("[0-9a-f]{40}|[0-9a-f]{64}");
 
     private static final Pattern REPOSITORY =
             Pattern.compile("/([A-Za-z0-9._-]{1,100})/([A-Za-z0-9._-]{1,100})");
@@ -91,6 +94,26 @@ public final class PullRequestFacts {
                     state,
                     approved,
                     mergeCommit,
+                    mergedHead,
+                    decidedAt,
+                    account);
+        }
+
+        /**
+         * Returns these facts with the merge commit.
+         *
+         * @param commit The merge commit.
+         * @return The facts.
+         */
+        public Facts withMergeCommit(String commit) {
+            return new Facts(
+                    repository,
+                    head,
+                    base,
+                    mergeBase,
+                    state,
+                    approved,
+                    commit,
                     mergedHead,
                     decidedAt,
                     account);
@@ -263,6 +286,26 @@ public final class PullRequestFacts {
                 decidedAt(
                         merged ? pull.mergedAt() : "closed".equals(state) ? pull.closedAt() : null),
                 null);
+    }
+
+    /**
+     * Reads a merged pull request's merge commit.
+     *
+     * @param graphQl The GraphQL client.
+     * @param token The token lent for this call.
+     * @param address The pull request.
+     * @return The merge commit, written in full.
+     * @throws IllegalStateException If GitHub names none or one not of a commit's form.
+     */
+    public static String mergeCommit(GitHubGraphQl graphQl, String token, Address address) {
+        final String commit =
+                graphQl.mergeCommit(
+                        token, address.owner(), address.repo(), Math.toIntExact(address.number()));
+        if (commit == null || !MERGE_COMMIT.matcher(commit).matches()) {
+            throw new IllegalStateException(
+                    "GitHub names no merge commit of a commit's form for a merged pull request");
+        }
+        return commit;
     }
 
     private static java.time.@Nullable Instant decidedAt(java.time.@Nullable OffsetDateTime at) {

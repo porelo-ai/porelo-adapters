@@ -1,0 +1,2 @@
+title: A pull request's review page says partial, and so does every later page of the same walk, when a comment was deleted, added or became outdated between two pages, so a walk never ends complete after skipping or repeating a result.
+type: fixed

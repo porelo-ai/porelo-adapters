@@ -3,7 +3,11 @@ package org.fuin.porelo.build.github.review;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
@@ -11,8 +15,13 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Cuts a pull request's results into the profile's pages: at most {@link #RESULT_LIMIT} results and
- * {@link #BYTE_LIMIT} bytes of UTF-8 per document, and at least one result while any are left. A
- * page's cursor is the index of its first result in the whole conversation, read anew each call.
+ * {@link #BYTE_LIMIT} bytes of UTF-8 per document, and at least one result while any are left.
+ *
+ * <p>A page's cursor is the index of its first result in the whole conversation, read anew each
+ * call, and a digest of the guids before it. When the conversation read anew no longer has those
+ * results before the index, a result was dropped, added or moved between two pages: that page and
+ * every later one of the same walk say {@code partial}, so the walk never ends complete after
+ * skipping or repeating a result.
  */
 public final class ReviewPage {
 
@@ -22,7 +31,10 @@ public final class ReviewPage {
     /** At most this many bytes of UTF-8 in one document. */
     public static final int BYTE_LIMIT = 1_048_576;
 
-    private static final Pattern CURSOR = Pattern.compile("0|[1-9][0-9]{0,8}");
+    private static final Pattern CURSOR =
+            Pattern.compile("(0|[1-9][0-9]{0,8})\\.([0-9a-f]{16})(\\.x)?");
+
+    private static final String CHANGED = ".x";
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -52,11 +64,13 @@ public final class ReviewPage {
             boolean complete,
             @Nullable String cursor,
             BiFunction<List<ObjectNode>, String, ObjectNode> document) {
-        final int from = from(cursor);
+        final Cursor at = Cursor.of(cursor);
+        final int from = at.index();
         // The conversation may have shrunk since the cursor was written: nothing more to read.
         if (from > results.size()) {
             return written(document.apply(List.of(), "partial"), null);
         }
+        final boolean changed = at.changed() || !at.digest().equals(digest(results, from));
         final List<ObjectNode> taken = new ArrayList<>();
         for (int i = from; i < results.size() && taken.size() < RESULT_LIMIT; i++) {
             taken.add(results.get(i));
@@ -72,8 +86,8 @@ public final class ReviewPage {
         final int next = from + taken.size();
         final boolean last = next == results.size();
         return written(
-                document.apply(taken, last && complete ? "complete" : "partial"),
-                last ? null : Integer.toString(next));
+                document.apply(taken, last && complete && !changed ? "complete" : "partial"),
+                last ? null : next + "." + digest(results, next) + (changed ? CHANGED : ""));
     }
 
     /**
@@ -117,14 +131,34 @@ public final class ReviewPage {
         return root;
     }
 
-    private static int from(@Nullable String cursor) {
-        if (cursor == null || cursor.isEmpty()) {
-            return 0;
+    /** Where a page begins, what came before it, and whether its walk already saw a change. */
+    private record Cursor(int index, String digest, boolean changed) {
+
+        static Cursor of(@Nullable String cursor) {
+            if (cursor == null || cursor.isEmpty()) {
+                return new Cursor(0, ReviewPage.digest(List.of(), 0), false);
+            }
+            final var m = CURSOR.matcher(cursor);
+            if (!m.matches()) {
+                throw new IllegalArgumentException("not a cursor this adapter wrote");
+            }
+            return new Cursor(Integer.parseInt(m.group(1)), m.group(2), m.group(3) != null);
         }
-        if (!CURSOR.matcher(cursor).matches()) {
-            throw new IllegalArgumentException("not a cursor this adapter wrote");
+    }
+
+    /** The first 16 hex digits of SHA-256 over the guids of the first {@code count} results. */
+    private static String digest(List<ObjectNode> results, int count) {
+        final MessageDigest sha;
+        try {
+            sha = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 is missing", ex);
         }
-        return Integer.parseInt(cursor);
+        for (int i = 0; i < count; i++) {
+            sha.update(results.get(i).path("guid").asText().getBytes(StandardCharsets.UTF_8));
+            sha.update((byte) '\n');
+        }
+        return HexFormat.of().formatHex(sha.digest(), 0, 8);
     }
 
     private static Page written(ObjectNode document, @Nullable String cursor) {
@@ -136,6 +170,6 @@ public final class ReviewPage {
     }
 
     private static int bytes(String text) {
-        return text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+        return text.getBytes(StandardCharsets.UTF_8).length;
     }
 }

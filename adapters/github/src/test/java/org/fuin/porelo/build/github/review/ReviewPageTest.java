@@ -75,7 +75,7 @@ class ReviewPageTest {
 
         assertThat(List.of(first.cursor(), second.cursor()))
                 .as("each cursor names the next page's first result")
-                .containsExactly("100", "200");
+                .allSatisfy(c -> assertThat(c).matches("(100|200)\\.[0-9a-f]{16}"));
         assertThat(third.cursor()).as("the last page has no next").isNull();
         assertThat(
                         List.of(first, second, third).stream()
@@ -96,6 +96,37 @@ class ReviewPageTest {
     }
 
     @Test
+    void aResultGoneBetweenTwoPagesMakesTheNextPagePartial() {
+        final List<ObjectNode> results = copies(150, "short");
+        final ReviewPage.Page first = page(results, true, null);
+        final List<ObjectNode> shrunk = new ArrayList<>(results);
+        shrunk.remove(3);
+
+        final ReviewPage.Page second = page(shrunk, true, first.cursor());
+
+        assertThat(second.cursor()).as("the second page is the last").isNull();
+        assertThat(completeness(second))
+                .as("a result before the cursor went, so the walk skipped one unnoticed")
+                .isEqualTo("partial");
+    }
+
+    @Test
+    void aResultAddedBeforeTheCursorKeepsEveryLaterPagePartial() {
+        final List<ObjectNode> results = copies(250, "short");
+        final ReviewPage.Page first = page(results, true, null);
+        final List<ObjectNode> grown = new ArrayList<>(results);
+        grown.add(0, copies(251, "new").get(250));
+
+        final ReviewPage.Page second = page(grown, true, first.cursor());
+        final ReviewPage.Page third = page(grown, true, second.cursor());
+
+        assertThat(List.of(completeness(second), completeness(third)))
+                .as("once the walk saw a change, its last page cannot say complete either")
+                .containsExactly("partial", "partial");
+        assertThat(third.cursor()).isNull();
+    }
+
+    @Test
     void aPageStopsBeforeOneMebibyte() {
         final List<ObjectNode> results = copies(100, "{{".repeat(8_000));
 
@@ -109,7 +140,19 @@ class ReviewPageTest {
 
     @Test
     void aCursorThisAdapterDidNotWriteIsRefused() {
-        for (final String cursor : List.of("-1", "01", "x", "1e3", "9999999999")) {
+        for (final String cursor :
+                List.of(
+                        "-1",
+                        "01",
+                        "x",
+                        "1e3",
+                        "9999999999",
+                        "100",
+                        "100.",
+                        "100.0123456789abcdeF",
+                        "100.0123456789abcde",
+                        "100.0123456789abcdef.y",
+                        "01.0123456789abcdef")) {
             assertThatThrownBy(() -> page(List.of(), true, cursor))
                     .as(cursor)
                     .isInstanceOf(IllegalArgumentException.class);
@@ -118,13 +161,17 @@ class ReviewPageTest {
 
     @Test
     void aCursorPastAShrunkConversationAnswersAnEmptyPartialPage() {
-        final ReviewPage.Page page = page(copies(3, "x"), true, "50");
+        final ReviewPage.Page page = page(copies(3, "x"), true, "50.0123456789abcdef");
 
         assertThat(page.document().at("/runs/0/results").size()).isZero();
         assertThat(page.document().at("/runs/0/properties/porelo~1completeness").asText())
                 .as("what changed since is not known")
                 .isEqualTo("partial");
         assertThat(page.cursor()).isNull();
+    }
+
+    private static String completeness(ReviewPage.Page page) {
+        return page.document().at("/runs/0/properties/porelo~1completeness").asText();
     }
 
     private static ReviewPage.Page page(List<ObjectNode> results, boolean complete, String cursor) {

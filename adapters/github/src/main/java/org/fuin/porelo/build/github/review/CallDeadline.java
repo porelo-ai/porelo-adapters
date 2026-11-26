@@ -18,10 +18,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 
 /**
- * Holds every request of one review call to the call's end: each send waits no longer than the call
- * has left, and once the end has passed nothing more is sent. A send refused for that throws {@link
- * HttpConnectTimeoutException}, so the GitHub client counts it as never sent and a write is not
- * taken for one that may have reached GitHub.
+ * Holds every request of one review call to the call's end: each send waits for its answer no
+ * longer than the call has left, and once the end has passed nothing more is sent. A send refused
+ * for that throws {@link HttpConnectTimeoutException}, so the GitHub client counts it as never sent
+ * and a write is not taken for one that may have reached GitHub.
  */
 final class CallDeadline extends HttpClient {
 

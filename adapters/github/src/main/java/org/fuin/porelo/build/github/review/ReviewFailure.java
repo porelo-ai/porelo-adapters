@@ -125,13 +125,17 @@ public final class ReviewFailure extends RuntimeException {
     }
 
     /**
-     * Whether a 403 says the token lacks a permission, by GitHub's header naming the permissions it
-     * accepts or its own words; a 403 for a locked conversation or a blocked account says neither.
+     * Whether a 403 says the token cannot reach the resource: it lacks a permission, or the
+     * organization wants it authorized for SAML. GitHub's {@code X-Accepted-GitHub-Permissions}
+     * names the endpoint's permissions on every answer, so only its words tell; a 403 for a locked
+     * conversation or a blocked account says neither.
      */
     private static boolean permissionMissing(GitHubException failure) {
         final String message = failure.getMessage();
-        return failure.acceptedPermissions() != null
-                || (message != null && message.startsWith("Resource not accessible by"));
+        return message != null
+                && (message.startsWith("Resource not accessible by")
+                        || message.startsWith(
+                                "Resource protected by organization SAML enforcement"));
     }
 
     /**

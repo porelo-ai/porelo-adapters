@@ -209,9 +209,14 @@ class GitHubReviewReaderTest {
     void aWriteGitHubForbidsForALockedConversationIsNoRefusedTokenAndCarriesGitHubsWords()
             throws IOException {
         final ReplayHttpClient http = new ReplayHttpClient();
+        // GitHub names the endpoint's permissions on every answer, a successful one too.
         http.answer(
                 403,
-                Map.of("content-type", List.of("application/json")),
+                Map.of(
+                        "content-type",
+                        List.of("application/json"),
+                        "x-accepted-github-permissions",
+                        List.of("pull_requests=write")),
                 "{\"message\":\"Unable to create comment because issue is locked.\"}");
 
         assertThatThrownBy(
@@ -226,20 +231,18 @@ class GitHubReviewReaderTest {
     }
 
     @Test
-    void aForbiddenAnswerNamingAMissingPermissionIsARefusedToken() throws IOException {
-        for (final Map<String, List<String>> headers :
+    void aForbiddenAnswerSayingTheTokenCannotReachTheResourceIsARefusedToken() throws IOException {
+        for (final String message :
                 List.of(
-                        Map.of(
-                                "content-type",
-                                List.of("application/json"),
-                                "x-accepted-github-permissions",
-                                List.of("pull_requests=write")),
-                        Map.of("content-type", List.of("application/json")))) {
+                        "Resource not accessible by personal access token",
+                        "Resource not accessible by integration",
+                        "Resource protected by organization SAML enforcement. You must grant your"
+                                + " Personal Access token access to this organization.")) {
             final ReplayHttpClient http = new ReplayHttpClient();
             http.answer(
                     403,
-                    headers,
-                    "{\"message\":\"Resource not accessible by personal access token\"}");
+                    Map.of("content-type", List.of("application/json")),
+                    "{\"message\":\"" + message + "\"}");
 
             assertThatThrownBy(
                             () ->
@@ -248,7 +251,7 @@ class GitHubReviewReaderTest {
                                                     ACCESS,
                                                     PULL,
                                                     JSON.writeValueAsString(submission())))
-                    .as(headers.toString())
+                    .as("the person must change or authorize the token: " + message)
                     .isInstanceOf(ForgeReviewRefused.class)
                     .extracting(e -> ((ForgeReviewRefused) e).reason())
                     .isEqualTo(ForgeReviewRefused.Reason.CREDENTIAL_REFUSED);

@@ -150,6 +150,20 @@ class GitHubReviewTest {
     }
 
     @Test
+    void aRequestWaitsNoLongerThanItsCallHasLeft() throws IOException {
+        final ReplayHttpClient http = recorded("pull", "compare", "reviews", "user");
+        final Instant start = Instant.parse("2026-11-26T07:00:00Z");
+        final Clock clock = new Stepping(start, start.plusSeconds(290));
+
+        new GitHubReview(() -> http, Duration.ofSeconds(60), Duration.ofSeconds(300), clock)
+                .pullRequest(API, TOKEN, PULL);
+
+        assertThat(http.requests().get(0).timeout())
+                .as("a request may not outlive the call's end")
+                .contains(Duration.ofSeconds(10));
+    }
+
+    @Test
     void aWriteIsNotSentOnceItsCallsLengthHasPassed() throws IOException {
         final ReplayHttpClient http = recorded("createReviewComment");
         final Instant start = Instant.parse("2026-11-26T07:00:00Z");

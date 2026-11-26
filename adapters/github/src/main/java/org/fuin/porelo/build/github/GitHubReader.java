@@ -96,10 +96,10 @@ public final class GitHubReader implements BuildReader, ReviewReader {
             final Function<LimitFactors, Http> transport,
             final Clock clock,
             final LimitFactors limits) {
-        this(transport, clock, limits, GitHubReader::reviewOverNetwork);
+        this(transport, clock, limits, l -> reviewOverNetwork(l, clock));
     }
 
-    private static ReviewReader reviewOverNetwork(final LimitFactors limits) {
+    private static ReviewReader reviewOverNetwork(final LimitFactors limits, final Clock clock) {
         // One client per limits: each holds a selector thread and has read the certificates.
         final java.net.http.HttpClient client = Http.trusting(limits);
         return new GitHubReviewReader(
@@ -107,7 +107,7 @@ public final class GitHubReader implements BuildReader, ReviewReader {
                         () -> client,
                         limits.services(Http.REQUEST),
                         limits.services(Http.CALL),
-                        Clock.systemUTC()));
+                        clock));
     }
 
     /**

@@ -23,6 +23,7 @@ import org.fuin.porelo.build.api.ForgeAccess;
 import org.fuin.porelo.build.api.ReviewFacts;
 import org.fuin.porelo.build.api.ReviewReader;
 import org.fuin.porelo.build.api.Target;
+import org.fuin.porelo.build.github.review.GitHubReview;
 import org.fuin.porelo.build.github.review.GitHubReviewReader;
 import org.fuin.porelo.build.http.BuildFields;
 import org.fuin.porelo.build.http.FailedTests;
@@ -101,7 +102,12 @@ public final class GitHubReader implements BuildReader, ReviewReader {
     private static ReviewReader reviewOverNetwork(final LimitFactors limits) {
         // One client per limits: each holds a selector thread and has read the certificates.
         final java.net.http.HttpClient client = Http.trusting(limits);
-        return new GitHubReviewReader(() -> client, limits.services(Http.REQUEST));
+        return new GitHubReviewReader(
+                new GitHubReview(
+                        () -> client,
+                        limits.services(Http.REQUEST),
+                        limits.services(Http.CALL),
+                        Clock.systemUTC()));
     }
 
     /**

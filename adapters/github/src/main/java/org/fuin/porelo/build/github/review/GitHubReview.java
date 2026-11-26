@@ -3,8 +3,10 @@ package org.fuin.porelo.build.github.review;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.function.Supplier;
+import org.fuin.porelo.build.http.Http;
 import org.fuin.porelo.forge.github.GitHubClient;
 import org.fuin.porelo.forge.github.GitHubException;
 import org.fuin.porelo.forge.github.GitHubGraphQl;
@@ -14,7 +16,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * One person's review of a pull request on GitHub: its facts, its conversation as profile 2 pages,
  * and one released result written. Every call takes the REST base URL and the token lent for it,
- * keeps neither, and reaches no verdict: nothing here approves, requests changes or resolves.
+ * keeps neither, and reaches no verdict: nothing here approves, requests changes or resolves. Each
+ * call ends within its own length, however many requests it takes.
  */
 public final class GitHubReview {
 
@@ -22,14 +25,18 @@ public final class GitHubReview {
 
     private final Duration requestTimeout;
 
+    private final Duration callLength;
+
+    private final Clock clock;
+
     /**
-     * Constructor with the client's own request timeout.
+     * Constructor with the client's own request timeout and {@link Http#CALL} for a call.
      *
      * @param http Gives the client each call sends with: trusting the account's authorities,
      *     following no redirect.
      */
     public GitHubReview(Supplier<HttpClient> http) {
-        this(http, GitHubClient.DEFAULT_REQUEST_TIMEOUT);
+        this(http, GitHubClient.DEFAULT_REQUEST_TIMEOUT, Http.CALL, Clock.systemUTC());
     }
 
     /**
@@ -38,10 +45,15 @@ public final class GitHubReview {
      * @param http Gives the client each call sends with: trusting the account's authorities,
      *     following no redirect.
      * @param requestTimeout How long one request to GitHub may take.
+     * @param call How long one call may take, all its requests together.
+     * @param clock What time it is, for what a call has left.
      */
-    public GitHubReview(Supplier<HttpClient> http, Duration requestTimeout) {
+    public GitHubReview(
+            Supplier<HttpClient> http, Duration requestTimeout, Duration call, Clock clock) {
         this.http = http;
         this.requestTimeout = requestTimeout;
+        this.callLength = call;
+        this.clock = clock;
     }
 
     /**
@@ -53,17 +65,18 @@ public final class GitHubReview {
      * @return Its facts.
      */
     public PullRequestFacts.Facts pullRequest(String api, String token, String url) {
+        final HttpClient within = oneCall();
         final URI base = base(api);
         final PullRequestFacts.Address address = address(base, url);
         return reading(
                 () -> {
-                    final PullRequestFacts facts = new PullRequestFacts(rest(base));
+                    final PullRequestFacts facts = new PullRequestFacts(rest(base, within));
                     PullRequestFacts.Facts read = facts.read(token, address);
                     if ("merged".equals(read.state())) {
                         read =
                                 read.withMergeCommit(
                                         PullRequestFacts.mergeCommit(
-                                                graphQl(base), token, address));
+                                                graphQl(base, within), token, address));
                     }
                     return read.with(facts.account(token));
                 },
@@ -81,6 +94,7 @@ public final class GitHubReview {
      */
     public @Nullable String pullRequestOf(
             String api, String token, String upstream, String branch) {
+        final HttpClient within = oneCall();
         final URI base = base(api);
         final PullRequestFacts.Address repository;
         try {
@@ -95,7 +109,7 @@ public final class GitHubReview {
         }
         return reading(
                 () ->
-                        new PullRequestFacts(rest(base))
+                        new PullRequestFacts(rest(base, within))
                                 .openOf(token, repository, branch, PullRequestFacts.webHost(base)),
                 ReviewFailure.Kind.NO_SUCH_PULL_REQUEST);
     }
@@ -110,18 +124,19 @@ public final class GitHubReview {
      * @return The page and the next page's cursor.
      */
     public ReviewPage.Page comments(String api, String token, String url, @Nullable String cursor) {
+        final HttpClient within = oneCall();
         final URI base = base(api);
         final PullRequestFacts.Address address = address(base, url);
         final String host = PullRequestFacts.webHost(base);
         return reading(
                 () -> {
-                    final GitHubClient rest = rest(base);
+                    final GitHubClient rest = rest(base, within);
                     final PullRequestFacts.Facts facts =
                             new PullRequestFacts(rest).read(token, address);
                     final Conversation.Read read =
                             Conversation.read(
                                     host,
-                                    new ConversationSource(rest, graphQl(base))
+                                    new ConversationSource(rest, graphQl(base, within))
                                             .read(
                                                     token,
                                                     address.owner(),
@@ -154,6 +169,7 @@ public final class GitHubReview {
      * @return The thread written to, as a decimal string.
      */
     public String post(String api, String token, String url, JsonNode submission) {
+        final HttpClient within = oneCall();
         final URI base = base(api);
         final PullRequestFacts.Address address = address(base, url);
         final JsonNode run = submission.path("runs").path(0);
@@ -186,7 +202,12 @@ public final class GitHubReview {
         }
         try {
             return SubmissionWrite.send(
-                    rest(base), token, address.owner(), address.repo(), address.number(), call);
+                    rest(base, within),
+                    token,
+                    address.owner(),
+                    address.repo(),
+                    address.number(),
+                    call);
         } catch (GitHubException ex) {
             throw ReviewFailure.of(
                     ex,
@@ -208,20 +229,25 @@ public final class GitHubReview {
         }
     }
 
-    private GitHubClient rest(URI base) {
+    /** The client for one call, which sends nothing once the call's length has passed. */
+    private HttpClient oneCall() {
+        return new CallDeadline(http.get(), clock, clock.instant().plus(callLength));
+    }
+
+    private GitHubClient rest(URI base, HttpClient within) {
         return new GitHubClient(
                 base,
                 URI.create("https://" + PullRequestFacts.webHost(base) + "/"),
-                http.get(),
+                within,
                 Strictness.LENIENT,
                 requestTimeout,
                 GitHubClient.DEFAULT_RATE_LIMIT_DELAY);
     }
 
-    private GitHubGraphQl graphQl(URI base) {
+    private GitHubGraphQl graphQl(URI base, HttpClient within) {
         return new GitHubGraphQl(
                 graphQlBase(base),
-                http.get(),
+                within,
                 Strictness.LENIENT,
                 requestTimeout,
                 GitHubClient.DEFAULT_RATE_LIMIT_DELAY);

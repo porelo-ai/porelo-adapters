@@ -51,16 +51,6 @@ public final class GitHubReviewReader implements ReviewReader {
         this(new GitHubReview(http));
     }
 
-    /**
-     * Constructor.
-     *
-     * @param http Gives the client each call sends with.
-     * @param requestTimeout How long one request to GitHub may take.
-     */
-    public GitHubReviewReader(Supplier<java.net.http.HttpClient> http, Duration requestTimeout) {
-        this(new GitHubReview(http, requestTimeout));
-    }
-
     @Override
     public ReviewFacts pullRequest(ForgeAccess access, String url) {
         final PullRequestFacts.Facts facts =

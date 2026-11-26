@@ -1,0 +1,2 @@
+title: Each review call of the GitHub adapter ends within the call's length scaled by the services factor, however many pages GitHub lists, and a write is never sent once that length has passed.
+type: fixed

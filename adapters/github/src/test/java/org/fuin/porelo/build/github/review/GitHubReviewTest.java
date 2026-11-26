@@ -12,6 +12,11 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpTimeoutException;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -119,6 +124,54 @@ class GitHubReviewTest {
                 .extracting(e -> ((ReviewFailure) e).kind())
                 .isEqualTo(ReviewFailure.Kind.WRITE_OUTCOME_UNKNOWN);
         assertThat(http.sent).as("one create call, never repeated").isEqualTo(1);
+    }
+
+    @Test
+    void aReadEndsUnreachableWithoutAFurtherRequestOnceItsCallsLengthHasPassed()
+            throws IOException {
+        final ReplayHttpClient http =
+                recorded("pull", "compare", "reviews", "reviewComments", "reviewThreads");
+        final Instant start = Instant.parse("2026-11-26T07:00:00Z");
+        final Clock clock = new Stepping(start, start, start.plusSeconds(301));
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(
+                                                () -> http,
+                                                Duration.ofSeconds(60),
+                                                Duration.ofSeconds(300),
+                                                clock)
+                                        .comments(API, TOKEN, PULL, null))
+                .as("a long conversation or a slow forge cannot hold one call past its length")
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.UNREACHABLE);
+        assertThat(http.requests()).as("only the request sent in time").hasSize(1);
+    }
+
+    @Test
+    void aWriteIsNotSentOnceItsCallsLengthHasPassed() throws IOException {
+        final ReplayHttpClient http = recorded("createReviewComment");
+        final Instant start = Instant.parse("2026-11-26T07:00:00Z");
+        final Clock clock = new Stepping(start, start.plusSeconds(301));
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(
+                                                () -> http,
+                                                Duration.ofSeconds(60),
+                                                Duration.ofSeconds(300),
+                                                clock)
+                                        .post(
+                                                API,
+                                                TOKEN,
+                                                PULL,
+                                                submission("submitted-comment.sarif.json")))
+                .as("a write never sent is no write of unknown outcome")
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.UNREACHABLE);
+        assertThat(http.requests()).as("nothing reached GitHub").isEmpty();
     }
 
     @Test
@@ -295,6 +348,33 @@ class GitHubReviewTest {
             out.append(t).append('\n');
         }
         return out.toString();
+    }
+
+    /** Says each given time once, in order, and the last one from then on. */
+    private static final class Stepping extends Clock {
+
+        private final List<Instant> times;
+
+        private int next;
+
+        Stepping(Instant... times) {
+            this.times = List.of(times);
+        }
+
+        @Override
+        public Instant instant() {
+            return times.get(Math.min(next++, times.size() - 1));
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /** Sends nothing and times out on every request, as a write whose answer was lost. */

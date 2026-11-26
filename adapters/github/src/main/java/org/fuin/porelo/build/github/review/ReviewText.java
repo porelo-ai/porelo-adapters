@@ -5,13 +5,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.commonmark.ext.footnotes.FootnotesExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
-import org.commonmark.node.Block;
 import org.commonmark.node.Code;
 import org.commonmark.node.Document;
 import org.commonmark.node.FencedCodeBlock;
@@ -22,7 +19,6 @@ import org.commonmark.node.IndentedCodeBlock;
 import org.commonmark.node.Link;
 import org.commonmark.node.LinkReferenceDefinition;
 import org.commonmark.node.Node;
-import org.commonmark.node.SoftLineBreak;
 import org.commonmark.node.SourceSpan;
 import org.commonmark.node.Text;
 import org.commonmark.parser.IncludeSourceSpans;
@@ -30,9 +26,9 @@ import org.commonmark.parser.Parser;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The text rules of Porelo's review profile: what a forge's text becomes on a read, what a message
- * becomes on a write, and which characters no string of a document may hold. What is code, HTML or
- * text is the CommonMark parser's answer, with GitHub's tables, never a guess of this class.
+ * The text rules of Porelo's review profile: what a message becomes on a write, and which
+ * characters no string of a document may hold. What is code, HTML or text is the CommonMark
+ * parser's answer, with GitHub's tables, never a guess of this class.
  */
 public final class ReviewText {
 
@@ -41,8 +37,6 @@ public final class ReviewText {
 
     /** A display name, at most this many Unicode scalar values. */
     public static final int DISPLAY_NAME_LIMIT = 128;
-
-    private static final int VARIATION_SELECTOR_16 = 0xFE0F;
 
     private static final Pattern MENTION =
             Pattern.compile(
@@ -68,304 +62,10 @@ public final class ReviewText {
 
     private ReviewText() {}
 
-    /** What a forge's text became: the profile's text and what was lost, or why it is held. */
-    public record Read(@Nullable String text, Set<String> losses, @Nullable String held) {
-
-        /** Copies the losses. */
-        public Read {
-            losses = Set.copyOf(losses);
-        }
-
-        /**
-         * Tells whether the text cannot be carried and its item is held.
-         *
-         * @return {@code true} if held.
-         */
-        public boolean isHeld() {
-            return held != null;
-        }
-    }
-
-    /**
-     * Converts a forge's Markdown to the profile's message text: line ends become {@code \n}, HTML
-     * and link reference definitions are dropped, a link or image becomes its text, an emoji's
-     * U+FE0F in text is dropped, every brace is doubled. Code is never touched. Nothing else is
-     * shortened or rewritten: a refused character, also one a character reference stands for, an
-     * HTML block other than a comment, a body that reads otherwise once its markup is dropped, or a
-     * body over the limit holds the item.
-     *
-     * @param body The forge's text.
-     * @return The text, its losses, or why it is held.
-     */
-    public static Read fromForge(String body) {
-        final Set<String> losses = new TreeSet<>();
-        final String lines = body.replace("\r\n", "\n").replace('\r', '\n');
-        final Document parsed = parse(lines);
-        final List<Edit> edits = new ArrayList<>();
-        final String held = reduce(parsed, lines, edits, losses);
-        if (held != null) {
-            return new Read(null, losses, held);
-        }
-        final String text = apply(lines, edits);
-        // Dropping a tag can join the pieces of another, or turn text into code: read it again.
-        if (!edits.isEmpty() && !shown(parse(text), false).equals(shown(parsed, true))) {
-            return new Read(null, losses, "markup that reads otherwise once its HTML is dropped");
-        }
-        final String refused = refusedCharacter(text);
-        if (refused != null) {
-            return new Read(null, losses, refused);
-        }
-        if (text.isBlank()) {
-            return new Read(null, losses, "an empty body");
-        }
-        if (overLimit(text)) {
-            return new Read(null, losses, "a body over " + BODY_LIMIT + " characters");
-        }
-        return new Read(text.replace("{", "{{").replace("}", "}}"), losses, null);
-    }
-
-    /**
-     * Collects what a read drops, or says why the body is held, visiting the nodes in document
-     * order without recursion, since a body GitHub holds may nest tens of thousands deep.
-     */
-    private static @Nullable String reduce(
-            Node root, String text, List<Edit> edits, Set<String> losses) {
-        final Deque<Node> pending = new ArrayDeque<>();
-        pending.push(root);
-        while (!pending.isEmpty()) {
-            final Node node = pending.pop();
-            final Visit visit = reduceOne(node, text, edits, losses);
-            if (visit.held() != null) {
-                return visit.held();
-            }
-            if (visit.children()) {
-                pushChildren(node, pending);
-            }
-        }
-        return null;
-    }
-
-    /** What one node of a read says: why it is held, or whether its children are read. */
-    private record Visit(@Nullable String held, boolean children) {
-        static final Visit CHILDREN = new Visit(null, true);
-        static final Visit LEAF = new Visit(null, false);
-
-        static Visit held(String why) {
-            return new Visit(why, false);
-        }
-    }
-
     /** Pushes a node's children so that they pop in document order. */
     private static void pushChildren(Node node, Deque<Node> pending) {
         for (Node child = node.getLastChild(); child != null; child = child.getPrevious()) {
             pending.push(child);
-        }
-    }
-
-    private static Visit reduceOne(Node node, String text, List<Edit> edits, Set<String> losses) {
-        if (node instanceof HtmlBlock block && !isComment(block.getLiteral())) {
-            return Visit.held("an HTML block, whose text GitHub shows");
-        }
-        if (node instanceof FencedCodeBlock fence) {
-            final String refused = refusedCharacter(String.valueOf(fence.getInfo()));
-            if (refused != null) {
-                return Visit.held(refused + " in a fence's info");
-            }
-        }
-        if (node instanceof HtmlBlock
-                || node instanceof HtmlInline
-                || node instanceof LinkReferenceDefinition) {
-            losses.add(node instanceof LinkReferenceDefinition ? "link-dropped" : "markup-dropped");
-            for (final SourceSpan span : spans(node)) {
-                // A block's whole line goes, so a dropped block leaves no empty lines behind.
-                final boolean wholeLine =
-                        node instanceof HtmlBlock
-                                && span.getColumnIndex() == 0
-                                && end(span) < text.length()
-                                && text.charAt(end(span)) == '\n';
-                edits.add(new Edit(span.getInputIndex(), end(span) + (wholeLine ? 1 : 0), ""));
-            }
-            return Visit.LEAF;
-        }
-        if (node instanceof Code
-                || node instanceof FencedCodeBlock
-                || node instanceof IndentedCodeBlock) {
-            return Visit.LEAF;
-        }
-        if (node instanceof Link || node instanceof Image) {
-            losses.add("link-dropped");
-            keepOnlyChildren(node, edits);
-        }
-        if (node instanceof Text plain) {
-            // A character reference stands for its character, so the decoded text is checked.
-            final String refused = refusedCharacter(withoutEmojiSelectors(plain.getLiteral()));
-            if (refused != null) {
-                return Visit.held(refused);
-            }
-            int written = 0;
-            for (final SourceSpan span : spans(node)) {
-                written += count(text.substring(span.getInputIndex(), end(span)));
-                dropEmojiVariationSelectors(text, span, edits, losses);
-            }
-            if (count(plain.getLiteral()) > written) {
-                // Only a written U+FE0F is dropped; a character reference to one would stay.
-                return Visit.held("a character reference to U+FE0F");
-            }
-        }
-        return Visit.CHILDREN;
-    }
-
-    /** A link or an image: the brackets and the destination go, its text stays. */
-    private static void keepOnlyChildren(Node node, List<Edit> edits) {
-        final int start = start(node);
-        final int end = end(node);
-        // A line break the parser made between lines has no place in the text.
-        Node first = node.getFirstChild();
-        while (first != null && first.getSourceSpans().isEmpty()) {
-            first = first.getNext();
-        }
-        Node last = node.getLastChild();
-        while (last != null && last.getSourceSpans().isEmpty()) {
-            last = last.getPrevious();
-        }
-        if (first == null || last == null) {
-            edits.add(new Edit(start, end, ""));
-            return;
-        }
-        edits.add(new Edit(start, start(first), ""));
-        edits.add(new Edit(end(last), end, ""));
-    }
-
-    /** HTML comments GitHub hides whole: nothing but white space between or after them. */
-    private static boolean isComment(String block) {
-        int i = 0;
-        while (true) {
-            while (i < block.length() && Character.isWhitespace(block.charAt(i))) {
-                i++;
-            }
-            if (i == block.length()) {
-                return true;
-            }
-            if (!block.startsWith("<!--", i)) {
-                return false;
-            }
-            // The earliest end, as a browser takes it, so no text is read as inside a comment.
-            final int end = block.indexOf("-->", i + 2);
-            final int bang = block.indexOf("--!>", i + 2);
-            if (end < 0 && bang < 0) {
-                return true;
-            }
-            i = bang >= 0 && (end < 0 || bang < end) ? bang + 4 : end + 3;
-        }
-    }
-
-    private static boolean isCode(Node node) {
-        return node instanceof FencedCodeBlock || node instanceof IndentedCodeBlock;
-    }
-
-    private static int count(String text) {
-        return (int) text.codePoints().filter(cp -> cp == VARIATION_SELECTOR_16).count();
-    }
-
-    /**
-     * What a reader sees of a parse: its blocks, code and text, with HTML, link reference
-     * definitions and the wrappers of links left out, and spaces, which dropping a tag moves, too.
-     */
-    private static String shown(Node root, boolean dropped) {
-        final StringBuilder out = new StringBuilder();
-        // One buffer and a stack, never a buffer per level: a body may nest tens of thousands deep.
-        final Deque<Object> pending = new ArrayDeque<>();
-        pending.push(root);
-        while (!pending.isEmpty()) {
-            final Object next = pending.pop();
-            if (next instanceof Close close) {
-                close(close, out);
-            } else {
-                open((Node) next, dropped, out, pending);
-            }
-        }
-        return out.toString();
-    }
-
-    /** A wrapped node's end: where its wrapper and its own content begin in the buffer. */
-    private record Close(Node node, int wrapper, int content) {}
-
-    /** With {@code dropped}, the HTML is what the read drops; without, HTML left is new. */
-    private static void open(Node node, boolean dropped, StringBuilder out, Deque<Object> pending) {
-        if (node instanceof HtmlBlock || node instanceof HtmlInline) {
-            if (!dropped) {
-                out.append("\u0001html\u0001");
-            }
-            return;
-        }
-        if (node instanceof LinkReferenceDefinition || node instanceof SoftLineBreak) {
-            return;
-        }
-        if (node instanceof Text plain) {
-            out.append(withoutEmojiSelectors(plain.getLiteral()).replaceAll("[ \t]", ""));
-            return;
-        }
-        final boolean wrapped = !(node instanceof Link || node instanceof Image);
-        final int wrapper = out.length();
-        if (wrapped) {
-            out.append('\u0002').append(node.getClass().getSimpleName()).append('\u0002');
-        }
-        final int content = out.length();
-        if (node instanceof Code code) {
-            out.append(code.getLiteral());
-        } else if (node instanceof FencedCodeBlock fence) {
-            out.append(fence.getInfo()).append('\u0003').append(fence.getLiteral());
-        } else if (node instanceof IndentedCodeBlock code) {
-            out.append(code.getLiteral());
-        }
-        if (wrapped) {
-            pending.push(new Close(node, wrapper, content));
-        }
-        for (Node child = node.getLastChild(); child != null; child = child.getPrevious()) {
-            pending.push(child);
-        }
-    }
-
-    private static void close(Close close, StringBuilder out) {
-        // A block left empty, a paragraph that held only an image say, is gone from the text.
-        if (close.node() instanceof Block
-                && !isCode(close.node())
-                && out.length() == close.content()) {
-            out.setLength(close.wrapper());
-        } else {
-            out.append('\u0004');
-        }
-    }
-
-    private static String withoutEmojiSelectors(String text) {
-        final StringBuilder out = new StringBuilder(text.length());
-        int previous = -1;
-        for (int i = 0; i < text.length(); ) {
-            final int cp = text.codePointAt(i);
-            if (!(cp == VARIATION_SELECTOR_16
-                    && previous >= 0
-                    && Character.isExtendedPictographic(previous))) {
-                out.appendCodePoint(cp);
-            }
-            previous = cp;
-            i += Character.charCount(cp);
-        }
-        return out.toString();
-    }
-
-    private static void dropEmojiVariationSelectors(
-            String text, SourceSpan span, List<Edit> edits, Set<String> losses) {
-        int previous = -1;
-        for (int i = span.getInputIndex(); i < end(span); ) {
-            final int cp = text.codePointAt(i);
-            if (cp == VARIATION_SELECTOR_16
-                    && previous >= 0
-                    && Character.isExtendedPictographic(previous)) {
-                losses.add("variation-selector-dropped");
-                edits.add(new Edit(i, i + 1, ""));
-            }
-            previous = cp;
-            i += Character.charCount(cp);
         }
     }
 
@@ -612,32 +312,6 @@ public final class ReviewText {
             }
         }
         return out;
-    }
-
-    /**
-     * Tells whether a text is CommonMark's blank: spaces and tabs only, no other white space.
-     *
-     * @param text What to look at.
-     * @return {@code true} if blank.
-     */
-    public static boolean onlySpacesAndTabs(String text) {
-        return text.chars().allMatch(c -> c == ' ' || c == '\t');
-    }
-
-    /**
-     * Counts how often a character repeats from a position on.
-     *
-     * @param text Where to look.
-     * @param i The first position.
-     * @param c The character.
-     * @return The length of the run.
-     */
-    public static int runOf(String text, int i, char c) {
-        int n = 0;
-        while (i + n < text.length() && text.charAt(i + n) == c) {
-            n++;
-        }
-        return n;
     }
 
     // ------------------------------------------------------------------------- the parse

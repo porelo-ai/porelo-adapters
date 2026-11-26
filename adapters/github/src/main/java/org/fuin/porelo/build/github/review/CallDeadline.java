@@ -8,20 +8,27 @@ import java.net.http.HttpClient;
 import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import org.jspecify.annotations.Nullable;
 
 /**
- * Holds every request of one review call to the call's end: each send waits for its answer no
- * longer than the call has left, and once the end has passed nothing more is sent. A send refused
- * for that throws {@link HttpConnectTimeoutException}, so the GitHub client counts it as never sent
- * and a write is not taken for one that may have reached GitHub.
+ * Holds every request of one review call to the call's end: each send waits for its whole answer,
+ * body included, no longer than the call has left, and once the end has passed nothing more is
+ * sent. A send refused for that throws {@link HttpConnectTimeoutException}, so the GitHub client
+ * counts it as never sent; one cut off at the end is aborted and throws {@link
+ * HttpTimeoutException}, so a write that may have reached GitHub is of unknown outcome.
  */
 final class CallDeadline extends HttpClient {
 
@@ -47,14 +54,60 @@ final class CallDeadline extends HttpClient {
     @Override
     public <T> HttpResponse<T> send(HttpRequest request, HttpResponse.BodyHandler<T> handler)
             throws IOException, InterruptedException {
-        return http.send(within(request), handler);
+        final Duration left = left();
+        final HttpRequest bounded = within(request, left);
+        // The JDK's request timeout ends once the headers arrive; the body is bounded here.
+        final FutureTask<HttpResponse<T>> exchange =
+                new FutureTask<>(() -> http.send(bounded, handler));
+        Thread.ofVirtual().name("review-request").start(exchange);
+        try {
+            return exchange.get(left.toNanos(), TimeUnit.NANOSECONDS);
+        } catch (TimeoutException ex) {
+            if (!exchange.cancel(true)) {
+                // The answer came as the call ended; a write GitHub took is not made unknown.
+                return finished(exchange);
+            }
+            throw new HttpTimeoutException(
+                    "the review call's deadline passed while GitHub answered");
+        } catch (InterruptedException ex) {
+            exchange.cancel(true);
+            throw ex;
+        } catch (ExecutionException ex) {
+            throw thrown(ex.getCause());
+        }
+    }
+
+    private static <T> HttpResponse<T> finished(FutureTask<HttpResponse<T>> exchange)
+            throws IOException, InterruptedException {
+        try {
+            return exchange.get();
+        } catch (ExecutionException ex) {
+            throw thrown(ex.getCause());
+        }
+    }
+
+    /** What the exchange threw, as {@code send} itself would have thrown it. */
+    private static IOException thrown(@Nullable Throwable cause) throws InterruptedException {
+        if (cause instanceof IOException io) {
+            return io;
+        }
+        if (cause instanceof InterruptedException interrupted) {
+            throw interrupted;
+        }
+        if (cause instanceof RuntimeException runtime) {
+            throw runtime;
+        }
+        if (cause instanceof Error error) {
+            throw error;
+        }
+        return new IOException("the review request failed", cause);
     }
 
     @Override
     public <T> CompletableFuture<HttpResponse<T>> sendAsync(
             HttpRequest request, HttpResponse.BodyHandler<T> handler) {
         try {
-            return http.sendAsync(within(request), handler);
+            return http.sendAsync(within(request, left()), handler);
         } catch (HttpConnectTimeoutException ex) {
             return CompletableFuture.failedFuture(ex);
         }
@@ -66,15 +119,15 @@ final class CallDeadline extends HttpClient {
             HttpResponse.BodyHandler<T> handler,
             HttpResponse.PushPromiseHandler<T> push) {
         try {
-            return http.sendAsync(within(request), handler, push);
+            return http.sendAsync(within(request, left()), handler, push);
         } catch (HttpConnectTimeoutException ex) {
             return CompletableFuture.failedFuture(ex);
         }
     }
 
     /** The request with the smaller of its own timeout and what the call has left. */
-    private HttpRequest within(HttpRequest request) throws HttpConnectTimeoutException {
-        final Duration left = Duration.between(clock.instant(), end);
+    private static HttpRequest within(HttpRequest request, Duration left)
+            throws HttpConnectTimeoutException {
         if (left.isNegative() || left.isZero()) {
             throw new HttpConnectTimeoutException("the review call's deadline passed; not sent");
         }
@@ -82,6 +135,10 @@ final class CallDeadline extends HttpClient {
         return HttpRequest.newBuilder(request, (name, value) -> true)
                 .timeout(own.compareTo(left) <= 0 ? own : left)
                 .build();
+    }
+
+    private Duration left() {
+        return Duration.between(clock.instant(), end);
     }
 
     @Override

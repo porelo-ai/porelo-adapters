@@ -20,8 +20,11 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.fuin.porelo.forge.github.replay.ReplayHttpClient;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 class GitHubReviewTest {
 
@@ -164,6 +167,53 @@ class GitHubReviewTest {
         assertThat(http.requests().get(0).timeout())
                 .as("a request may not outlive the call's end")
                 .contains(Duration.ofSeconds(10));
+    }
+
+    @Test
+    @Timeout(20)
+    void aReadWhoseAnswerOutlastsItsCallEndsUnreachableAndItsExchangeIsAborted()
+            throws InterruptedException {
+        final Stalling http = new Stalling();
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(
+                                                () -> http,
+                                                Duration.ofSeconds(60),
+                                                Duration.ofMillis(300),
+                                                Clock.systemUTC())
+                                        .pullRequest(API, TOKEN, PULL))
+                .as("an answer whose body trickles in cannot hold the call past its end")
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.UNREACHABLE);
+        assertThat(http.aborted.await(5, TimeUnit.SECONDS))
+                .as("the exchange is stopped, not left reading after the call answered")
+                .isTrue();
+    }
+
+    @Test
+    @Timeout(20)
+    void aWriteWhoseAnswerOutlastsItsCallIsOfUnknownOutcomeAndNotRepeated() {
+        final Stalling http = new Stalling();
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(
+                                                () -> http,
+                                                Duration.ofSeconds(60),
+                                                Duration.ofMillis(300),
+                                                Clock.systemUTC())
+                                        .post(
+                                                API,
+                                                TOKEN,
+                                                PULL,
+                                                submission("submitted-comment.sarif.json")))
+                .as("a write that may have reached GitHub is never taken for one not sent")
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.WRITE_OUTCOME_UNKNOWN);
+        assertThat(http.sent).as("one create call, never repeated").isEqualTo(1);
     }
 
     @Test
@@ -394,15 +444,38 @@ class GitHubReviewTest {
         }
     }
 
-    /** Sends nothing and times out on every request, as a write whose answer was lost. */
-    private static final class TimingOut extends java.net.http.HttpClient {
+    /**
+     * Takes each request and never finishes its answer, as GitHub sending headers in time and the
+     * body slowly; like the JDK's client, it aborts the exchange when its thread is interrupted.
+     */
+    private static final class Stalling extends TimingOut {
 
-        private int sent;
+        private final CountDownLatch aborted = new CountDownLatch(1);
 
         @Override
         public <T> java.net.http.HttpResponse<T> send(
                 HttpRequest request, java.net.http.HttpResponse.BodyHandler<T> handler)
-                throws IOException {
+                throws InterruptedException {
+            sent++;
+            try {
+                Thread.sleep(Duration.ofMinutes(5));
+            } catch (InterruptedException ex) {
+                aborted.countDown();
+                throw ex;
+            }
+            throw new IllegalStateException("the call's end did not stop the exchange");
+        }
+    }
+
+    /** Sends nothing and times out on every request, as a write whose answer was lost. */
+    private static class TimingOut extends java.net.http.HttpClient {
+
+        int sent;
+
+        @Override
+        public <T> java.net.http.HttpResponse<T> send(
+                HttpRequest request, java.net.http.HttpResponse.BodyHandler<T> handler)
+                throws IOException, InterruptedException {
             sent++;
             throw new HttpTimeoutException("request timed out");
         }

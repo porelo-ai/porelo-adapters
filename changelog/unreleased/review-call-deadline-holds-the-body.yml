@@ -1,0 +1,2 @@
+title: "A GitHub review call now ends at its deadline even while GitHub is still sending an answer's body, and the cut-off request is aborted."
+type: fixed

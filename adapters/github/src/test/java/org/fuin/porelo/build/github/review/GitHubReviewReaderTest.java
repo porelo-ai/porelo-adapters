@@ -95,7 +95,7 @@ class GitHubReviewReaderTest {
         assertThat(facts.state()).isEqualTo(ReviewFacts.State.MERGED);
         assertThat(facts.mergeCommit())
                 .as("GitHub's merge commit, read by GraphQL")
-                .isEqualTo("3253c2baeea3009e177c8001ec67c7915686a2c2");
+                .isEqualTo(recordedMergeCommit());
         assertThat(facts.mergedHead()).as("the base branch the merge went onto").isNotBlank();
         assertThat(facts.decidedAt())
                 .as("GitHub's merged_at")
@@ -300,6 +300,13 @@ class GitHubReviewReaderTest {
     private static String recordedHead() throws IOException {
         return JSON.readTree(ReplayHttpClient.recorded("pull").iterator().next().body())
                 .at("/head/sha")
+                .asText();
+    }
+
+    /** The merge commit GitHub's GraphQL named when it was recorded. */
+    private static String recordedMergeCommit() throws IOException {
+        return JSON.readTree(ReplayHttpClient.recorded("mergeCommit").iterator().next().body())
+                .at("/data/repository/pullRequest/mergeCommit/oid")
                 .asText();
     }
 

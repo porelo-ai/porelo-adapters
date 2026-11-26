@@ -18,8 +18,9 @@ import org.jspecify.annotations.Nullable;
  * Converts a pull request's line comments and their replies, as GitHub answers them, to results of
  * Porelo's review profile 2. A thread is named by its root comment's REST ID; each comment and each
  * reply is a result of its own, produced by the GitHub account that wrote it. A thread GitHub no
- * longer places on lines, and a file comment, are left out, as the profile has no anchor for them.
- * A comment the profile cannot carry is held: counted, left out, and the read is not complete.
+ * longer places on lines, and a file comment, are left out, as the profile has no anchor for them;
+ * so is a comment of the reading account's own review not yet submitted. A comment the profile
+ * cannot carry is held: counted, left out, and the read is not complete.
  */
 public final class Conversation {
 
@@ -96,6 +97,9 @@ public final class Conversation {
         for (final Thread thread : answers.threads()) {
             final List<PullRequestReviewComment> comments = new ArrayList<>();
             for (final GitHubGraphQl.Comment node : thread.comments()) {
+                if (pending(node)) {
+                    continue;
+                }
                 final Long id = node.databaseId();
                 final PullRequestReviewComment comment = id == null ? null : byId.get(id);
                 // A comment GitHub names twice, as a moved page cursor may, is kept once.
@@ -119,6 +123,14 @@ public final class Conversation {
             }
         }
         return new Read(results, held, answers.complete() && held == 0);
+    }
+
+    /**
+     * Whether a comment belongs to the reading account's own review not yet submitted: nobody else
+     * sees it, and GitHub's REST list leaves it out, so it is no result and nothing held.
+     */
+    private static boolean pending(GitHubGraphQl.Comment comment) {
+        return "PENDING".equals(comment.state());
     }
 
     /** A thread the profile has no anchor for: one GitHub no longer places, or on a file. */

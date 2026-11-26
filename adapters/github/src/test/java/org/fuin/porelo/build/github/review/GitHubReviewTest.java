@@ -56,6 +56,9 @@ class GitHubReviewTest {
         assertThat(page.document().at("/runs/0/versionControlProvenance/0/revisionId").asText())
                 .as("the recorded head")
                 .isEqualTo(recordedHead());
+        assertThat(page.document().at("/runs/0/properties/porelo~1completeness").asText())
+                .as("the recording's pending comment of the reading account is no held comment")
+                .isEqualTo("complete");
         assertThat(page.cursor()).isNull();
     }
 

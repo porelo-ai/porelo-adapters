@@ -15,6 +15,7 @@
      "databaseId": 101,
      "body": "Use the constant [here]{0}.",
      "createdAt": "2026-10-30T09:14:02Z",
+     "state": "SUBMITTED",
      "author": {
       "login": "example-reviewer",
       "id": "U",
@@ -26,6 +27,7 @@
      "databaseId": 102,
      "body": "Done \\ thanks.",
      "createdAt": "2026-10-30T09:14:02Z",
+     "state": "SUBMITTED",
      "author": {
       "login": "example-author",
       "id": "U",
@@ -55,6 +57,7 @@
      "databaseId": 201,
      "body": "Old line read wrong.",
      "createdAt": "2026-10-30T09:14:02Z",
+     "state": "SUBMITTED",
      "author": {
       "login": "example-reviewer",
       "id": "U",
@@ -66,6 +69,7 @@
      "databaseId": 202,
      "body": "Agreed.",
      "createdAt": "2026-10-30T09:14:02Z",
+     "state": "SUBMITTED",
      "author": {
       "login": "example-author",
       "id": "U",
@@ -77,6 +81,7 @@
      "databaseId": 203,
      "body": "And again.",
      "createdAt": "2026-10-30T09:14:02Z",
+     "state": "SUBMITTED",
      "author": {
       "login": "example-reviewer",
       "id": "U",

@@ -1,0 +1,2 @@
+title: A comment of the reading account's own review not yet submitted, which GitHub lists only in GraphQL, is left out of a pull request's review pages without making every read partial.
+type: fixed

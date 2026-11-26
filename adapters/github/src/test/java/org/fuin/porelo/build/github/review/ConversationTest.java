@@ -122,6 +122,65 @@ class ConversationTest {
     }
 
     @Test
+    void theReadingAccountsUnsubmittedCommentsAreLeftOutAndTheReadStaysComplete() {
+        final Conversation.Read read =
+                Conversation.read(
+                        HOST,
+                        answers(
+                                c -> {},
+                                t -> {
+                                    if ("PRRT_1".equals(t.get("id").asText())) {
+                                        ((ArrayNode) t.at("/comments/nodes")).add(pending(t, 901));
+                                    }
+                                },
+                                all -> {
+                                    final ObjectNode own = all.get(0).deepCopy();
+                                    own.put("id", "PRRT_9");
+                                    final ObjectNode only = pending(own, 902);
+                                    final ArrayNode nodes = (ArrayNode) own.at("/comments/nodes");
+                                    nodes.removeAll();
+                                    nodes.add(only);
+                                    all.add(own);
+                                }));
+
+        assertThat(read.complete())
+                .as(
+                        "GitHub lists the reading account's own pending review only in GraphQL;"
+                                + " counting it as held made every read partial")
+                .isTrue();
+        assertThat(read.results()).as("a comment nobody else can see yet is no result").hasSize(5);
+    }
+
+    @Test
+    void aCommentGitHubCallsPendingButRestListsIsHeldNotDropped() {
+        final Conversation.Read read =
+                Conversation.read(
+                        HOST,
+                        answers(
+                                c -> {},
+                                t -> {
+                                    if ("PRRT_1".equals(t.get("id").asText())) {
+                                        ((ObjectNode) t.at("/comments/nodes/1"))
+                                                .put("state", "PENDING");
+                                    }
+                                }));
+
+        assertThat(read.complete())
+                .as("a comment others can read must never vanish behind a complete read")
+                .isFalse();
+        assertThat(read.held()).isEqualTo(1);
+    }
+
+    /** A comment of the reading account's review not yet submitted, which REST does not list. */
+    private static ObjectNode pending(ObjectNode thread, long databaseId) {
+        final ObjectNode node = thread.at("/comments/nodes/0").deepCopy();
+        node.put("id", "PRRC_" + databaseId);
+        node.put("databaseId", databaseId);
+        node.put("state", "PENDING");
+        return node;
+    }
+
+    @Test
     void aHeldRootHoldsItsWholeThread() {
         final Conversation.Read read =
                 Conversation.read(
@@ -305,10 +364,16 @@ class ConversationTest {
     }
 
     static Conversation.Native answers(Consumer<ObjectNode> comment, Consumer<ObjectNode> thread) {
+        return answers(comment, thread, all -> {});
+    }
+
+    static Conversation.Native answers(
+            Consumer<ObjectNode> comment, Consumer<ObjectNode> thread, Consumer<ArrayNode> all) {
         final ArrayNode comments = (ArrayNode) tree("conversation-comments.json");
         comments.forEach(c -> comment.accept((ObjectNode) c));
         final ArrayNode threads = (ArrayNode) tree("conversation-threads.json");
         threads.forEach(t -> thread.accept((ObjectNode) t));
+        all.accept(threads);
         try {
             final List<PullRequestReviewComment> rest =
                     JSON.readerFor(new TypeReference<List<PullRequestReviewComment>>() {})

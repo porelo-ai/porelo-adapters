@@ -1,0 +1,2 @@
+title: The GitHub adapter answers CredentialRefused only for a 401 or a 403 that names a missing permission, and any other 403, such as one for a locked conversation, as a failure carrying GitHub's status and words.
+type: fixed

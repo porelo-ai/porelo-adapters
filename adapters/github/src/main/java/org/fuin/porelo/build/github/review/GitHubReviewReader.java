@@ -128,8 +128,10 @@ public final class GitHubReviewReader implements ReviewReader {
         } catch (ReviewFailure ex) {
             throw refused(ex);
         } catch (GitHubException ex) {
-            // Answered, but with nothing the contract names: a 422 or a 5xx on a read.
-            throw new IllegalStateException(ex.getMessage(), ex);
+            // Answered, but with nothing the contract names: a 422, a 5xx on a read, a 403 that
+            // refuses no token.
+            throw new IllegalStateException(
+                    "GitHub answered " + ex.status() + ": " + ex.getMessage(), ex);
         }
     }
 

@@ -206,6 +206,56 @@ class GitHubReviewReaderTest {
     }
 
     @Test
+    void aWriteGitHubForbidsForALockedConversationIsNoRefusedTokenAndCarriesGitHubsWords()
+            throws IOException {
+        final ReplayHttpClient http = new ReplayHttpClient();
+        http.answer(
+                403,
+                Map.of("content-type", List.of("application/json")),
+                "{\"message\":\"Unable to create comment because issue is locked.\"}");
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReviewReader(() -> http)
+                                        .post(ACCESS, PULL, JSON.writeValueAsString(submission())))
+                .as("a person told their token was refused would replace a token that works")
+                .isNotInstanceOf(ForgeReviewRefused.class)
+                .hasMessageContaining("403")
+                .hasMessageContaining("Unable to create comment because issue is locked.");
+        assertThat(http.requests()).as("one write, never repeated").hasSize(1);
+    }
+
+    @Test
+    void aForbiddenAnswerNamingAMissingPermissionIsARefusedToken() throws IOException {
+        for (final Map<String, List<String>> headers :
+                List.of(
+                        Map.of(
+                                "content-type",
+                                List.of("application/json"),
+                                "x-accepted-github-permissions",
+                                List.of("pull_requests=write")),
+                        Map.of("content-type", List.of("application/json")))) {
+            final ReplayHttpClient http = new ReplayHttpClient();
+            http.answer(
+                    403,
+                    headers,
+                    "{\"message\":\"Resource not accessible by personal access token\"}");
+
+            assertThatThrownBy(
+                            () ->
+                                    new GitHubReviewReader(() -> http)
+                                            .post(
+                                                    ACCESS,
+                                                    PULL,
+                                                    JSON.writeValueAsString(submission())))
+                    .as(headers.toString())
+                    .isInstanceOf(ForgeReviewRefused.class)
+                    .extracting(e -> ((ForgeReviewRefused) e).reason())
+                    .isEqualTo(ForgeReviewRefused.Reason.CREDENTIAL_REFUSED);
+        }
+    }
+
+    @Test
     void aRateLimitSaysWhenToAskAgain() {
         final ReplayHttpClient http = new ReplayHttpClient();
         http.answer(

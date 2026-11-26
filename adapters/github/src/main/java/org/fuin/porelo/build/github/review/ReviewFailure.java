@@ -112,7 +112,7 @@ public final class ReviewFailure extends RuntimeException {
         if (failure.rateLimited()) {
             return new ReviewFailure(Kind.RATE_LIMITED, said, failure);
         }
-        if (failure.status() == 401 || failure.status() == 403) {
+        if (failure.status() == 401 || (failure.status() == 403 && permissionMissing(failure))) {
             return new ReviewFailure(Kind.CREDENTIAL_REFUSED, said, failure);
         }
         if (failure.status() == 404) {
@@ -122,6 +122,16 @@ public final class ReviewFailure extends RuntimeException {
             return new ReviewFailure(Kind.UNREACHABLE, said, failure);
         }
         return failure;
+    }
+
+    /**
+     * Whether a 403 says the token lacks a permission, by GitHub's header naming the permissions it
+     * accepts or its own words; a 403 for a locked conversation or a blocked account says neither.
+     */
+    private static boolean permissionMissing(GitHubException failure) {
+        final String message = failure.getMessage();
+        return failure.acceptedPermissions() != null
+                || (message != null && message.startsWith("Resource not accessible by"));
     }
 
     /**

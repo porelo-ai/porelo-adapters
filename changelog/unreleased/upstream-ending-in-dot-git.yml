@@ -1,0 +1,2 @@
+title: "The GitHub adapter finds a branch's pull request when the project names its upstream with a trailing .git or a trailing slash."
+type: fixed

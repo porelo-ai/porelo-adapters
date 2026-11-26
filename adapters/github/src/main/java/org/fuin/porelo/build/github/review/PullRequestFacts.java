@@ -31,7 +31,7 @@ public final class PullRequestFacts {
     private static final Pattern MERGE_COMMIT = Pattern.compile("[0-9a-f]{40}|[0-9a-f]{64}");
 
     private static final Pattern REPOSITORY =
-            Pattern.compile("/([A-Za-z0-9._-]{1,100})/([A-Za-z0-9._-]{1,100})");
+            Pattern.compile("/([A-Za-z0-9._-]{1,100})/([A-Za-z0-9._-]{1,100})/?");
 
     private final GitHubClient client;
 
@@ -201,13 +201,20 @@ public final class PullRequestFacts {
      * Reads a repository's URL, which must lie on the forge the REST base URL names.
      *
      * @param api The REST base URL.
-     * @param url The repository's URL, {@code https://<host>/<owner>/<repo>}.
+     * @param url The repository's URL, {@code https://<host>/<owner>/<repo>}, its name with or
+     *     without one trailing {@code .git} and the path with or without a trailing slash, which
+     *     git and the forge treat as one repository.
      * @return Its owner and name, as an address of number 0.
      * @throws IllegalArgumentException If the URL is no repository of that forge.
      */
     public static Address repository(URI api, String url) {
         final Matcher path = matched(api, url, REPOSITORY);
-        return new Address(path.group(1), path.group(2), 0);
+        final String name = path.group(2);
+        final String repo = name.endsWith(".git") ? name.substring(0, name.length() - 4) : name;
+        if (repo.isEmpty() || dots(repo)) {
+            throw new IllegalArgumentException("the URL's path is not of the expected form");
+        }
+        return new Address(path.group(1), repo, 0);
     }
 
     private static Matcher matched(URI api, String url, Pattern form) {

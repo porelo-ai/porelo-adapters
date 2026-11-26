@@ -50,6 +50,49 @@ class PullRequestFactsTest {
     }
 
     @Test
+    void anUpstreamEndingInDotGitNamesTheSameRepository() {
+        final URI api = URI.create("https://api.github.com");
+
+        assertThat(
+                        PullRequestFacts.repository(
+                                api, "https://github.com/example-org/example-repo.git"))
+                .as("git and GitHub's web address treat both forms as one repository")
+                .isEqualTo(
+                        PullRequestFacts.repository(
+                                api, "https://github.com/example-org/example-repo"))
+                .isEqualTo(new PullRequestFacts.Address("example-org", "example-repo", 0));
+        for (final String upstream :
+                List.of(
+                        "https://github.com/example-org/example-repo/",
+                        "https://github.com/example-org/example-repo.git/")) {
+            assertThat(PullRequestFacts.repository(api, upstream))
+                    .as(upstream + " is read as the build reader reads it")
+                    .isEqualTo(new PullRequestFacts.Address("example-org", "example-repo", 0));
+        }
+        assertThat(
+                        PullRequestFacts.repository(
+                                api, "https://github.com/example-org/example.git.git"))
+                .as("only one trailing .git is dropped")
+                .isEqualTo(new PullRequestFacts.Address("example-org", "example.git", 0));
+    }
+
+    @Test
+    void anUpstreamWhoseNameIsEmptyOrADotSegmentOnceDotGitIsDroppedIsRefused() {
+        for (final String url :
+                List.of(
+                        "https://github.com/example-org/.git",
+                        "https://github.com/example-org/..git",
+                        "https://github.com/example-org/...git")) {
+            assertThatThrownBy(
+                            () ->
+                                    PullRequestFacts.repository(
+                                            URI.create("https://api.github.com"), url))
+                    .as(url + " would name another path once the client builds its request")
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Test
     void aPullRequestOnAnotherHostIsRefused() {
         for (final String url :
                 List.of(

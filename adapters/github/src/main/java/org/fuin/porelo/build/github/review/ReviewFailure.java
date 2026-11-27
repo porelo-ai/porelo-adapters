@@ -125,6 +125,54 @@ public final class ReviewFailure extends RuntimeException {
     }
 
     /**
+     * Names a failed GraphQL call by the contract's error, or gives it back when none fits. GitHub
+     * answers a query or mutation it refuses with a 2xx and an error of its own, so such an answer
+     * says a write was not taken; every other failure is judged as {@link #of} judges it.
+     *
+     * @param failure What the client threw.
+     * @param write Whether the call was a write, which is never repeated.
+     * @param missing The error for what GitHub does not know or the token may not see.
+     * @return The failure to answer.
+     */
+    public static RuntimeException ofGraphQl(GitHubException failure, boolean write, Kind missing) {
+        if (!refusedInWords(failure)) {
+            return of(failure, write, missing);
+        }
+        final String said = "GitHub: " + failure.getMessage();
+        if (failure.rateLimited()) {
+            return new ReviewFailure(Kind.RATE_LIMITED, said, failure);
+        }
+        if (permissionMissing(failure) || typed(failure, "FORBIDDEN")) {
+            return new ReviewFailure(Kind.CREDENTIAL_REFUSED, said, failure);
+        }
+        if (typed(failure, "NOT_FOUND")) {
+            return new ReviewFailure(missing, said, failure);
+        }
+        return failure;
+    }
+
+    /** Whether GitHub answered a GraphQL request with an error it named itself. */
+    private static boolean refusedInWords(GitHubException failure) {
+        return failure.delivery() == Delivery.ANSWERED
+                && failure.status() / 100 == 2
+                && failure.forgeMessage() != null;
+    }
+
+    /** Whether any GraphQL error of the answer is of that type, as the client words its details. */
+    private static boolean typed(GitHubException failure, String type) {
+        for (final String detail : failure.forgeDetails()) {
+            final int at = detail.lastIndexOf(" (type ");
+            if (at >= 0 && detail.endsWith(")")) {
+                final String where = detail.substring(at + " (type ".length(), detail.length() - 1);
+                if (where.equals(type) || where.startsWith(type + ", path ")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Whether a 403 says the token cannot reach the resource: it lacks a permission, or the
      * organization wants it authorized for SAML. GitHub's {@code X-Accepted-GitHub-Permissions}
      * names the endpoint's permissions on every answer, so only its words tell; a 403 for a locked

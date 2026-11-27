@@ -1,7 +1,9 @@
 package org.fuin.porelo.build.github.review;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.IntFunction;
 import org.fuin.porelo.forge.github.GitHubClient;
 import org.fuin.porelo.forge.github.GitHubGraphQl;
@@ -54,6 +56,67 @@ public final class ConversationSource {
         return new Conversation.Native(
                 comments.items(), threads, comments.complete() && threadsComplete);
     }
+
+    /**
+     * Finds the thread of a pull request that a submitted root comment opened, reading the threads
+     * a page at a time until it is found. A thread's root is its first comment, which the thread's
+     * first page of comments always holds.
+     *
+     * @param token The token lent for this call.
+     * @param owner The repository's owner.
+     * @param repo The repository's name.
+     * @param number The pull request's number.
+     * @param root The root comment's REST id.
+     * @return The thread, or none and whether every thread was read.
+     * @throws NoSuchPullRequest If GitHub names no such pull request.
+     */
+    public Found thread(String token, String owner, String repo, long number, long root) {
+        @Nullable String after = null;
+        boolean complete = true;
+        final Set<String> seen = new HashSet<>();
+        for (int page = 0; page < PAGE_LIMIT; page++) {
+            final GitHubGraphQl.ThreadsData data =
+                    graphQl.reviewThreads(token, owner, repo, Math.toIntExact(number), after)
+                            .data();
+            if (data.repository() == null || data.repository().pullRequest() == null) {
+                throw new NoSuchPullRequest();
+            }
+            final GitHubGraphQl.Threads threads = data.repository().pullRequest().reviewThreads();
+            for (final GitHubGraphQl.ReviewThread thread : threads.nodes()) {
+                // A thread named twice, as a moved page cursor may, says another was skipped.
+                complete &= seen.add(thread.id());
+                final List<GitHubGraphQl.Comment> comments = thread.comments().nodes();
+                if (comments.isEmpty() || comments.get(0).databaseId() == null) {
+                    // A thread that shows no root's id may be the one asked for.
+                    complete = false;
+                } else if (opens(comments.get(0), root)) {
+                    return new Found(thread, true);
+                }
+            }
+            if (!Boolean.TRUE.equals(threads.pageInfo().hasNextPage())) {
+                return new Found(null, complete);
+            }
+            after = threads.pageInfo().endCursor();
+            if (after == null) {
+                // More pages without a place to go on from would be the first page again.
+                return new Found(null, false);
+            }
+        }
+        return new Found(null, false);
+    }
+
+    /** Whether a comment is the submitted one of that REST id; a pending one nobody else sees. */
+    private static boolean opens(GitHubGraphQl.Comment first, long root) {
+        return Long.valueOf(root).equals(first.databaseId()) && !"PENDING".equals(first.state());
+    }
+
+    /**
+     * A thread looked for by its root comment.
+     *
+     * @param thread The thread, or {@code null} when it was not among those read.
+     * @param complete Whether every thread was read, so that none found means there is none.
+     */
+    public record Found(GitHubGraphQl.@Nullable ReviewThread thread, boolean complete) {}
 
     /** Reads every page of the threads and of each thread's comments. */
     private boolean threads(

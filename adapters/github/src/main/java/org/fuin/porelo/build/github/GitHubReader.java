@@ -204,6 +204,12 @@ public final class GitHubReader implements BuildReader, ReviewReader {
         return review.post(access, url, document);
     }
 
+    /** Marks one thread of a pull request resolved. */
+    @Override
+    public void resolve(final ForgeAccess access, final String url, final String thread) {
+        review.resolve(access, url, thread);
+    }
+
     /** Returns the forge this reader implements. */
     @Override
     public String forge() {

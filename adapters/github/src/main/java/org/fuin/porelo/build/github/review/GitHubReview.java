@@ -15,9 +15,10 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * One person's review of a pull request on GitHub: its facts, its conversation as profile 2 pages,
- * and one released result written. Every call takes the REST base URL and the token lent for it,
- * keeps neither, and reaches no verdict: nothing here approves, requests changes or resolves. Each
- * call ends within its own length, however many requests it takes.
+ * one released result written and one thread resolved. Every call takes the REST base URL and the
+ * token lent for it, keeps neither, and reaches no verdict: nothing here approves, requests changes
+ * or merges, and resolving is the only state of a thread it changes. Each call ends within its own
+ * length, however many requests it takes.
  */
 public final class GitHubReview {
 
@@ -215,6 +216,76 @@ public final class GitHubReview {
                     call.replyTo() == null
                             ? ReviewFailure.Kind.NO_SUCH_PULL_REQUEST
                             : ReviewFailure.Kind.NO_SUCH_THREAD);
+        }
+    }
+
+    /**
+     * Marks one thread of a pull request resolved, as the account the token stands for. A thread
+     * GitHub already shows resolved is done without a write. It is the one state the adapter
+     * changes: nothing here reopens a thread.
+     *
+     * @param api The REST base URL.
+     * @param token The token lent for this call.
+     * @param url The pull request's URL.
+     * @param thread The thread, named by its root comment's REST id as a decimal string.
+     */
+    public void resolve(String api, String token, String url, String thread) {
+        final HttpClient within = oneCall();
+        final URI base = base(api);
+        final PullRequestFacts.Address address = address(base, url);
+        final long root = root(thread);
+        final GitHubGraphQl graphQl = graphQl(base, within);
+        final ConversationSource.Found found;
+        try {
+            found =
+                    new ConversationSource(rest(base, within), graphQl)
+                            .thread(token, address.owner(), address.repo(), address.number(), root);
+        } catch (GitHubException ex) {
+            throw ReviewFailure.ofGraphQl(ex, false, ReviewFailure.Kind.NO_SUCH_PULL_REQUEST);
+        } catch (ConversationSource.NoSuchPullRequest ex) {
+            throw new ReviewFailure(
+                    ReviewFailure.Kind.NO_SUCH_PULL_REQUEST, String.valueOf(ex.getMessage()), ex);
+        }
+        final GitHubGraphQl.ReviewThread open = found.thread();
+        if (open == null) {
+            if (found.complete()) {
+                throw new ReviewFailure(
+                        ReviewFailure.Kind.NO_SUCH_THREAD,
+                        "the pull request holds no thread of that id",
+                        null);
+            }
+            throw new IllegalStateException(
+                    "the pull request's threads were not read to their end, and the thread is not"
+                            + " among those read");
+        }
+        if (Boolean.TRUE.equals(open.isResolved())) {
+            return;
+        }
+        final GitHubGraphQl.ThreadState now;
+        try {
+            now =
+                    graphQl.resolveReviewThread(token, open.id())
+                            .data()
+                            .resolveReviewThread()
+                            .thread();
+        } catch (GitHubException ex) {
+            throw ReviewFailure.ofGraphQl(ex, true, ReviewFailure.Kind.NO_SUCH_THREAD);
+        }
+        if (!open.id().equals(now.id()) || !Boolean.TRUE.equals(now.isResolved())) {
+            throw new IllegalStateException(
+                    "GitHub answered the resolve without showing the thread resolved");
+        }
+    }
+
+    /** A thread's id as Porelo names it: its root comment's REST id, a positive decimal. */
+    private static long root(String thread) {
+        if (!thread.matches("[1-9][0-9]{0,18}")) {
+            throw new InvalidArgument("thread: not a positive decimal id");
+        }
+        try {
+            return Long.parseLong(thread);
+        } catch (NumberFormatException ex) {
+            throw new InvalidArgument("thread: not a positive decimal id");
         }
     }
 

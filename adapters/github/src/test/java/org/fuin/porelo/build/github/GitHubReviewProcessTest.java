@@ -83,6 +83,27 @@ class GitHubReviewProcessTest {
         }
     }
 
+    @Test
+    void aResolveIsServedAcrossTheSocketAndAForgeNotReachedIsNoWriteOfUnknownOutcome()
+            throws IOException {
+        try (InstalledReviewReader reader = reader()) {
+            assertThatThrownBy(
+                            () ->
+                                    reader.resolve(
+                                            new ForgeAccess("https://127.0.0.1:9/api/v3", TOKEN),
+                                            "https://127.0.0.1:9/example-org/example-repo/pull/1",
+                                            "17"))
+                    .as("the thread is looked up before any write, and the forge is not there")
+                    .isInstanceOf(ForgeReviewRefused.class)
+                    .satisfies(
+                            e -> {
+                                assertThat(((ForgeReviewRefused) e).reason())
+                                        .isEqualTo(ForgeReviewRefused.Reason.UNREACHABLE);
+                                assertThat(String.valueOf(e.getMessage())).doesNotContain(TOKEN);
+                            });
+        }
+    }
+
     private InstalledReviewReader reader() throws IOException {
         return new InstalledReviewReader(executable(), "github", scratch.resolve("s"));
     }

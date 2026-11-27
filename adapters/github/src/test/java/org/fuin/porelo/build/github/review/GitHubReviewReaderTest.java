@@ -259,6 +259,98 @@ class GitHubReviewReaderTest {
     }
 
     @Test
+    void aNamedThreadIsResolvedWithOneWriteAndASecondAskForItIsDoneToo() throws IOException {
+        final ReplayHttpClient http = recorded("reviewThreads", "resolveReviewThread");
+        final ReplayHttpClient.Answer threads = ReplayHttpClient.recorded("reviewThreads").get(0);
+        http.answer(
+                threads.status(),
+                threads.headers(),
+                threads.body().replaceFirst("\"isResolved\":false", "\"isResolved\":true"));
+        final GitHubReviewReader reader = new GitHubReviewReader(() -> http);
+
+        reader.resolve(ACCESS, PULL, recordedThreadRoot());
+        reader.resolve(ACCESS, PULL, recordedThreadRoot());
+
+        assertThat(http.requests())
+                .as("a read and the one write, then only a read of the resolved thread")
+                .hasSize(3);
+    }
+
+    @Test
+    void aThreadThePullRequestDoesNotHoldIsTheContractsNoSuchThread() {
+        final ReplayHttpClient http = recorded("reviewThreads");
+
+        assertThatThrownBy(() -> new GitHubReviewReader(() -> http).resolve(ACCESS, PULL, "17"))
+                .isInstanceOf(ForgeReviewRefused.class)
+                .extracting(e -> ((ForgeReviewRefused) e).reason())
+                .isEqualTo(ForgeReviewRefused.Reason.NO_SUCH_THREAD);
+        assertThat(http.requests()).as("nothing written").hasSize(1);
+    }
+
+    @Test
+    void aThreadNotFoundOnAnIncompleteReadIsAFailureAndNeverNoSuchThread() throws IOException {
+        final ReplayHttpClient.Answer recorded = ReplayHttpClient.recorded("reviewThreads").get(0);
+        final ReplayHttpClient.Answer more =
+                new ReplayHttpClient.Answer(
+                        recorded.status(),
+                        recorded.headers(),
+                        recorded.body().replace("\"hasNextPage\":false", "\"hasNextPage\":true"));
+        final ReplayHttpClient http = new ReplayHttpClient().otherwise(request -> more);
+
+        assertThatThrownBy(() -> new GitHubReviewReader(() -> http).resolve(ACCESS, PULL, "17"))
+                .as("Porelo told there is no such thread would drop one that exists")
+                .isNotInstanceOf(ForgeReviewRefused.class);
+    }
+
+    @Test
+    void aResolveWithoutAnAnswerOfItsOutcomeIsTheContractsWriteOutcomeUnknown() {
+        final ReplayHttpClient http = recorded("reviewThreads");
+        http.answer(502, Map.of(), "{\"message\":\"Server Error\"}");
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReviewReader(() -> http)
+                                        .resolve(ACCESS, PULL, recordedThreadRoot()))
+                .isInstanceOf(ForgeReviewRefused.class)
+                .extracting(e -> ((ForgeReviewRefused) e).reason())
+                .isEqualTo(ForgeReviewRefused.Reason.WRITE_OUTCOME_UNKNOWN);
+        assertThat(http.requests()).as("one write, never repeated").hasSize(2);
+    }
+
+    @Test
+    void aResolveGitHubForbidsTheAccountIsARefusedTokenAndAnotherRefusalCarriesGitHubsWords() {
+        final ReplayHttpClient forbidden = recorded("reviewThreads");
+        forbidden.answer(
+                200, Map.of("content-type", List.of("application/json")), refusal("FORBIDDEN"));
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReviewReader(() -> forbidden)
+                                        .resolve(ACCESS, PULL, recordedThreadRoot()))
+                .as("the account may not resolve: the person must change the token")
+                .isInstanceOf(ForgeReviewRefused.class)
+                .satisfies(
+                        e -> {
+                            assertThat(((ForgeReviewRefused) e).reason())
+                                    .isEqualTo(ForgeReviewRefused.Reason.CREDENTIAL_REFUSED);
+                            assertThat(String.valueOf(e.getMessage()))
+                                    .doesNotContain(ACCESS.token());
+                        });
+
+        final ReplayHttpClient other = recorded("reviewThreads");
+        other.answer(
+                200, Map.of("content-type", List.of("application/json")), refusal("UNPROCESSABLE"));
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReviewReader(() -> other)
+                                        .resolve(ACCESS, PULL, recordedThreadRoot()))
+                .as("a refusal the contract has no name for is a failure in GitHub's words")
+                .isNotInstanceOf(ForgeReviewRefused.class)
+                .hasMessageContaining("GitHub said no");
+    }
+
+    @Test
     void aRateLimitSaysWhenToAskAgain() {
         final ReplayHttpClient http = new ReplayHttpClient();
         http.answer(
@@ -308,6 +400,25 @@ class GitHubReviewReaderTest {
         return JSON.readTree(ReplayHttpClient.recorded("mergeCommit").iterator().next().body())
                 .at("/data/repository/pullRequest/mergeCommit/oid")
                 .asText();
+    }
+
+    /** The REST id of the first recorded thread's root comment. */
+    private static String recordedThreadRoot() {
+        try {
+            return JSON.readTree(ReplayHttpClient.recorded("reviewThreads").get(0).body())
+                    .at(
+                            "/data/repository/pullRequest/reviewThreads/nodes/0/comments/nodes/0/databaseId")
+                    .asText();
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
+    /** GitHub's answer to a mutation it refuses: a 200 with one error of that type. */
+    private static String refusal(String type) {
+        return "{\"data\":{\"resolveReviewThread\":null},\"errors\":[{\"type\":\""
+                + type
+                + "\",\"path\":[\"resolveReviewThread\"],\"message\":\"GitHub said no\"}]}";
     }
 
     private static ReplayHttpClient recorded(String... names) {

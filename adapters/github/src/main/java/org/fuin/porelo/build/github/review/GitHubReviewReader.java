@@ -21,8 +21,8 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Answers Porelo's review contract for GitHub: holds what Porelo sends to profile 2 before any
- * call, holds its own pages to it before answering, and names each failure by the contract's
- * errors.
+ * call, holds its own pages to it before answering, resolves a thread when asked, and names each
+ * failure by the contract's errors.
  */
 public final class GitHubReviewReader implements ReviewReader {
 
@@ -116,6 +116,15 @@ public final class GitHubReviewReader implements ReviewReader {
             throw new IllegalStateException("a submission SARIF read is no JSON", ex);
         }
         return answering(() -> review.post(api(access), access.token(), url, submission));
+    }
+
+    @Override
+    public void resolve(ForgeAccess access, String url, String thread) {
+        answering(
+                () -> {
+                    review.resolve(api(access), access.token(), url, thread);
+                    return thread;
+                });
     }
 
     private static String api(ForgeAccess access) {

@@ -61,14 +61,19 @@ Beside the build, the GitHub adapter serves one person's review of a pull reques
   at most 100 results and 1 MiB a page. A thread is named by its first comment's REST ID.
 - **One released comment or reply**, written with exactly one call and never repeated: when GitHub's answer is
   lost, the answer is `WriteOutcomeUnknown`, and Porelo decides.
+- **One thread resolved**, when Porelo asks: the thread named by its first comment's REST ID reads resolved on
+  GitHub afterwards, under the account the token stands for, whoever opened it. A thread already resolved is done
+  without a write, a thread the pull request does not hold is `NoSuchThread`, and a lost answer is
+  `WriteOutcomeUnknown`.
 
-It never approves, requests changes, resolves a thread or merges. What profile 2 cannot carry is left out and the
+Resolving is the only state of a thread it changes: it never approves, requests changes, reopens a thread or
+merges. What profile 2 cannot carry is left out and the
 page says `partial`: a comment on a file or an outdated line, a span over 100 lines, a text over 8192 bytes or with a
 character the profile refuses. A submission asking for what GitHub cannot write, such as a general comment, is
 refused with `NotInProfile` before any call.
 
 The token is lent for each call and kept by neither side. It needs **Pull requests: Read and write** for the
-conversation and the comments, and **Contents: Read** for the merge base.
+conversation, the comments and resolving a thread, and **Contents: Read** for the merge base.
 
 ## Forgejo Actions
 

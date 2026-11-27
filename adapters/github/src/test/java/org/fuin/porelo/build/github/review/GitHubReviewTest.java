@@ -349,16 +349,368 @@ class GitHubReviewTest {
     }
 
     @Test
+    void anOpenThreadIsResolvedByExactlyOneMutationCarryingItsOwnNodeId() throws IOException {
+        final ReplayHttpClient http = recorded("reviewThreads", "resolveReviewThread");
+
+        new GitHubReview(() -> http).resolve(API, TOKEN, PULL, recordedThreadRoot());
+
+        assertThat(http.requests()).as("the threads read, then one mutation").hasSize(2);
+        final JsonNode asked = JSON.readTree(body(http.requests().get(0))).path("variables");
+        assertThat(List.of(asked.path("owner").asText(), asked.path("repo").asText()))
+                .as("the threads read are those of the pull request Porelo named")
+                .containsExactly("fixture-org", "fixture-repo");
+        assertThat(asked.path("number").asInt()).as("its number").isEqualTo(11);
+        final JsonNode sent = JSON.readTree(body(http.requests().get(1)));
+        assertThat(sent.path("query").asText())
+                .as("the one write is the resolve")
+                .contains("resolveReviewThread(")
+                .doesNotContain("unresolveReviewThread");
+        assertThat(sent.at("/variables/id").asText())
+                .as("the thread Porelo named and no other")
+                .isEqualTo(recordedThreadNode());
+        assertThat(http.requests())
+                .allSatisfy(
+                        request ->
+                                assertThat(request.uri().getHost())
+                                        .as("every request carrying the token")
+                                        .isEqualTo("host-1.example.org"));
+    }
+
+    @Test
+    void aThreadAlreadyResolvedIsDoneWithoutAnyWrite() throws IOException {
+        final ReplayHttpClient http = new ReplayHttpClient();
+        http.answer(threads(body -> body.replace("\"isResolved\":false", "\"isResolved\":true")));
+
+        new GitHubReview(() -> http).resolve(API, TOKEN, PULL, recordedThreadRoot());
+
+        assertThat(http.requests())
+                .as("only the read; a second resolve changes nothing")
+                .hasSize(1);
+    }
+
+    @Test
+    void aThreadThePullRequestDoesNotHoldIsNoSuchThreadAndNothingIsWritten() throws IOException {
+        final ReplayHttpClient http = recorded("reviewThreads");
+
+        assertThatThrownBy(() -> new GitHubReview(() -> http).resolve(API, TOKEN, PULL, "17"))
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.NO_SUCH_THREAD);
+        assertThat(http.requests()).as("only the read").hasSize(1);
+    }
+
+    @Test
+    void aReplysIdNamesNoThread() throws IOException {
+        final ReplayHttpClient http = recorded("reviewThreads");
+        final String reply = recordedThreads().at("/0/comments/nodes/1/databaseId").asText();
+
+        assertThatThrownBy(() -> new GitHubReview(() -> http).resolve(API, TOKEN, PULL, reply))
+                .as("a thread is named by its root comment alone")
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.NO_SUCH_THREAD);
+        assertThat(http.requests()).as("only the read").hasSize(1);
+    }
+
+    @Test
+    void aThreadOfTheReadingAccountsOwnPendingReviewIsNotResolved() throws IOException {
+        final ReplayHttpClient http = new ReplayHttpClient();
+        http.answer(
+                threads(body -> body.replace("\"state\":\"SUBMITTED\"", "\"state\":\"PENDING\"")));
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(() -> http)
+                                        .resolve(API, TOKEN, PULL, recordedThreadRoot()))
+                .as("a comment nobody else sees opens no thread Porelo was shown")
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.NO_SUCH_THREAD);
+        assertThat(http.requests()).as("only the read").hasSize(1);
+    }
+
+    @Test
+    void aThreadIdThatIsNoPositiveDecimalSendsNothing() {
+        for (final String id :
+                List.of(
+                        "",
+                        "0",
+                        "007",
+                        "-7",
+                        "7 ",
+                        "seven",
+                        "PRRT_kwDOVc0D",
+                        "9999999999999999999",
+                        "99999999999999999999")) {
+            final ReplayHttpClient http = new ReplayHttpClient();
+
+            assertThatThrownBy(() -> new GitHubReview(() -> http).resolve(API, TOKEN, PULL, id))
+                    .as("thread id '%s'", id)
+                    .isInstanceOf(GitHubReview.InvalidArgument.class);
+            assertThat(http.requests()).as("the token went nowhere for '%s'", id).isEmpty();
+        }
+    }
+
+    @Test
+    void aThreadNotFoundAmongThreadsNotReadToTheirEndIsNeverNoSuchThread() throws IOException {
+        final ReplayHttpClient.Answer more =
+                threads(body -> body.replace("\"hasNextPage\":false", "\"hasNextPage\":true"));
+        final ReplayHttpClient http = new ReplayHttpClient().otherwise(request -> more);
+
+        assertThatThrownBy(() -> new GitHubReview(() -> http).resolve(API, TOKEN, PULL, "17"))
+                .as("the thread may be among those not read")
+                .isNotInstanceOf(ReviewFailure.class)
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(http.requests())
+                .as("the page limit's reads and no write")
+                .hasSize(ConversationSource.PAGE_LIMIT)
+                .allSatisfy(
+                        request -> assertThat(body(request)).doesNotContain("resolveReviewThread"));
+    }
+
+    @Test
+    void aThreadWhoseRootGitHubGivesNoIdForLeavesTheReadIncomplete() throws IOException {
+        final ReplayHttpClient http = new ReplayHttpClient();
+        http.answer(
+                threads(
+                        body ->
+                                body.replaceAll(
+                                        "\"databaseId\":[0-9]{4,}", "\"databaseId\":null")));
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(() -> http)
+                                        .resolve(API, TOKEN, PULL, recordedThreadRoot()))
+                .as("a thread that shows no root's id may be the one asked for")
+                .isNotInstanceOf(ReviewFailure.class)
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(http.requests()).as("only the read").hasSize(1);
+    }
+
+    @Test
+    void threadsGitHubNamesTwiceAcrossPagesLeaveTheReadIncomplete() throws IOException {
+        final ReplayHttpClient http = new ReplayHttpClient();
+        http.answer(threads(body -> body.replace("\"hasNextPage\":false", "\"hasNextPage\":true")));
+        http.recording("reviewThreads");
+
+        assertThatThrownBy(() -> new GitHubReview(() -> http).resolve(API, TOKEN, PULL, "17"))
+                .as("a moved page cursor that repeats threads may have skipped the one asked for")
+                .isNotInstanceOf(ReviewFailure.class)
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(http.requests()).as("both pages read, nothing written").hasSize(2);
+    }
+
+    @Test
+    void aResolveWhoseAnswerIsLostIsOfUnknownOutcomeAndNotRepeated() throws IOException {
+        final ThenTimingOut http = new ThenTimingOut(recorded("reviewThreads"));
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(() -> http)
+                                        .resolve(API, TOKEN, PULL, recordedThreadRoot()))
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.WRITE_OUTCOME_UNKNOWN);
+        assertThat(http.sent).as("the read and one mutation, never repeated").isEqualTo(2);
+    }
+
+    @Test
+    void aResolveAnsweredWithAServerErrorIsOfUnknownOutcome() throws IOException {
+        final ReplayHttpClient http = recorded("reviewThreads");
+        http.answer(502, Map.of(), "{\"message\":\"Server Error\"}");
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(() -> http)
+                                        .resolve(API, TOKEN, PULL, recordedThreadRoot()))
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.WRITE_OUTCOME_UNKNOWN);
+        assertThat(http.requests()).hasSize(2);
+    }
+
+    @Test
+    void aResolveGitHubForbidsTheAccountIsARefusedTokenNamingNoToken() throws IOException {
+        final ReplayHttpClient http = recorded("reviewThreads");
+        http.answer(
+                200,
+                Map.of("content-type", List.of("application/json")),
+                "{\"data\":{\"resolveReviewThread\":null},\"errors\":[{\"type\":\"FORBIDDEN\","
+                        + "\"path\":[\"resolveReviewThread\"],\"message\":\"fixture-user may not "
+                        + TOKEN
+                        + "\"}]}");
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(() -> http)
+                                        .resolve(API, TOKEN, PULL, recordedThreadRoot()))
+                .isInstanceOf(ReviewFailure.class)
+                .satisfies(
+                        e -> {
+                            assertThat(((ReviewFailure) e).kind())
+                                    .as("refused in GitHub's words, so not taken")
+                                    .isEqualTo(ReviewFailure.Kind.CREDENTIAL_REFUSED);
+                            assertThat(trace(e))
+                                    .as("no word of the failure holds the token")
+                                    .doesNotContain(TOKEN);
+                        });
+    }
+
+    @Test
+    void aResolveOfAThreadGoneSinceItWasReadIsNoSuchThread() throws IOException {
+        final ReplayHttpClient http = recorded("reviewThreads");
+        http.answer(
+                200,
+                Map.of("content-type", List.of("application/json")),
+                "{\"data\":{\"resolveReviewThread\":null},\"errors\":[{\"type\":\"NOT_FOUND\","
+                        + "\"path\":[\"resolveReviewThread\"],"
+                        + "\"message\":\"Could not resolve to a node with the global id\"}]}");
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(() -> http)
+                                        .resolve(API, TOKEN, PULL, recordedThreadRoot()))
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.NO_SUCH_THREAD);
+    }
+
+    @Test
+    void aTokenThatMayNotReadTheThreadsIsRefusedAndAPullRequestGitHubDoesNotShowIsMissing() {
+        final ReplayHttpClient forbidden = new ReplayHttpClient();
+        forbidden.answer(
+                200,
+                Map.of("content-type", List.of("application/json")),
+                "{\"data\":{\"repository\":null},\"errors\":[{\"type\":\"FORBIDDEN\","
+                        + "\"path\":[\"repository\"],"
+                        + "\"message\":\"Resource not accessible by personal access token\"}]}");
+
+        assertThatThrownBy(() -> new GitHubReview(() -> forbidden).resolve(API, TOKEN, PULL, "17"))
+                .as("the person must change the token, which a plain failure would not say")
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.CREDENTIAL_REFUSED);
+
+        final ReplayHttpClient missing = new ReplayHttpClient();
+        missing.answer(
+                200,
+                Map.of("content-type", List.of("application/json")),
+                "{\"data\":{\"repository\":null},\"errors\":[{\"type\":\"NOT_FOUND\","
+                        + "\"path\":[\"repository\"],\"message\":\"Could not resolve to a"
+                        + " Repository with the name 'fixture-org/fixture-repo'.\"}]}");
+
+        assertThatThrownBy(() -> new GitHubReview(() -> missing).resolve(API, TOKEN, PULL, "17"))
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.NO_SUCH_PULL_REQUEST);
+        assertThat(missing.requests()).as("only the read").hasSize(1);
+    }
+
+    @Test
+    void aResolveAnsweredWithoutTheThreadsStateIsOfUnknownOutcome() throws IOException {
+        final ReplayHttpClient http = recorded("reviewThreads");
+        http.answer(
+                200,
+                Map.of("content-type", List.of("application/json")),
+                "{\"data\":{\"resolveReviewThread\":null}}");
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(() -> http)
+                                        .resolve(API, TOKEN, PULL, recordedThreadRoot()))
+                .as("GitHub took the request and did not say what became of the thread")
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.WRITE_OUTCOME_UNKNOWN);
+        assertThat(http.requests()).as("one write, never repeated").hasSize(2);
+    }
+
+    @Test
+    void aResolveGitHubAnswersWithTheThreadStillOpenIsNoSuccess() throws IOException {
+        final ReplayHttpClient http = recorded("reviewThreads");
+        final ReplayHttpClient.Answer taken =
+                ReplayHttpClient.recorded("resolveReviewThread").get(0);
+        http.answer(
+                taken.status(),
+                taken.headers(),
+                taken.body().replace("\"isResolved\":true", "\"isResolved\":false"));
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReview(() -> http)
+                                        .resolve(API, TOKEN, PULL, recordedThreadRoot()))
+                .as("an open thread is never reported resolved")
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void noMethodReachesAVerdict() {
         assertThat(
                         java.util.Arrays.stream(GitHubReview.class.getMethods())
                                 .map(java.lang.reflect.Method::getName)
                                 .toList())
-                .as("it never approves, requests changes or resolves")
+                .as("it never approves, requests changes, reopens or merges")
                 .noneMatch(
                         name ->
                                 name.matches(
-                                        "(?i).*(approve|verdict|requestChanges|resolve|merge).*"));
+                                        "(?i).*(approve|verdict|requestChanges|unresolve|reopen|merge).*"));
+    }
+
+    /** The recorded pull request's threads, as GitHub answered them. */
+    private static JsonNode recordedThreads() throws IOException {
+        return JSON.readTree(ReplayHttpClient.recorded("reviewThreads").get(0).body())
+                .at("/data/repository/pullRequest/reviewThreads/nodes");
+    }
+
+    /** The REST id of the first recorded thread's root comment. */
+    private static String recordedThreadRoot() throws IOException {
+        return recordedThreads().at("/0/comments/nodes/0/databaseId").asText();
+    }
+
+    /** The node id of the first recorded thread. */
+    private static String recordedThreadNode() throws IOException {
+        return recordedThreads().at("/0/id").asText();
+    }
+
+    /** The recorded threads' answer with its body changed, which must change it. */
+    private static ReplayHttpClient.Answer threads(java.util.function.UnaryOperator<String> change)
+            throws IOException {
+        final ReplayHttpClient.Answer recorded = ReplayHttpClient.recorded("reviewThreads").get(0);
+        final String changed = change.apply(recorded.body());
+        assertThat(changed)
+                .as("the recording holds what the case changes")
+                .isNotEqualTo(recorded.body());
+        return new ReplayHttpClient.Answer(recorded.status(), recorded.headers(), changed);
+    }
+
+    /** What a request carries as its body. */
+    private static String body(HttpRequest request) {
+        final java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        request.bodyPublisher()
+                .orElseThrow()
+                .subscribe(
+                        new java.util.concurrent.Flow.Subscriber<java.nio.ByteBuffer>() {
+                            @Override
+                            public void onSubscribe(java.util.concurrent.Flow.Subscription s) {
+                                s.request(Long.MAX_VALUE);
+                            }
+
+                            @Override
+                            public void onNext(java.nio.ByteBuffer item) {
+                                final byte[] bytes = new byte[item.remaining()];
+                                item.get(bytes);
+                                out.writeBytes(bytes);
+                            }
+
+                            @Override
+                            public void onError(Throwable failure) {
+                                throw new IllegalStateException(failure);
+                            }
+
+                            @Override
+                            public void onComplete() {}
+                        });
+        return out.toString(java.nio.charset.StandardCharsets.UTF_8);
     }
 
     /** The head of the recorded pull request, as GitHub answered it when it was recorded. */
@@ -464,6 +816,30 @@ class GitHubReviewTest {
                 throw ex;
             }
             throw new IllegalStateException("the call's end did not stop the exchange");
+        }
+    }
+
+    /** Answers its first requests as recorded and times out on the next, as a lost answer. */
+    private static final class ThenTimingOut extends TimingOut {
+
+        private final ReplayHttpClient first;
+
+        private final int answered;
+
+        ThenTimingOut(ReplayHttpClient first) {
+            this.first = first;
+            this.answered = 1;
+        }
+
+        @Override
+        public <T> java.net.http.HttpResponse<T> send(
+                HttpRequest request, java.net.http.HttpResponse.BodyHandler<T> handler)
+                throws IOException, InterruptedException {
+            if (sent < answered) {
+                sent++;
+                return first.send(request, handler);
+            }
+            return super.send(request, handler);
         }
     }
 

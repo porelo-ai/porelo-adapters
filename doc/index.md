@@ -70,7 +70,8 @@ Resolving is the only state of a thread it changes: it never approves, requests 
 merges. What profile 2 cannot carry is left out and the
 page says `partial`: a comment on a file or an outdated line, a span over 100 lines, a text over 8192 bytes or with a
 character the profile refuses. A submission asking for what GitHub cannot write, such as a general comment, is
-refused with `NotInProfile` before any call.
+refused with `NotInProfile` before any call, and so is one that names threads to resolve or carries a judgment:
+a thread is resolved only when Porelo asks for that thread, and a judgment never reaches GitHub.
 
 The token is lent for each call and kept by neither side. It needs **Pull requests: Read and write** for the
 conversation, the comments and resolving a thread, and **Contents: Read** for the merge base.

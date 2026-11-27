@@ -349,6 +349,39 @@ class GitHubReviewTest {
     }
 
     @Test
+    void aPostNamingThreadsToResolveIsRefusedWholeAndItsCommentIsNotWritten() {
+        for (final String name :
+                List.of("submitted-comment.sarif.json", "submitted-reply.sarif.json")) {
+            final ObjectNode resolving = submission(name);
+            ((ObjectNode) resolving.at("/runs/0/properties"))
+                    .putArray("porelo/resolveThreads")
+                    .add("4467633645");
+            final ReplayHttpClient http = new ReplayHttpClient();
+
+            assertThatThrownBy(() -> new GitHubReview(() -> http).post(API, TOKEN, PULL, resolving))
+                    .as(name + ": a resolve goes through resolve alone, never beside a post")
+                    .isInstanceOf(ReviewFailure.class)
+                    .extracting(e -> ((ReviewFailure) e).kind())
+                    .isEqualTo(ReviewFailure.Kind.NOT_IN_PROFILE);
+            assertThat(http.requests()).as(name + " reached GitHub").isEmpty();
+        }
+    }
+
+    @Test
+    void aJudgmentIsNeverPostedEvenAsAReply() {
+        final ObjectNode judging = submission("submitted-reply.sarif.json");
+        ((ObjectNode) judging.at("/runs/0/results/0/properties")).put("porelo/judgment", "reject");
+        final ReplayHttpClient http = new ReplayHttpClient();
+
+        assertThatThrownBy(() -> new GitHubReview(() -> http).post(API, TOKEN, PULL, judging))
+                .as("a reject discards a push at Porelo and never reaches a forge")
+                .isInstanceOf(ReviewFailure.class)
+                .extracting(e -> ((ReviewFailure) e).kind())
+                .isEqualTo(ReviewFailure.Kind.NOT_IN_PROFILE);
+        assertThat(http.requests()).isEmpty();
+    }
+
+    @Test
     void anOpenThreadIsResolvedByExactlyOneMutationCarryingItsOwnNodeId() throws IOException {
         final ReplayHttpClient http = recorded("reviewThreads", "resolveReviewThread");
 

@@ -181,6 +181,15 @@ public final class GitHubReview {
                     null,
                     "runs[0].properties.porelo/pullRequest");
         }
+        // A resolve comes through resolve alone: posting the result and dropping the list would
+        // leave the threads open without a word.
+        if (run.path("properties").has("porelo/resolveThreads")) {
+            throw new ReviewFailure(
+                    ReviewFailure.Kind.NOT_IN_PROFILE,
+                    "a post resolves no thread",
+                    null,
+                    "runs[0].properties.porelo/resolveThreads");
+        }
         final JsonNode results = run.path("results");
         if (!results.isArray() || results.size() != 1) {
             throw new ReviewFailure(
@@ -188,6 +197,13 @@ public final class GitHubReview {
                     "a post carries exactly one result",
                     null,
                     "runs[0].results");
+        }
+        if (results.get(0).path("properties").has("porelo/judgment")) {
+            throw new ReviewFailure(
+                    ReviewFailure.Kind.NOT_IN_PROFILE,
+                    "a judgment never reaches a forge",
+                    null,
+                    "runs[0].results[0].properties.porelo/judgment");
         }
         final String commit =
                 run.path("versionControlProvenance").path(0).path("revisionId").asText();

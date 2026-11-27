@@ -173,6 +173,26 @@ class GitHubReviewReaderTest {
     }
 
     @Test
+    void aSubmissionNamingThreadsToResolveIsNotInProfileAndItsCommentIsNotWritten()
+            throws IOException {
+        final ObjectNode resolving = submission();
+        ((ObjectNode) resolving.at("/runs/0/properties"))
+                .putArray("porelo/resolveThreads")
+                .add("4467633645");
+        final ReplayHttpClient http = new ReplayHttpClient();
+
+        assertThatThrownBy(
+                        () ->
+                                new GitHubReviewReader(() -> http)
+                                        .post(ACCESS, PULL, JSON.writeValueAsString(resolving)))
+                .as("a resolve goes through Resolve alone, never beside a posted comment")
+                .isInstanceOf(ForgeReviewRefused.class)
+                .extracting(e -> ((ForgeReviewRefused) e).reason())
+                .isEqualTo(ForgeReviewRefused.Reason.NOT_IN_PROFILE);
+        assertThat(http.requests()).isEmpty();
+    }
+
+    @Test
     void aRateLimitWithoutAWordFromGitHubSaysZero() {
         final ReplayHttpClient http = new ReplayHttpClient();
         http.answer(

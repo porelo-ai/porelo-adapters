@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.fuin.porelo.build.review.ReviewRefusal;
-import org.fuin.porelo.forge.github.model.PullsCreateReviewCommentRequest;
 import org.junit.jupiter.api.Test;
 
 class SubmissionWriteTest {
@@ -14,20 +13,6 @@ class SubmissionWriteTest {
     private static final ObjectMapper JSON = new ObjectMapper();
 
     private static final String COMMIT = "bb33e12342d6f5235c9c5acddfdb1fc6f86dedfd";
-
-    @Test
-    void aNewCommentBecomesOneLineCommentOnThePinnedCommit() {
-        final SubmissionWrite.Call call = SubmissionWrite.render(comment(), COMMIT);
-
-        assertThat(call.replyTo()).as("a new comment answers no thread").isNull();
-        final PullsCreateReviewCommentRequest request = call.comment();
-        assertThat(request).isNotNull();
-        assertThat(request.commitId()).as("made on the pinned commit").isEqualTo(COMMIT);
-        assertThat(request.path()).as("the URI decoded once").isEqualTo("doc/a b.md");
-        assertThat(request.startLine()).isEqualTo(10);
-        assertThat(request.line()).isEqualTo(12);
-        assertThat(request.side()).isEqualTo(PullsCreateReviewCommentRequest.SideEnum.RIGHT);
-    }
 
     @Test
     void aReplyBecomesOneReplyToTheNamedThread() {
@@ -49,26 +34,6 @@ class SubmissionWriteTest {
         assertThat(SubmissionWrite.render(result, COMMIT).body())
                 .as("brackets, backslash and braces as the person wrote them")
                 .isEqualTo("See [x] in {a} \\ b.");
-    }
-
-    @Test
-    void aMentionNotifiesNoOne() {
-        final ObjectNode result = comment();
-        ((ObjectNode) result.get("message")).put("text", "Ask @octocat.");
-
-        assertThat(SubmissionWrite.render(result, COMMIT).body())
-                .as("a mention in a code span notifies nobody")
-                .isEqualTo("Ask `@octocat`.");
-    }
-
-    @Test
-    void aSuggestionFenceInTheTextIsRefusedInWords() {
-        final ObjectNode result = comment();
-        ((ObjectNode) result.get("message")).put("text", "```suggestion\nx\n```");
-
-        assertThatThrownBy(() -> SubmissionWrite.render(result, COMMIT))
-                .isInstanceOf(ReviewRefusal.class)
-                .hasMessageContaining("suggestion fence");
     }
 
     @Test

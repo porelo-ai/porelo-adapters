@@ -237,6 +237,66 @@ class RecordedForgeTest {
     }
 
     @Test
+    void aLostBuildReadStillAllowsTheHttpClientsTransparentRetry() throws Exception {
+        Files.writeString(
+                directory.resolve("01.json"),
+                """
+                {"method":"GET","path":"/read","status":0,"headers":{},"body":""}
+                """);
+        try (RecordedForge forge = new RecordedForge(directory, "test-token", "Bearer");
+                HttpClient client = HttpClient.newHttpClient()) {
+            for (int attempt = 0; attempt < 2; attempt++) {
+                assertThatThrownBy(() -> get(client, forge.api() + "/read"))
+                        .as("Build2 transport loss still tolerates the client's GET retry")
+                        .isInstanceOf(java.io.IOException.class);
+            }
+            forge.verify();
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"line\":12.0}", "{\"line\":1.2e1}"})
+    void aWriteWhoseNumberIsWrittenAnotherWayIsNotTheRecordedWrite(final String sent)
+            throws Exception {
+        Files.writeString(
+                directory.resolve("01.json"),
+                """
+                {"method":"POST","path":"/write","requestBody":{"line":12},"status":201,"headers":{},"body":"{}"}
+                """);
+        try (RecordedForge forge = new RecordedForge(directory, "test-token", "Bearer");
+                HttpClient client = HttpClient.newHttpClient()) {
+            post(client, forge.api() + "/write", sent);
+            assertThatThrownBy(forge::verify)
+                    .as("a line written as a decimal is not the integer GitHub was sent")
+                    .isInstanceOf(AssertionError.class);
+        }
+    }
+
+    @Test
+    void aWriteOfTheRecordedBodyIsTheRecordedWrite() throws Exception {
+        Files.writeString(
+                directory.resolve("01.json"),
+                """
+                {"method":"POST","path":"/write","requestBody":{"line":12},"status":201,"headers":{},"body":"{}"}
+                """);
+        try (RecordedForge forge = new RecordedForge(directory, "test-token", "Bearer");
+                HttpClient client = HttpClient.newHttpClient()) {
+            post(client, forge.api() + "/write", "{\"line\": 12}");
+            forge.verify();
+        }
+    }
+
+    private static void post(final HttpClient client, final String uri, final String body)
+            throws Exception {
+        client.send(
+                HttpRequest.newBuilder(URI.create(uri))
+                        .header("Authorization", "Bearer test-token")
+                        .POST(HttpRequest.BodyPublishers.ofString(body))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+    }
+
+    @Test
     void aMissingExchangeFailsWithTheMethodAndPath() throws Exception {
         // Missing traffic must fail the case instead of letting a plausible 404 hide adapter drift.
         Files.writeString(

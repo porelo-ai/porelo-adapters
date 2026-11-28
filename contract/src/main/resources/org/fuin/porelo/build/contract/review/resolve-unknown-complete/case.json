@@ -1,0 +1,15 @@
+{
+  "method": "Resolve",
+  "parameters": {
+    "url": "{{web}}/fixture-org/fixture-repo/pull/11",
+    "thread": "999"
+  },
+  "expected": {
+    "error": "NoSuchThread",
+    "fields": {}
+  },
+  "exchanges": [
+    "01.json"
+  ],
+  "source": "Hand-shaped complete thread list does not contain the requested root id; no mutation is permitted."
+}

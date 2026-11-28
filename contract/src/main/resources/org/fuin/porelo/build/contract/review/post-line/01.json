@@ -1,0 +1,19 @@
+{
+  "method": "POST",
+  "path": "/api/v3/repos/fixture-org/fixture-repo/pulls/11/comments",
+  "status": 201,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": "{\"url\":\"{{api}}/repos/fixture-org/fixture-repo/pulls/comments/4467633645\",\"pull_request_review_id\":5768488376,\"id\":4467633645,\"node_id\":\"PRRC_kwDOVc0D888AAAABCkqt7Q\",\"diff_hunk\":\"@@ -0,0 +1,2 @@\\n+fixture-complete\",\"path\":\"forge-client-bbd1c0eb-61e9-4179-9ad5-8f01a3af1f5a.txt\",\"commit_id\":\"ddb2cdaa1ee183a0c5a021a6a9145a3b8a53a7cf\",\"original_commit_id\":\"ddb2cdaa1ee183a0c5a021a6a9145a3b8a53a7cf\",\"user\":{\"login\":\"fixture-reviewer\",\"id\":3,\"node_id\":\"FIXTURE_NODE_3\",\"avatar_url\":\"https://host-2.example.org/u/3\",\"gravatar_id\":\"\",\"url\":\"{{api}}/users/fixture-reviewer\",\"html_url\":\"{{web}}/fixture-reviewer\",\"followers_url\":\"{{api}}/users/fixture-reviewer/followers\",\"following_url\":\"{{api}}/users/fixture-reviewer/following{/other_user}\",\"gists_url\":\"{{api}}/users/fixture-reviewer/gists{/gist_id}\",\"starred_url\":\"{{api}}/users/fixture-reviewer/starred{/owner}{/repo}\",\"subscriptions_url\":\"{{api}}/users/fixture-reviewer/subscriptions\",\"organizations_url\":\"{{api}}/users/fixture-reviewer/orgs\",\"repos_url\":\"{{api}}/users/fixture-reviewer/repos\",\"events_url\":\"{{api}}/users/fixture-reviewer/events{/privacy}\",\"received_events_url\":\"{{api}}/users/fixture-reviewer/received_events\",\"type\":\"User\",\"user_view_type\":\"public\",\"site_admin\":false},\"body\":\"```suggestion\\nfixture-complete\\n```\",\"created_at\":\"2026-11-04T12:45:53Z\",\"updated_at\":\"2026-11-04T12:45:54Z\",\"html_url\":\"{{web}}/fixture-org/fixture-repo/pull/11\",\"pull_request_url\":\"{{api}}/repos/fixture-org/fixture-repo/pulls/11\",\"_links\":{\"self\":{\"href\":\"{{api}}/repos/fixture-org/fixture-repo/pulls/comments/4467633645\"},\"html\":{\"href\":\"{{web}}/fixture-org/fixture-repo/pull/11\"},\"pull_request\":{\"href\":\"{{api}}/repos/fixture-org/fixture-repo/pulls/11\"}},\"reactions\":{\"url\":\"{{api}}/repos/fixture-org/fixture-repo/pulls/comments/4467633645/reactions\",\"total_count\":0,\"+1\":0,\"-1\":0,\"laugh\":0,\"hooray\":0,\"confused\":0,\"heart\":0,\"rocket\":0,\"eyes\":0},\"start_line\":null,\"original_start_line\":null,\"start_side\":null,\"line\":1,\"original_line\":1,\"side\":\"RIGHT\",\"author_association\":\"MEMBER\",\"original_position\":1,\"position\":1,\"subject_type\":\"line\",\"is_copilot_code_review\":false,\"copilot_code_review_sources\":[]}",
+  "requestBody": {
+    "body": "Use the constant.",
+    "commit_id": "ddb2cdaa1ee183a0c5a021a6a9145a3b8a53a7cf",
+    "path": "doc/a b.md",
+    "side": "RIGHT",
+    "line": 12,
+    "start_line": 10,
+    "start_side": "RIGHT"
+  },
+  "source": "github-client:createReviewComment"
+}

@@ -87,21 +87,6 @@ class GitHubReviewTest {
     }
 
     @Test
-    void aNewCommentIsWrittenWithExactlyOneCall() throws IOException {
-        final ReplayHttpClient http = recorded("createReviewComment");
-
-        final String thread =
-                new GitHubReview(() -> http)
-                        .post(API, TOKEN, PULL, submission("submitted-comment.sarif.json"));
-
-        assertThat(thread).as("the new comment opens its thread").matches("[1-9][0-9]*");
-        assertThat(http.requests()).hasSize(1);
-        assertThat(http.requests().get(0).method()).isEqualTo("POST");
-        assertThat(http.requests().get(0).uri().getPath())
-                .isEqualTo("/api/v3/repos/fixture-org/fixture-repo/pulls/11/comments");
-    }
-
-    @Test
     void aReplyIsWrittenWithExactlyOneCallToItsThread() throws IOException {
         final ReplayHttpClient http = recorded("replyReviewComment");
 
@@ -113,24 +98,6 @@ class GitHubReviewTest {
         assertThat(http.requests()).hasSize(1);
         assertThat(http.requests().get(0).uri().getPath())
                 .endsWith("/pulls/11/comments/4467633645/replies");
-    }
-
-    @Test
-    void aWriteWhoseAnswerIsLostIsOfUnknownOutcomeAndNotRepeated() {
-        final TimingOut http = new TimingOut();
-
-        assertThatThrownBy(
-                        () ->
-                                new GitHubReview(() -> http)
-                                        .post(
-                                                API,
-                                                TOKEN,
-                                                PULL,
-                                                submission("submitted-comment.sarif.json")))
-                .isInstanceOf(ReviewFailure.class)
-                .extracting(e -> ((ReviewFailure) e).kind())
-                .isEqualTo(ReviewFailure.Kind.WRITE_OUTCOME_UNKNOWN);
-        assertThat(http.sent).as("one create call, never repeated").isEqualTo(1);
     }
 
     @Test
@@ -335,21 +302,6 @@ class GitHubReviewTest {
     }
 
     @Test
-    void aGeneralCommentIsNotInTheProfile() {
-        final ObjectNode general = submission("submitted-comment.sarif.json");
-        ((ObjectNode) general.at("/runs/0/results/0")).remove("locations");
-        ((ObjectNode) general.at("/runs/0/results/0/properties"))
-                .put("porelo/anchorKind", "general");
-        final ReplayHttpClient http = new ReplayHttpClient();
-
-        assertThatThrownBy(() -> new GitHubReview(() -> http).post(API, TOKEN, PULL, general))
-                .isInstanceOf(ReviewFailure.class)
-                .extracting(e -> ((ReviewFailure) e).kind())
-                .isEqualTo(ReviewFailure.Kind.NOT_IN_PROFILE);
-        assertThat(http.requests()).isEmpty();
-    }
-
-    @Test
     void aPostNamingThreadsToResolveIsRefusedWholeAndItsCommentIsNotWritten() {
         for (final String name :
                 List.of("submitted-comment.sarif.json", "submitted-reply.sarif.json")) {
@@ -380,57 +332,6 @@ class GitHubReviewTest {
                 .extracting(e -> ((ReviewFailure) e).kind())
                 .isEqualTo(ReviewFailure.Kind.NOT_IN_PROFILE);
         assertThat(http.requests()).isEmpty();
-    }
-
-    @Test
-    void anOpenThreadIsResolvedByExactlyOneMutationCarryingItsOwnNodeId() throws IOException {
-        final ReplayHttpClient http = recorded("reviewThreads", "resolveReviewThread");
-
-        new GitHubReview(() -> http).resolve(API, TOKEN, PULL, recordedThreadRoot());
-
-        assertThat(http.requests()).as("the threads read, then one mutation").hasSize(2);
-        final JsonNode asked = JSON.readTree(body(http.requests().get(0))).path("variables");
-        assertThat(List.of(asked.path("owner").asText(), asked.path("repo").asText()))
-                .as("the threads read are those of the pull request Porelo named")
-                .containsExactly("fixture-org", "fixture-repo");
-        assertThat(asked.path("number").asInt()).as("its number").isEqualTo(11);
-        final JsonNode sent = JSON.readTree(body(http.requests().get(1)));
-        assertThat(sent.path("query").asText())
-                .as("the one write is the resolve")
-                .contains("resolveReviewThread(")
-                .doesNotContain("unresolveReviewThread");
-        assertThat(sent.at("/variables/id").asText())
-                .as("the thread Porelo named and no other")
-                .isEqualTo(recordedThreadNode());
-        assertThat(http.requests())
-                .allSatisfy(
-                        request ->
-                                assertThat(request.uri().getHost())
-                                        .as("every request carrying the token")
-                                        .isEqualTo("host-1.example.org"));
-    }
-
-    @Test
-    void aThreadAlreadyResolvedIsDoneWithoutAnyWrite() throws IOException {
-        final ReplayHttpClient http = new ReplayHttpClient();
-        http.answer(threads(body -> body.replace("\"isResolved\":false", "\"isResolved\":true")));
-
-        new GitHubReview(() -> http).resolve(API, TOKEN, PULL, recordedThreadRoot());
-
-        assertThat(http.requests())
-                .as("only the read; a second resolve changes nothing")
-                .hasSize(1);
-    }
-
-    @Test
-    void aThreadThePullRequestDoesNotHoldIsNoSuchThreadAndNothingIsWritten() throws IOException {
-        final ReplayHttpClient http = recorded("reviewThreads");
-
-        assertThatThrownBy(() -> new GitHubReview(() -> http).resolve(API, TOKEN, PULL, "17"))
-                .isInstanceOf(ReviewFailure.class)
-                .extracting(e -> ((ReviewFailure) e).kind())
-                .isEqualTo(ReviewFailure.Kind.NO_SUCH_THREAD);
-        assertThat(http.requests()).as("only the read").hasSize(1);
     }
 
     @Test
@@ -542,6 +443,7 @@ class GitHubReviewTest {
                         () ->
                                 new GitHubReview(() -> http)
                                         .resolve(API, TOKEN, PULL, recordedThreadRoot()))
+                .as("a mutation that timed out may have resolved the thread")
                 .isInstanceOf(ReviewFailure.class)
                 .extracting(e -> ((ReviewFailure) e).kind())
                 .isEqualTo(ReviewFailure.Kind.WRITE_OUTCOME_UNKNOWN);
@@ -699,11 +601,6 @@ class GitHubReviewTest {
     /** The REST id of the first recorded thread's root comment. */
     private static String recordedThreadRoot() throws IOException {
         return recordedThreads().at("/0/comments/nodes/0/databaseId").asText();
-    }
-
-    /** The node id of the first recorded thread. */
-    private static String recordedThreadNode() throws IOException {
-        return recordedThreads().at("/0/id").asText();
     }
 
     /** The recorded threads' answer with its body changed, which must change it. */

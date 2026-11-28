@@ -1,0 +1,208 @@
+{
+  "method": "Comments",
+  "parameters": {
+    "url": "{{web}}/fixture-org/fixture-repo/pull/11"
+  },
+  "expected": {
+    "answer": {
+      "document": {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "properties": {
+          "porelo/profileVersion": "2",
+          "porelo/documentKind": "page"
+        },
+        "runs": [
+          {
+            "tool": {
+              "driver": {
+                "name": "Porelo"
+              }
+            },
+            "versionControlProvenance": [
+              {
+                "repositoryUri": "{{web}}/fixture-org/fixture-repo",
+                "revisionId": "ddb2cdaa1ee183a0c5a021a6a9145a3b8a53a7cf"
+              }
+            ],
+            "columnKind": "unicodeCodePoints",
+            "properties": {
+              "porelo/pullRequest": "{{web}}/fixture-org/fixture-repo/pull/11",
+              "porelo/baseRevisionId": "80816f1cded6167373c9b41b162b5319de20eb20",
+              "porelo/completeness": "partial"
+            },
+            "results": [
+              {
+                "guid": "{{uuid}}",
+                "kind": "review",
+                "level": "none",
+                "message": {
+                  "text": "Use the constant \\[here\\]{{0}}."
+                },
+                "locations": [
+                  {
+                    "physicalLocation": {
+                      "artifactLocation": {
+                        "uri": "src/main/java/Gate.java"
+                      },
+                      "region": {
+                        "startLine": 10,
+                        "endLine": 12
+                      }
+                    }
+                  }
+                ],
+                "properties": {
+                  "porelo/anchorKind": "line",
+                  "porelo/diffSide": "new",
+                  "porelo/threadId": "101",
+                  "porelo/threadState": "open",
+                  "porelo/sourceKind": "forge-account",
+                  "porelo/forgeAccountId": "583231",
+                  "porelo/forgeAccountName": "example-reviewer",
+                  "porelo/createdAt": "2026-10-30T09:14:02Z"
+                }
+              },
+              {
+                "guid": "{{uuid}}",
+                "kind": "review",
+                "level": "none",
+                "message": {
+                  "text": "Done \\\\ thanks."
+                },
+                "locations": [
+                  {
+                    "physicalLocation": {
+                      "artifactLocation": {
+                        "uri": "src/main/java/Gate.java"
+                      },
+                      "region": {
+                        "startLine": 10,
+                        "endLine": 12
+                      }
+                    }
+                  }
+                ],
+                "properties": {
+                  "porelo/anchorKind": "line",
+                  "porelo/diffSide": "new",
+                  "porelo/threadId": "101",
+                  "porelo/threadState": "open",
+                  "porelo/sourceKind": "forge-account",
+                  "porelo/forgeAccountId": "771002",
+                  "porelo/forgeAccountName": "example-author",
+                  "porelo/createdAt": "2026-10-30T09:14:02Z",
+                  "porelo/replyTo": "101"
+                }
+              },
+              {
+                "guid": "{{uuid}}",
+                "kind": "review",
+                "level": "none",
+                "message": {
+                  "text": "Old line read wrong."
+                },
+                "locations": [
+                  {
+                    "physicalLocation": {
+                      "artifactLocation": {
+                        "uri": "doc/a%20b.md"
+                      },
+                      "region": {
+                        "startLine": 4,
+                        "endLine": 4
+                      }
+                    }
+                  }
+                ],
+                "properties": {
+                  "porelo/anchorKind": "line",
+                  "porelo/diffSide": "old",
+                  "porelo/threadId": "201",
+                  "porelo/threadState": "resolved",
+                  "porelo/sourceKind": "forge-account",
+                  "porelo/forgeAccountId": "583231",
+                  "porelo/forgeAccountName": "example-reviewer",
+                  "porelo/createdAt": "2026-10-30T09:14:02Z"
+                }
+              },
+              {
+                "guid": "{{uuid}}",
+                "kind": "review",
+                "level": "none",
+                "message": {
+                  "text": "Agreed."
+                },
+                "locations": [
+                  {
+                    "physicalLocation": {
+                      "artifactLocation": {
+                        "uri": "doc/a%20b.md"
+                      },
+                      "region": {
+                        "startLine": 4,
+                        "endLine": 4
+                      }
+                    }
+                  }
+                ],
+                "properties": {
+                  "porelo/anchorKind": "line",
+                  "porelo/diffSide": "old",
+                  "porelo/threadId": "201",
+                  "porelo/threadState": "resolved",
+                  "porelo/sourceKind": "forge-account",
+                  "porelo/forgeAccountId": "771002",
+                  "porelo/forgeAccountName": "example-author",
+                  "porelo/createdAt": "2026-10-30T09:14:02Z",
+                  "porelo/replyTo": "201"
+                }
+              },
+              {
+                "guid": "{{uuid}}",
+                "kind": "review",
+                "level": "none",
+                "message": {
+                  "text": "And again."
+                },
+                "locations": [
+                  {
+                    "physicalLocation": {
+                      "artifactLocation": {
+                        "uri": "doc/a%20b.md"
+                      },
+                      "region": {
+                        "startLine": 4,
+                        "endLine": 4
+                      }
+                    }
+                  }
+                ],
+                "properties": {
+                  "porelo/anchorKind": "line",
+                  "porelo/diffSide": "old",
+                  "porelo/threadId": "201",
+                  "porelo/threadState": "resolved",
+                  "porelo/sourceKind": "forge-account",
+                  "porelo/forgeAccountId": "583231",
+                  "porelo/forgeAccountName": "example-reviewer",
+                  "porelo/createdAt": "2026-10-30T09:14:02Z",
+                  "porelo/replyTo": "201"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "exchanges": [
+    "01.json",
+    "02.json",
+    "03.json",
+    "04.json",
+    "05.json",
+    "06.json"
+  ],
+  "source": "Hand-shaped disappearance while continuing a thread; the last returned page must stay partial."
+}

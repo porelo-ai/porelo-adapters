@@ -1,0 +1,18 @@
+{
+  "method": "POST",
+  "path": "/api/graphql",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": "{\"data\":{\"repository\":{\"pullRequest\":{\"reviewThreads\":{\"nodes\":[{\"id\":\"PRRT_1\",\"isResolved\":false,\"isOutdated\":false,\"path\":\"src/main/java/Gate.java\",\"line\":12,\"diffSide\":\"RIGHT\",\"startDiffSide\":null,\"resolvedBy\":null,\"comments\":{\"nodes\":[{\"id\":\"PRRC_101\",\"databaseId\":101,\"body\":\"Use the constant [here]{0}.\",\"createdAt\":\"2026-10-30T09:14:02Z\",\"state\":\"SUBMITTED\",\"author\":{\"login\":\"example-reviewer\",\"id\":\"U\",\"databaseId\":583231}},{\"id\":\"PRRC_102\",\"databaseId\":102,\"body\":\"Done \\\\ thanks.\",\"createdAt\":\"2026-10-30T09:14:02Z\",\"state\":\"SUBMITTED\",\"author\":{\"login\":\"example-author\",\"id\":\"U\",\"databaseId\":771002}}],\"pageInfo\":{\"hasNextPage\":false,\"endCursor\":\"Y3Vyc29y\"}}},{\"id\":\"PRRT_2\",\"isResolved\":true,\"isOutdated\":false,\"path\":\"doc/a b.md\",\"line\":4,\"diffSide\":\"LEFT\",\"startDiffSide\":null,\"resolvedBy\":null,\"comments\":{\"nodes\":[{\"id\":\"PRRC_201\",\"databaseId\":201,\"body\":\"Old line read wrong.\",\"createdAt\":\"2026-10-30T09:14:02Z\",\"state\":\"SUBMITTED\",\"author\":{\"login\":\"example-reviewer\",\"id\":\"U\",\"databaseId\":583231}},{\"id\":\"PRRC_202\",\"databaseId\":202,\"body\":\"Agreed.\",\"createdAt\":\"2026-10-30T09:14:02Z\",\"state\":\"SUBMITTED\",\"author\":{\"login\":\"example-author\",\"id\":\"U\",\"databaseId\":771002}},{\"id\":\"PRRC_203\",\"databaseId\":203,\"body\":\"And again.\",\"createdAt\":\"2026-10-30T09:14:02Z\",\"state\":\"SUBMITTED\",\"author\":{\"login\":\"example-reviewer\",\"id\":\"U\",\"databaseId\":583231}}],\"pageInfo\":{\"hasNextPage\":false,\"endCursor\":\"Y3Vyc29y\"}}}],\"pageInfo\":{\"hasNextPage\":false,\"endCursor\":null}}}}}}",
+  "requestBody": {
+    "query": "query ReviewThreads($owner: String!, $repo: String!, $number: Int!, $after: String) {\n  repository(owner: $owner, name: $repo) {\n    pullRequest(number: $number) {\n      reviewThreads(first: 100, after: $after) {\n        nodes {\n          id isResolved isOutdated path line diffSide startDiffSide\n          resolvedBy { login id databaseId }\n          comments(first: 100) {\n            nodes {\n              id databaseId body createdAt state\n              author { login ... on User { id databaseId } ... on Bot { id databaseId } }\n            }\n            pageInfo { hasNextPage endCursor }\n          }\n        }\n        pageInfo { hasNextPage endCursor }\n      }\n    }\n  }\n}\n",
+    "variables": {
+      "owner": "fixture-org",
+      "repo": "fixture-repo",
+      "number": 11
+    }
+  },
+  "source": "github-adapter:conversation-threads.json"
+}

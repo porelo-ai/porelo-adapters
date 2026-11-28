@@ -29,61 +29,6 @@ class ConversationTest {
                     .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
     @Test
-    void twoThreadsWithRepliesBecomeResultsInTheThreadsOrder() {
-        final Conversation.Read read = Conversation.read(HOST, answers(c -> {}, t -> {}));
-
-        assertThat(read.complete()).as("nothing was held").isTrue();
-        assertThat(read.results())
-                .extracting(r -> r.at("/properties/porelo~1threadId").asText())
-                .as("each thread's items follow its root, named by the root's REST ID")
-                .containsExactly("101", "101", "201", "201", "201");
-        assertThat(read.results())
-                .extracting(r -> r.at("/properties/porelo~1replyTo").asText(null))
-                .as("only a reply names the thread it answers")
-                .containsExactly(null, "101", null, "201", "201");
-    }
-
-    @Test
-    void aResultCarriesItsAnchorAndTheAccountThatWroteIt() {
-        final List<ObjectNode> results =
-                Conversation.read(HOST, answers(c -> {}, t -> {})).results();
-
-        final JsonNode reply = results.get(1);
-        assertThat(reply.at("/locations/0/physicalLocation/region/startLine").asInt())
-                .as("a reply stands at its thread's lines")
-                .isEqualTo(10);
-        assertThat(reply.at("/locations/0/physicalLocation/region/endLine").asInt()).isEqualTo(12);
-        assertThat(reply.at("/properties/porelo~1sourceKind").asText()).isEqualTo("forge-account");
-        assertThat(reply.at("/properties/porelo~1forgeAccountId").asText())
-                .as("the reply's own writer, not the thread's")
-                .isEqualTo("771002");
-        assertThat(reply.at("/properties/porelo~1forgeAccountName").asText())
-                .isEqualTo("example-author");
-        assertThat(reply.at("/properties/porelo~1createdAt").asText())
-                .as("when GitHub says it was written, in whole seconds of UTC")
-                .isEqualTo("2026-10-30T09:14:02Z");
-        final JsonNode old = results.get(2);
-        assertThat(old.at("/properties/porelo~1diffSide").asText()).isEqualTo("old");
-        assertThat(old.at("/properties/porelo~1threadState").asText()).isEqualTo("resolved");
-        assertThat(old.at("/locations/0/physicalLocation/artifactLocation/uri").asText())
-                .as("the path as a repository-relative URI")
-                .isEqualTo("doc/a%20b.md");
-    }
-
-    @Test
-    void aForgesTextIsPlainTextEscapedAsTheProfileWritesIt() {
-        final List<ObjectNode> results =
-                Conversation.read(HOST, answers(c -> {}, t -> {})).results();
-
-        assertThat(results.get(0).at("/message/text").asText())
-                .as("brackets escaped, braces doubled")
-                .isEqualTo("Use the constant \\[here\\]{{0}}.");
-        assertThat(results.get(1).at("/message/text").asText())
-                .as("a backslash escaped")
-                .isEqualTo("Done \\\\ thanks.");
-    }
-
-    @Test
     void anOutdatedThreadAndAFileCommentAreLeftOutWithoutMakingTheReadPartial() {
         final Conversation.Read read =
                 Conversation.read(
@@ -105,54 +50,6 @@ class ConversationTest {
     }
 
     @Test
-    void aCommentWithARefusedCharacterIsHeldAndTheReadIsPartial() {
-        final Conversation.Read read =
-                Conversation.read(
-                        HOST,
-                        answers(
-                                c -> {
-                                    if (c.get("id").asLong() == 202) {
-                                        c.put("body", "Agreed‮.");
-                                    }
-                                },
-                                t -> {}));
-
-        assertThat(read.held()).isEqualTo(1);
-        assertThat(read.complete()).as("a held comment makes the read partial").isFalse();
-        assertThat(read.results()).as("the thread's other items stay").hasSize(4);
-    }
-
-    @Test
-    void theReadingAccountsUnsubmittedCommentsAreLeftOutAndTheReadStaysComplete() {
-        final Conversation.Read read =
-                Conversation.read(
-                        HOST,
-                        answers(
-                                c -> {},
-                                t -> {
-                                    if ("PRRT_1".equals(t.get("id").asText())) {
-                                        ((ArrayNode) t.at("/comments/nodes")).add(pending(t, 901));
-                                    }
-                                },
-                                all -> {
-                                    final ObjectNode own = all.get(0).deepCopy();
-                                    own.put("id", "PRRT_9");
-                                    final ObjectNode only = pending(own, 902);
-                                    final ArrayNode nodes = (ArrayNode) own.at("/comments/nodes");
-                                    nodes.removeAll();
-                                    nodes.add(only);
-                                    all.add(own);
-                                }));
-
-        assertThat(read.complete())
-                .as(
-                        "GitHub lists the reading account's own pending review only in GraphQL;"
-                                + " counting it as held made every read partial")
-                .isTrue();
-        assertThat(read.results()).as("a comment nobody else can see yet is no result").hasSize(5);
-    }
-
-    @Test
     void aCommentGitHubCallsPendingButRestListsIsHeldNotDropped() {
         final Conversation.Read read =
                 Conversation.read(
@@ -170,15 +67,6 @@ class ConversationTest {
                 .as("a comment others can read must never vanish behind a complete read")
                 .isFalse();
         assertThat(read.held()).isEqualTo(1);
-    }
-
-    /** A comment of the reading account's review not yet submitted, which REST does not list. */
-    private static ObjectNode pending(ObjectNode thread, long databaseId) {
-        final ObjectNode node = thread.at("/comments/nodes/0").deepCopy();
-        node.put("id", "PRRC_" + databaseId);
-        node.put("databaseId", databaseId);
-        node.put("state", "PENDING");
-        return node;
     }
 
     @Test
@@ -267,17 +155,6 @@ class ConversationTest {
                                 t -> {}));
 
         assertThat(read.held()).isEqualTo(2);
-    }
-
-    @Test
-    void anUnfinishedListMakesTheReadPartial() {
-        final Conversation.Native whole = answers(c -> {}, t -> {});
-
-        final Conversation.Read read =
-                Conversation.read(
-                        HOST, new Conversation.Native(whole.comments(), whole.threads(), false));
-
-        assertThat(read.complete()).isFalse();
     }
 
     @Test

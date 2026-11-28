@@ -1,0 +1,14 @@
+{
+  "method": "PullRequest",
+  "parameters": {
+    "url": "{{web}}/fixture-org/fixture-repo/pull/11"
+  },
+  "expected": {
+    "error": "CredentialRefused",
+    "fields": {}
+  },
+  "exchanges": [
+    "01.json"
+  ],
+  "source": "Hand-shaped forge error echoes the per-call token; raw error fields and process output must not contain it."
+}

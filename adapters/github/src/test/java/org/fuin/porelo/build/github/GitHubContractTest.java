@@ -9,4 +9,10 @@ class GitHubContractTest extends AdapterContract {
     GitHubContractTest() {
         super(GitHubReader.class, "github", Path.of("src/test/resources/recordings"), "Bearer");
     }
+
+    /** Includes the published Review1 cases beside GitHub's Build2 cases. */
+    @Override
+    protected boolean readsReviews() {
+        return true;
+    }
 }

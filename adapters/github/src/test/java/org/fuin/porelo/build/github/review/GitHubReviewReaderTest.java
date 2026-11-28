@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.fuin.porelo.build.api.ConversationPage;
 import org.fuin.porelo.build.api.ForgeAccess;
 import org.fuin.porelo.build.api.ForgeReviewRefused;
 import org.fuin.porelo.build.api.ReviewFacts;
@@ -28,20 +27,6 @@ class GitHubReviewReaderTest {
             "https://host-1.example.org/fixture-org/fixture-repo/pull/11";
 
     private static final ObjectMapper JSON = new ObjectMapper();
-
-    @Test
-    void aRecordedConversationIsAnsweredAsAPageProfileTwoChecksForAnAdapter() throws IOException {
-        final ReplayHttpClient http =
-                recorded("pull", "compare", "reviews", "reviewComments", "reviewThreads");
-
-        final ConversationPage page =
-                new GitHubReviewReader(() -> http).comments(ACCESS, PULL, null);
-
-        assertThat(JSON.readTree(page.document()).at("/properties/porelo~1documentKind").asText())
-                .as("the page went through porelo's own reading and check")
-                .isEqualTo("page");
-        assertThat(page.cursor()).isNull();
-    }
 
     @Test
     void anOpenPullRequestsFactsAreTheContractsFacts() throws IOException {
@@ -211,18 +196,6 @@ class GitHubReviewReaderTest {
                                     .as("the contract's 0 when the forge did not say")
                                     .isZero();
                         });
-    }
-
-    @Test
-    void aCheckedSubmissionIsWrittenWithOneCall() throws IOException {
-        final ReplayHttpClient http = recorded("createReviewComment");
-
-        final String thread =
-                new GitHubReviewReader(() -> http)
-                        .post(ACCESS, PULL, JSON.writeValueAsString(submission()));
-
-        assertThat(thread).matches("[1-9][0-9]*");
-        assertThat(http.requests()).hasSize(1);
     }
 
     @Test

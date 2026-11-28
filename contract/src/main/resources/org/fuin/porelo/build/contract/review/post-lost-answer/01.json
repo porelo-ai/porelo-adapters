@@ -1,0 +1,18 @@
+{
+  "method": "POST",
+  "path": "/api/v3/repos/fixture-org/fixture-repo/pulls/11/comments",
+  "status": 0,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": "",
+  "requestBody": {
+    "body": "Use the constant.",
+    "commit_id": "ddb2cdaa1ee183a0c5a021a6a9145a3b8a53a7cf",
+    "path": "doc/a b.md",
+    "side": "RIGHT",
+    "line": 12,
+    "start_line": 10,
+    "start_side": "RIGHT"
+  }
+}

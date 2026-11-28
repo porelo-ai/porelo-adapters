@@ -1,0 +1,15 @@
+{
+  "method": "Resolve",
+  "parameters": {
+    "url": "{{web}}/fixture-org/fixture-repo/pull/11",
+    "thread": "201"
+  },
+  "expected": {
+    "answer": {}
+  },
+  "exchanges": [
+    "01.json",
+    "02.json"
+  ],
+  "source": "Hand-shaped target after a distractor open thread; REST root id 201 selects node PRRT_2, once."
+}

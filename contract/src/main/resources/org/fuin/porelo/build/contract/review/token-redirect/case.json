@@ -1,0 +1,16 @@
+{
+  "method": "PullRequest",
+  "parameters": {
+    "url": "{{web}}/fixture-org/fixture-repo/pull/11"
+  },
+  "expected": {
+    "error": "Failed",
+    "fields": {
+      "message": "{{message}}"
+    }
+  },
+  "exchanges": [
+    "01.json"
+  ],
+  "source": "Hand-shaped redirect to another trusted loopback host; any follow, with or without Authorization, fails the case."
+}

@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/api/v3/repos/fixture-org/fixture-repo/pulls/11",
+  "status": 302,
+  "headers": {
+    "location": "{{other}}/stolen"
+  },
+  "body": ""
+}

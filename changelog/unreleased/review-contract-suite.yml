@@ -1,0 +1,2 @@
+title: "porelo-build-contract also holds a review adapter to Porelo's review contract, replaying recorded forge answers over TLS and checking each write by its body and that it is sent exactly once; the GitHub adapter passes it."
+type: added

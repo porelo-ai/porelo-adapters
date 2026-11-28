@@ -1,0 +1,17 @@
+{
+  "method": "Resolve",
+  "parameters": {
+    "url": "{{web}}/fixture-org/fixture-repo/pull/11",
+    "thread": "999"
+  },
+  "expected": {
+    "error": "Failed",
+    "fields": {
+      "message": "{{message}}"
+    }
+  },
+  "exchanges": [
+    "01.json"
+  ],
+  "source": "Hand-shaped thread whose root id is unavailable; a missing thread cannot be disproved by this incomplete read."
+}

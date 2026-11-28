@@ -1,0 +1,16 @@
+{
+  "method": "POST",
+  "path": "/api/graphql",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": "{\"data\":{\"node\":null}}",
+  "requestBody": {
+    "query": "query ThreadComments($id: ID!, $after: String) {\n  node(id: $id) {\n    ... on PullRequestReviewThread {\n      comments(first: 100, after: $after) {\n        nodes {\n          id databaseId body createdAt state\n          author { login ... on User { id databaseId } ... on Bot { id databaseId } }\n        }\n        pageInfo { hasNextPage endCursor }\n      }\n    }\n  }\n}\n",
+    "variables": {
+      "id": "PRRT_1",
+      "after": "Y3Vyc29y"
+    }
+  }
+}

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -15,7 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
+import javax.net.ssl.SSLContext;
 import org.fuin.porelo.wire.Json;
+import org.fuin.porelo.wire.JsonException;
 import org.jspecify.annotations.Nullable;
 
 final class RecordedForge implements AutoCloseable {
@@ -25,26 +29,63 @@ final class RecordedForge implements AutoCloseable {
             String method,
             String path,
             String host,
+            @Nullable Object requestBody,
             int status,
             Map<String, String> headers,
             byte[] body) {}
 
     private final HttpServer server;
+    private final @Nullable HttpsServer redirectSink;
     private final String token;
     private final String scheme;
+    private final boolean strict;
     private final List<Exchange> exchanges;
     private final List<String> failures = new CopyOnWriteArrayList<>();
     private int next;
 
     RecordedForge(final Path directory, final String token, final String scheme)
             throws IOException {
+        this(directory, token, scheme, null);
+    }
+
+    RecordedForge(
+            final Path directory,
+            final String token,
+            final String scheme,
+            final @Nullable SSLContext tls)
+            throws IOException {
         if (!scheme.matches("[A-Za-z][A-Za-z0-9+.-]*")) {
             throw new IllegalArgumentException("Invalid authorization scheme");
         }
         this.token = token;
         this.scheme = scheme;
+        strict = tls != null;
         exchanges = read(directory);
-        server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        if (!strict && exchanges.isEmpty()) {
+            throw new IOException("No exchanges in " + directory);
+        }
+        if (tls == null) {
+            server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            redirectSink = null;
+        } else {
+            for (final Exchange exchange : exchanges) {
+                if (!exchange.method().equals("GET") && exchange.requestBody() == null) {
+                    throw new IOException("A review write needs requestBody: " + exchange.file());
+                }
+            }
+            final HttpsServer secure = HttpsServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            secure.setHttpsConfigurator(new HttpsConfigurator(tls));
+            server = secure;
+            try {
+                redirectSink = HttpsServer.create(new InetSocketAddress("127.0.0.2", 0), 0);
+                redirectSink.setHttpsConfigurator(new HttpsConfigurator(tls));
+                redirectSink.createContext("/", this::redirected);
+                redirectSink.start();
+            } catch (IOException | RuntimeException ex) {
+                secure.stop(0);
+                throw ex;
+            }
+        }
         server.createContext("/", this::serve);
         server.start();
     }
@@ -58,7 +99,22 @@ final class RecordedForge implements AutoCloseable {
     }
 
     String api() {
-        return "http://127.0.0.1:" + server.getAddress().getPort();
+        return origin() + (strict ? "/api/v3" : "");
+    }
+
+    String origin() {
+        return (strict ? "https" : "http") + "://127.0.0.1:" + server.getAddress().getPort();
+    }
+
+    String substitute(final String text) {
+        final HttpsServer sink = redirectSink;
+        return text.replace("{{api}}", api())
+                .replace("{{web}}", origin())
+                .replace("{{blob}}", origin().replace("127.0.0.1", "localhost"))
+                .replace(
+                        "{{other}}",
+                        sink == null ? "" : "https://127.0.0.2:" + sink.getAddress().getPort())
+                .replace("{{token}}", token);
     }
 
     synchronized void verify() {
@@ -70,11 +126,26 @@ final class RecordedForge implements AutoCloseable {
     @Override
     public void close() {
         server.stop(0);
+        if (redirectSink != null) {
+            redirectSink.stop(0);
+        }
+    }
+
+    private void redirected(final HttpExchange request) throws IOException {
+        try (request) {
+            failures.add("A redirect to another host was followed");
+            if (!request.getRequestHeaders().getOrDefault("Authorization", List.of()).isEmpty()) {
+                failures.add("Authorization left API origin");
+            }
+            request.sendResponseHeaders(404, -1);
+        }
     }
 
     private synchronized void serve(final HttpExchange request) throws IOException {
         try (request) {
-            final String asked = request.getRequestMethod() + " " + request.getRequestURI();
+            final String asked =
+                    (request.getRequestMethod() + " " + request.getRequestURI())
+                            .replace(token, "[redacted]");
             final boolean blob =
                     !("127.0.0.1:" + server.getAddress().getPort())
                             .equalsIgnoreCase(request.getRequestHeaders().getFirst("Host"));
@@ -89,13 +160,26 @@ final class RecordedForge implements AutoCloseable {
                                 : "API token missing or wrong: " + asked);
             }
             final int index =
-                    next == exchanges.size() && exchanges.getLast().status() == 0 ? next - 1 : next;
+                    !strict
+                                    && !exchanges.isEmpty()
+                                    && next == exchanges.size()
+                                    && exchanges.getLast().status() == 0
+                                    && exchanges.getLast().method().equals("GET")
+                            ? next - 1
+                            : next;
             if (index >= exchanges.size() || !matches(exchanges.get(index), request, blob)) {
                 failures.add("Unrecorded request: " + asked);
                 request.sendResponseHeaders(404, -1);
                 return;
             }
             final Exchange exchange = exchanges.get(index);
+            final String received =
+                    new String(request.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            if (!bodyMatches(exchange, received)) {
+                failures.add("Request body differs from " + exchange.file() + ": " + asked);
+                request.sendResponseHeaders(400, -1);
+                return;
+            }
             // A closed GET may be retried before HttpClient reports the transport failure.
             next = index + 1;
             if (exchange.status() == 0) {
@@ -104,21 +188,32 @@ final class RecordedForge implements AutoCloseable {
             exchange.headers()
                     .forEach(
                             (name, value) ->
-                                    request.getResponseHeaders()
-                                            .set(
-                                                    name,
-                                                    value.replace("{{api}}", api())
-                                                            .replace(
-                                                                    "{{blob}}",
-                                                                    "http://localhost:"
-                                                                            + server.getAddress()
-                                                                                    .getPort())));
+                                    request.getResponseHeaders().set(name, substitute(value)));
+            final byte[] response =
+                    strict
+                            ? substitute(new String(exchange.body(), StandardCharsets.UTF_8))
+                                    .getBytes(StandardCharsets.UTF_8)
+                            : exchange.body();
             request.sendResponseHeaders(
-                    exchange.status(), exchange.body().length == 0 ? -1 : exchange.body().length);
-            request.getResponseBody().write(exchange.body());
+                    exchange.status(), response.length == 0 ? -1 : response.length);
+            request.getResponseBody().write(response);
         } catch (IOException ex) {
             failures.add("Recording response failed: " + ex.getClass().getSimpleName());
             throw ex;
+        }
+    }
+
+    private boolean bodyMatches(final Exchange exchange, final String received) {
+        final Object expected = exchange.requestBody();
+        if (expected == null) {
+            return !strict || received.isEmpty();
+        }
+        try {
+            return java.util.Objects.equals(
+                    Json.parseNumberTypes(substitute(Json.write(expected))),
+                    Json.parseNumberTypes(received));
+        } catch (JsonException ex) {
+            return false;
         }
     }
 
@@ -135,12 +230,10 @@ final class RecordedForge implements AutoCloseable {
                     paths.filter(path -> path.getFileName().toString().matches("[0-9]+\\.json"))
                             .sorted()
                             .toList();
-            if (files.isEmpty()) {
-                throw new IOException("No exchanges in " + directory);
-            }
             final List<Exchange> result = new ArrayList<>();
             for (final Path path : files) {
-                final Object parsed = Json.parse(Files.readString(path));
+                // Whole numbers stay whole, so a write sending 12.0 for 12 is not the recorded one.
+                final Object parsed = Json.parseExact(Files.readString(path));
                 if (!(parsed instanceof Map<?, ?> map)) {
                     throw new IOException("Expected an exchange object: " + path);
                 }
@@ -172,7 +265,7 @@ final class RecordedForge implements AutoCloseable {
                 }
                 result.add(
                         (Map<?, ?>)
-                                Json.parse(
+                                Json.parseExact(
                                         Json.write(exchange)
                                                 .replace("{{id}}", Integer.toString(id))));
             }
@@ -212,6 +305,7 @@ final class RecordedForge implements AutoCloseable {
                 method,
                 requestPath,
                 host,
+                map.get("requestBody"),
                 status,
                 Map.copyOf(headers),
                 body(map, directory));

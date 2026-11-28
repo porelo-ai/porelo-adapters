@@ -1,0 +1,16 @@
+{
+  "method": "Resolve",
+  "parameters": {
+    "url": "{{web}}/fixture-org/fixture-repo/pull/11",
+    "thread": "201"
+  },
+  "expected": {
+    "error": "WriteOutcomeUnknown",
+    "fields": {}
+  },
+  "exchanges": [
+    "01.json",
+    "02.json"
+  ],
+  "source": "Hand-shaped connection loss after the resolve mutation; it must not be sent a second time."
+}

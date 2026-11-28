@@ -1,0 +1,15 @@
+{
+  "method": "POST",
+  "path": "/api/graphql",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": "{\"data\":{\"resolveReviewThread\":{\"thread\":{\"id\":\"PRRT_2\",\"isResolved\":true}}}}",
+  "requestBody": {
+    "query": "mutation ResolveReviewThread($id: ID!) {\n  resolveReviewThread(input: {threadId: $id}) { thread { id isResolved } }\n}\n",
+    "variables": {
+      "id": "PRRT_2"
+    }
+  }
+}

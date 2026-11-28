@@ -3,6 +3,7 @@ package org.fuin.porelo.build.contract;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import org.fuin.porelo.build.api.Target;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
-/** The Build2 socket contract; adapters supply a main class, forge identity, and recordings. */
+/** The Build2 and optional Review1 socket contracts, run through installed executables. */
 public abstract class AdapterContract {
 
     private final Class<?> main;
@@ -55,6 +56,96 @@ public abstract class AdapterContract {
         // A wrong verdict or refusal sends a task down the wrong path; tokens must stay at the API.
         return ContractCase.all().stream()
                 .map(each -> DynamicTest.dynamicTest(each.name(), () -> run(each)));
+    }
+
+    /**
+     * Whether this adapter serves Review1 beside Build2.
+     *
+     * @return {@code false} unless the adapter opts in.
+     */
+    protected boolean readsReviews() {
+        return false;
+    }
+
+    /**
+     * Selects this adapter's forge exchanges for the unchanged published review cases.
+     *
+     * @param bundled The extracted GitHub recordings, with one directory per case.
+     * @return The recordings root; another forge supplies exchanges under the same case names.
+     */
+    protected Path reviewRecordings(final Path bundled) {
+        return bundled;
+    }
+
+    /**
+     * Selects the installed executable used for review calls.
+     *
+     * @param scratch The case's owner-only scratch directory.
+     * @return The native image named by {@code porelo.adapter.native}, or a Java launcher.
+     * @throws IOException When the launcher cannot be written or the named image cannot run.
+     */
+    protected Path reviewExecutable(final Path scratch) throws IOException {
+        final String named = System.getProperty("porelo.adapter.native", "");
+        if (named.isEmpty()) {
+            return JavaExecutable.write(scratch, main);
+        }
+        final Path executable = Path.of(named).toAbsolutePath();
+        if (!Files.isExecutable(executable)) {
+            throw new IOException("The review adapter is not executable: " + executable);
+        }
+        return executable;
+    }
+
+    /**
+     * Exercises each published Review1 call through a fresh executable and a trusted TLS forge.
+     *
+     * @return One dynamic test per case for an adapter that opts in, otherwise no tests.
+     * @throws IOException When a published case cannot be read.
+     */
+    @TestFactory
+    public final Stream<DynamicTest> everyReviewAdapterAnswersTheReviewContract()
+            throws IOException {
+        if (!readsReviews()) {
+            return Stream.empty();
+        }
+        return ReviewCase.all().stream()
+                .map(each -> DynamicTest.dynamicTest(each.name(), () -> runReview(each)));
+    }
+
+    private void runReview(final ReviewCase test) throws Exception {
+        Files.createDirectories(Path.of("target"));
+        final Path scratch = Files.createTempDirectory(Path.of("target"), "r-");
+        try {
+            final Path bundled = scratch.resolve("recordings");
+            test.install(bundled.resolve(test.name()));
+            final Path certificates = Files.createDirectory(scratch.resolve("certificates"));
+            final var tls = new ReviewCertificates(certificates).create(scratch.resolve("config"));
+            try (RecordedForge server =
+                    new RecordedForge(
+                            reviewRecordings(bundled).resolve(test.name()),
+                            UUID.randomUUID().toString(),
+                            authorization,
+                            tls)) {
+                try {
+                    ReviewProcess.run(reviewExecutable(scratch), forge, scratch, test, server);
+                } catch (Throwable failure) {
+                    // The comparison names the cause; the forge's own count only adds to it.
+                    try {
+                        server.verify();
+                    } catch (AssertionError traffic) {
+                        failure.addSuppressed(traffic);
+                    }
+                    throw failure;
+                }
+                server.verify();
+            }
+        } finally {
+            try (Stream<Path> paths = Files.walk(scratch)) {
+                for (final Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                    Files.delete(path);
+                }
+            }
+        }
     }
 
     /**

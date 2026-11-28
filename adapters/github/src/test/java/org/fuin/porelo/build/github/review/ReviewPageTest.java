@@ -31,43 +31,6 @@ class ReviewPageTest {
                     "9f8e7d6c5b4a39281706f5e4d3c2b1a098765432");
 
     @Test
-    void twoThreadsWithRepliesBecomeOnePageThatPassesProfileTwo() {
-        final Conversation.Read read =
-                Conversation.read(
-                        ConversationTest.HOST, ConversationTest.answers(c -> {}, t -> {}));
-
-        final ReviewPage.Page page = page(read.results(), read.complete(), null);
-
-        assertThat(PROFILE_2.validate(page.text(), InputFormat.JSON))
-                .as("the page holds to profile 2's schema")
-                .isEmpty();
-        assertThat(page.cursor()).as("one page holds the whole conversation").isNull();
-        assertThat(page.document().at("/runs/0/properties/porelo~1completeness").asText())
-                .isEqualTo("complete");
-        assertThat(page.document().at("/runs/0/results").size()).isEqualTo(5);
-    }
-
-    @Test
-    void aPageWithAHeldCommentIsPartialAndStillPassesProfileTwo() {
-        final Conversation.Read read =
-                Conversation.read(
-                        ConversationTest.HOST,
-                        ConversationTest.answers(
-                                c -> {
-                                    if (c.get("id").asLong() == 202) {
-                                        c.put("body", "x​");
-                                    }
-                                },
-                                t -> {}));
-
-        final ReviewPage.Page page = page(read.results(), read.complete(), null);
-
-        assertThat(PROFILE_2.validate(page.text(), InputFormat.JSON)).isEmpty();
-        assertThat(page.document().at("/runs/0/properties/porelo~1completeness").asText())
-                .isEqualTo("partial");
-    }
-
-    @Test
     void moreThanOneHundredResultsArePagedByCursor() {
         final List<ObjectNode> results = copies(250, "short");
 

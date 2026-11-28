@@ -1,0 +1,2 @@
+title: Build the GitHub and Forgejo adapters with GraalVM 25.6, whose Base64 decoding is no longer open to Java4Shell.
+type: security

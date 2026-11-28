@@ -79,9 +79,11 @@ token() { # token <user> <name> <scopes as a JSON list>
 TOKEN=$(token core rec '["write:repository","write:user"]')
 REVIEWER=$(token reviewer rec '["write:repository"]')
 READ=$(token reviewer read '["read:repository"]')
+READUSER=$(token reviewer readuser '["read:repository","read:user"]')
 printf 'header = "Authorization: token %s"\n' "$TOKEN" >"$W/auth.cfg"
 printf 'header = "Authorization: token %s"\n' "$REVIEWER" >"$W/reviewer.cfg"
 printf 'header = "Authorization: token %s"\n' "$READ" >"$W/read.cfg"
+printf 'header = "Authorization: token %s"\n' "$READUSER" >"$W/readuser.cfg"
 unset TOKEN REVIEWER READ
 a() { curl -q --noproxy '*' -fsS -K "$W/auth.cfg" -H 'Content-Type: application/json' "$@"; }
 r() { curl -q --noproxy '*' -fsS -K "$W/reviewer.cfg" -H 'Content-Type: application/json' "$@"; }
@@ -167,7 +169,7 @@ PENDING=$(id_of <"$W/pending.json")
 CAPTURE_DAY=$(date -u +%F)
 export CAPTURE_DAY
 n=0
-rec() { # rec <name> <method> <url> [auth|reviewer|read] [body] [expected status]
+rec() { # rec <name> <method> <url> [auth|reviewer|read|readuser] [body] [expected status]
     n=$((n + 1))
     local cfg=$W/${4:-auth}.cfg
     local data=()
@@ -180,7 +182,7 @@ import json,os,pathlib,re,sys
 w=pathlib.Path(sys.argv[1])
 raw=(w/'response.body').read_bytes()
 head=(w/'response.headers').read_bytes()
-for name in ('auth','reviewer','read'):
+for name in ('auth','reviewer','read','readuser'):
     token=re.search(r'Authorization: token ([0-9a-f]{40})',(w/(name+'.cfg')).read_text()).group(1).encode()
     if token in raw or token in head:raise SystemExit('REFUSED: response contains a recording credential')
 status=int((w/'response.status').read_text())
@@ -231,4 +233,9 @@ WRITTEN=$(python3 -I -c 'import json,sys; print(json.loads(json.load(sys.stdin)[
 rec created-comments GET "$PULL/reviews/$WRITTEN/comments"
 python3 -I -c 'import json,sys; c=json.loads(json.load(sys.stdin)["body"]); assert len(c)==1 and c[0]["body"]=="Recorded single-line comment." and c[0]["position"]==3, "expected exactly one written line comment"' <"$LAST"
 rec create-review-read-only POST "$PULL/reviews" read "$WRITE" 403
+# Which scopes a review read takes: the pull request and its reviews, then the reading account.
+rec pull-read-only GET "$PULL" read
+rec reviews-read-only GET "$PULL/reviews?limit=50&page=1" read
+rec user-read-only GET "$API/user" read "" 403
+rec user-read-user GET "$API/user" readuser
 cat "$OUT/index.txt"

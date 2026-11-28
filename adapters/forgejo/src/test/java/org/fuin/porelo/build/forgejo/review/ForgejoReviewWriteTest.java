@@ -87,7 +87,7 @@ class ForgejoReviewWriteTest {
                                     .isEqualTo(ReviewRefusal.Reason.NOT_SUPPORTED);
                             assertThat(refusal.path())
                                     .as("the refusal identifies the requested reply")
-                                    .isEqualTo("porelo/replyTo");
+                                    .isEqualTo("properties.porelo/replyTo");
                         })
                 .hasMessage("Forgejo has no reply to a review comment");
         assertThat(http.requests).as("refusal precedes every request").isEmpty();

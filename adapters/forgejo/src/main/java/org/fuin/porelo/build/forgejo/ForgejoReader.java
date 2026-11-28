@@ -17,8 +17,13 @@ import org.fuin.porelo.build.api.Build;
 import org.fuin.porelo.build.api.BuildMain;
 import org.fuin.porelo.build.api.BuildReader;
 import org.fuin.porelo.build.api.BuildRefused;
+import org.fuin.porelo.build.api.ConversationPage;
+import org.fuin.porelo.build.api.ForgeAccess;
 import org.fuin.porelo.build.api.PullRequest;
+import org.fuin.porelo.build.api.ReviewFacts;
+import org.fuin.porelo.build.api.ReviewReader;
 import org.fuin.porelo.build.api.Target;
+import org.fuin.porelo.build.forgejo.review.ForgejoReviewReader;
 import org.fuin.porelo.build.http.BuildFields;
 import org.fuin.porelo.build.http.FailedTests;
 import org.fuin.porelo.build.http.Http;
@@ -28,7 +33,7 @@ import org.fuin.porelo.wire.LimitFactors;
 import org.jspecify.annotations.Nullable;
 
 /** Reads Forgejo Actions through an explicitly configured API, without following redirects. */
-public final class ForgejoReader implements BuildReader {
+public final class ForgejoReader implements BuildReader, ReviewReader {
     private static final Pattern UPSTREAM =
             Pattern.compile(
                     "^(?:[a-z+]+://)?(?:[^@/]+@)?[^:/]+[:/](?:\\d+/)?([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+?)(?:\\.git)?/?$");
@@ -45,6 +50,10 @@ public final class ForgejoReader implements BuildReader {
     /** How long one call may take, {@link Http#CALL} times {@code limits.services}. */
     private final Duration call;
 
+    private final Function<LimitFactors, ReviewReader> reviews;
+
+    private final ReviewReader review;
+
     /**
      * Creates a reader with an HTTP transport.
      *
@@ -57,18 +66,52 @@ public final class ForgejoReader implements BuildReader {
             final Function<LimitFactors, Http> transport,
             final Clock clock,
             final LimitFactors limits) {
-        this(transport, clock, limits.services(Http.CALL), transport.apply(limits));
+        this(transport, clock, limits, l -> reviewOverNetwork(l, clock));
+    }
+
+    /**
+     * Creates a reader whose review calls go through the given reader.
+     *
+     * @param transport Makes how each request is sent, its deadlines scaled by the factors given;
+     *     redirects must not be followed.
+     * @param clock What a call is timed by.
+     * @param limits The time factors, whose {@code services} scales each deadline.
+     * @param reviews Makes what answers the review contract, its deadlines scaled by the factors.
+     */
+    public ForgejoReader(
+            final Function<LimitFactors, Http> transport,
+            final Clock clock,
+            final LimitFactors limits,
+            final Function<LimitFactors, ReviewReader> reviews) {
+        this(
+                transport,
+                clock,
+                limits.services(Http.CALL),
+                transport.apply(limits),
+                reviews,
+                reviews.apply(limits));
     }
 
     private ForgejoReader(
             final Function<LimitFactors, Http> transport,
             final Clock clock,
             final Duration call,
-            final Http http) {
+            final Http http,
+            final Function<LimitFactors, ReviewReader> reviews,
+            final ReviewReader review) {
         this.transport = transport;
         this.clock = clock;
         this.call = call;
         this.http = http;
+        this.reviews = reviews;
+        this.review = review;
+    }
+
+    private static ReviewReader reviewOverNetwork(final LimitFactors limits, final Clock clock) {
+        // One client per limits: each holds a selector thread and has read the certificates.
+        final java.net.http.HttpClient client = Http.trusting(limits);
+        return new ForgejoReviewReader(
+                () -> client, limits.services(Http.REQUEST), limits.services(Http.CALL), clock);
     }
 
     /**
@@ -77,13 +120,18 @@ public final class ForgejoReader implements BuildReader {
     private ForgejoReader oneCall() {
         final Instant end = clock.instant().plus(call);
         return new ForgejoReader(
-                transport, clock, call, http.within(() -> Duration.between(clock.instant(), end)));
+                transport,
+                clock,
+                call,
+                http.within(() -> Duration.between(clock.instant(), end)),
+                reviews,
+                review);
     }
 
     /** Returns this reader with the deadlines Porelo's limits line scales. */
     @Override
     public ForgejoReader withLimits(final LimitFactors limits) {
-        return new ForgejoReader(transport, clock, limits);
+        return new ForgejoReader(transport, clock, limits, reviews);
     }
 
     /**
@@ -95,6 +143,38 @@ public final class ForgejoReader implements BuildReader {
         BuildMain.run(
                 new ForgejoReader(Http::overNetwork, Clock.systemUTC(), LimitFactors.DEFAULT),
                 arguments);
+    }
+
+    /** Returns a pull request's facts, as {@link ForgejoReviewReader} reads them. */
+    @Override
+    public ReviewFacts pullRequest(final ForgeAccess access, final String url) {
+        return review.pullRequest(access, url);
+    }
+
+    /** Returns the open pull request from a branch, opening none. */
+    @Override
+    public @Nullable String pullRequestOf(
+            final ForgeAccess access, final String upstream, final String branch) {
+        return review.pullRequestOf(access, upstream, branch);
+    }
+
+    /** Returns one page of a pull request's conversation. */
+    @Override
+    public ConversationPage comments(
+            final ForgeAccess access, final String url, final @Nullable String cursor) {
+        return review.comments(access, url, cursor);
+    }
+
+    /** Writes one released result, once. */
+    @Override
+    public String post(final ForgeAccess access, final String url, final String document) {
+        return review.post(access, url, document);
+    }
+
+    /** Answers that Forgejo cannot resolve a conversation through its API. */
+    @Override
+    public void resolve(final ForgeAccess access, final String url, final String thread) {
+        review.resolve(access, url, thread);
     }
 
     /** Returns the forge this reader implements. */

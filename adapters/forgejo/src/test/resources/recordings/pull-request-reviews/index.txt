@@ -6,3 +6,7 @@ comments-3 200 GET /api/v1/repos/core/probe/pulls/1/reviews/3/comments
 create-review 200 POST /api/v1/repos/core/probe/pulls/1/reviews
 created-comments 200 GET /api/v1/repos/core/probe/pulls/1/reviews/4/comments
 create-review-read-only 403 POST /api/v1/repos/core/probe/pulls/1/reviews
+pull-read-only 200 GET /api/v1/repos/core/probe/pulls/1
+reviews-read-only 200 GET /api/v1/repos/core/probe/pulls/1/reviews?limit=50&page=1
+user-read-only 403 GET /api/v1/user
+user-read-user 200 GET /api/v1/user

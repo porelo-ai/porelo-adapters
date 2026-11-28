@@ -1,0 +1,2 @@
+title: The Forgejo adapter serves Porelo's review contract beside the build contract, reading a pull request's facts and its line comments and writing one released single-line comment with exactly one Forgejo call, and answers that it cannot resolve a conversation.
+type: added

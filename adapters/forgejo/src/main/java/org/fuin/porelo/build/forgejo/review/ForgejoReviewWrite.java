@@ -39,7 +39,7 @@ public final class ForgejoReviewWrite {
             throw new ReviewRefusal(
                     ReviewRefusal.Reason.NOT_SUPPORTED,
                     "Forgejo has no reply to a review comment",
-                    "porelo/replyTo");
+                    "properties.porelo/replyTo");
         }
         final Submission.Line line = (Submission.Line) write;
         if (line.start() != line.end()) {

@@ -1,0 +1,12 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-11-28",
+  "capture": "user-read-user",
+  "method": "GET",
+  "path": "/user",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json;charset=utf-8"
+  },
+  "body": "{\"id\":2,\"login\":\"reviewer\",\"login_name\":\"\",\"source_id\":0,\"full_name\":\"\",\"email\":\"reviewer@example.invalid\",\"avatar_url\":\"http://127.0.0.1:3997/avatars/18d8682970f34ed253a017b29268dc38\",\"html_url\":\"http://127.0.0.1:3997/reviewer\",\"language\":\"\",\"is_admin\":false,\"last_login\":\"1970-01-01T00:00:00Z\",\"created\":\"2026-11-28T05:51:50Z\",\"restricted\":false,\"active\":true,\"prohibit_login\":false,\"location\":\"\",\"pronouns\":\"\",\"website\":\"\",\"description\":\"\",\"visibility\":\"public\",\"followers_count\":0,\"following_count\":0,\"starred_repos_count\":0,\"username\":\"reviewer\"}\n"
+}

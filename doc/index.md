@@ -109,4 +109,29 @@ are successful. Unrecognized statuses produce an unknown verdict naming the valu
 `workflow_id` with its status, in Forgejo's order. A job that never executed has no log; this does not make the
 repository absent. Log tails, job counts, and the total log budget follow the build API's limits.
 
+### A pull request's review on Forgejo
+
+Beside the build, the Forgejo adapter serves the same review contract, with what Forgejo's API holds:
+
+- **A pull request's facts**, as on GitHub. It counts as approved at its head when every reviewer's last submitted
+  verdict is an approval of that commit, neither dismissed nor stale; a review list longer than one call reads
+  counts as not approved.
+- **The open pull request of a branch** of the same repository, never one from a fork; it never opens one.
+- **Its conversation, page by page**: each line comment of a submitted review as one result, a comment on the same
+  file, side and line as the thread's first one counted as its reply. A thread is named by its first comment's ID
+  and reads resolved when Forgejo shows who resolved it. A pending review is the reading account's own and is left
+  out; a comment that names both sides, or neither, is left out and the page says `partial`.
+- **One released single-line comment**, written as one review with exactly one call and never repeated: when
+  Forgejo's answer is lost or cannot be read, the answer is `WriteOutcomeUnknown`, and Porelo decides.
+
+Forgejo's API cannot answer a comment in its thread, comment on several lines at once, propose a change or resolve
+a conversation. A reply, a region over more than one line or a `suggestion` is refused with `NotInProfile` before
+any call, and `Resolve` answers `ResolveUnsupported` without a request.
+
+The review contract names a repository by https only, so the API must be `https://<host>[:<port>][/<prefix>]/api/v1`
+and the pull request's address must lie on the same host and prefix; anything else is refused before a request,
+and a Forgejo on plain http serves builds but no review. The token needs **read:repository** and **read:user** to
+read, since the facts name the account the token stands for, and **write:repository** to write; a token missing a
+scope is answered `CredentialRefused`, any other refusal `Failed` with Forgejo's own words.
+
 See the [contract documentation](contract.md) for recordings and tests.

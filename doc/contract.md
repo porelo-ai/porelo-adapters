@@ -272,3 +272,11 @@ its measured aggregate verdict is failure. Generated outstanding-only cases isol
 
 Forgejo uses its recorded head, workflow identifiers, ordered job lists, and direct log bodies in `expect.json`.
 It passes the same questions and answer rules as GitHub with its declared `token` authorization scheme.
+
+The review recorder,
+[record-forgejo-reviews.sh](https://github.com/porelo-ai/porelo-adapters/blob/main/adapters/forgejo/src/test/record/record-forgejo-reviews.sh),
+starts one Forgejo, opens a pull request with comments on both sides, a reply, a resolved conversation and a pending
+review, and writes `adapters/forgejo/src/test/resources/recordings/pull-request-reviews/` with an `index.txt` naming
+each answer. It also records which scopes a token needs: a `read:repository` token reads the pull request and its
+reviews but is refused `GET /user` without `read:user`, and is refused a review write without `write:repository`.
+Its arguments are the output directory alone, and it refuses a response that holds one of its own tokens.

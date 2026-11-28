@@ -1,4 +1,4 @@
-package org.fuin.porelo.build.github.review;
+package org.fuin.porelo.build.http;
 
 import java.io.IOException;
 import java.net.Authenticator;
@@ -26,11 +26,11 @@ import org.jspecify.annotations.Nullable;
 /**
  * Holds every request of one review call to the call's end: each send waits for its whole answer,
  * body included, no longer than the call has left, and once the end has passed nothing more is
- * sent. A send refused for that throws {@link HttpConnectTimeoutException}, so the GitHub client
+ * sent. A send refused for that throws {@link HttpConnectTimeoutException}, so a forge client
  * counts it as never sent; one cut off at the end is aborted and throws {@link
- * HttpTimeoutException}, so a write that may have reached GitHub is of unknown outcome.
+ * HttpTimeoutException}, so a write that may have reached the forge is of unknown outcome.
  */
-final class CallDeadline extends HttpClient {
+public final class CallDeadline extends HttpClient {
 
     private final HttpClient http;
 
@@ -45,7 +45,7 @@ final class CallDeadline extends HttpClient {
      * @param clock What time it is.
      * @param end When the call ends.
      */
-    CallDeadline(HttpClient http, Clock clock, Instant end) {
+    public CallDeadline(HttpClient http, Clock clock, Instant end) {
         this.http = http;
         this.clock = clock;
         this.end = end;
@@ -64,11 +64,11 @@ final class CallDeadline extends HttpClient {
             return exchange.get(left.toNanos(), TimeUnit.NANOSECONDS);
         } catch (TimeoutException ex) {
             if (!exchange.cancel(true)) {
-                // The answer came as the call ended; a write GitHub took is not made unknown.
+                // The answer came as the call ended; a write the forge took is not made unknown.
                 return finished(exchange);
             }
             throw new HttpTimeoutException(
-                    "the review call's deadline passed while GitHub answered");
+                    "the review call's deadline passed while the forge answered");
         } catch (InterruptedException ex) {
             exchange.cancel(true);
             throw ex;

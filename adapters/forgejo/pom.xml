@@ -77,6 +77,14 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- The review profile's fixtures. -->
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-build-api</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <profiles>

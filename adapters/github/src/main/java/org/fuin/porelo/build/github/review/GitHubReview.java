@@ -6,6 +6,7 @@ import java.net.http.HttpClient;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.function.Supplier;
+import org.fuin.porelo.build.http.CallDeadline;
 import org.fuin.porelo.build.http.Http;
 import org.fuin.porelo.build.review.ReviewPage;
 import org.fuin.porelo.build.review.ReviewRefusal;

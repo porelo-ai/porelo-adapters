@@ -491,7 +491,7 @@ public final class ForgejoReviewReader implements ReviewReader {
         private static final Pattern REPOSITORY = Pattern.compile("([^/]+)/([^/]+?)(?:\\.git)?/?");
 
         static Address pullRequest(String api, String url) {
-            final URI base = api(api);
+            final URI base = api(api.isEmpty() ? atOrigin(url, "url") : api);
             final Matcher m = PULL.matcher(under(base, url, "url"));
             if (!m.matches()) {
                 throw invalid("url");
@@ -500,7 +500,7 @@ public final class ForgejoReviewReader implements ReviewReader {
         }
 
         static Address repository(String api, String upstream) {
-            final URI base = api(api);
+            final URI base = api(api.isEmpty() ? atOrigin(upstream, "upstream") : api);
             final Matcher m = REPOSITORY.matcher(under(base, upstream, "upstream"));
             if (!m.matches()) {
                 throw invalid("upstream");
@@ -546,6 +546,28 @@ public final class ForgejoReviewReader implements ReviewReader {
                 throw invalid("api");
             }
             return base;
+        }
+
+        /**
+         * The API at an address's own origin: Porelo names no API for a Forgejo, the contract's
+         * empty one being the forge's own, and an instance under a path prefix needs it named.
+         */
+        private static String atOrigin(String address, String parameter) {
+            final URI given;
+            try {
+                given = new URI(address);
+            } catch (URISyntaxException ex) {
+                throw invalid(parameter);
+            }
+            if (!"https".equals(given.getScheme())
+                    || given.getHost() == null
+                    || given.getRawUserInfo() != null) {
+                throw invalid(parameter);
+            }
+            return "https://"
+                    + given.getHost()
+                    + (given.getPort() < 0 ? "" : ":" + given.getPort())
+                    + "/api/v1";
         }
 
         /** The instance's web root: the API base without {@code api/v1/}. */

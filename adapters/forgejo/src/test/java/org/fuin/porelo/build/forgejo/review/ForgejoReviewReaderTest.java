@@ -83,13 +83,53 @@ class ForgejoReviewReaderTest {
     }
 
     @Test
-    void anEmptyApiIsRefusedSinceForgejoHasNoPublicInstance() {
+    void anEmptyApiIsTheApiAtThePullRequestsOrigin() throws IOException {
+        final ReplayedForgejo.RecordingHttpClient http = recordedFacts();
+
+        final ReviewFacts facts = reader(http).pullRequest(new ForgeAccess("", TOKEN), PULL);
+
+        assertThat(facts.head()).as("the pull request was read").isEqualTo(HEAD);
+        assertThat(http.requests)
+                .as("Porelo names no API, so the instance's own at the address's origin is asked")
+                .allSatisfy(
+                        r ->
+                                assertThat(r.uri().toString())
+                                        .as("every request stays on the pull request's origin")
+                                        .startsWith("https://forgejo.example.org/api/v1/"));
+    }
+
+    @Test
+    void anEmptyApiForAnAddressOnPlainHttpIsRefusedBeforeAnyRequest() {
         final ReplayedForgejo.RecordingHttpClient http = new ReplayedForgejo.RecordingHttpClient();
 
-        assertThatThrownBy(() -> reader(http).pullRequest(new ForgeAccess("", TOKEN), PULL))
-                .as("an empty api names no Forgejo")
-                .isInstanceOf(ForgejoReviewReader.InvalidArgument.class);
+        assertThatThrownBy(
+                        () ->
+                                reader(http)
+                                        .pullRequest(
+                                                new ForgeAccess("", TOKEN),
+                                                "http://forgejo.example.org/core/probe/pulls/1"))
+                .as("the token never travels in the clear, whatever names the instance")
+                .isInstanceOf(ForgejoReviewReader.InvalidArgument.class)
+                .hasMessageNotContaining(TOKEN);
         assertThat(http.requests).as("nothing is sent").isEmpty();
+    }
+
+    @Test
+    void anEmptyApiFindsTheBranchsPullRequestAtTheUpstreamsOrigin() throws IOException {
+        final ReplayedForgejo.RecordingHttpClient http =
+                new ReplayedForgejo.RecordingHttpClient(new ReplayedForgejo.Reply(200, "[]"));
+
+        assertThat(
+                        reader(http)
+                                .pullRequestOf(
+                                        new ForgeAccess("", TOKEN),
+                                        "https://forgejo.example.org/core/probe.git",
+                                        "feature"))
+                .as("no open pull request in the list answered")
+                .isNull();
+        assertThat(http.requests.getFirst().uri().toString())
+                .as("the list is asked of the upstream's own instance")
+                .startsWith("https://forgejo.example.org/api/v1/repos/core/probe/pulls");
     }
 
     @Test

@@ -130,7 +130,10 @@ any call, and `Resolve` answers `ResolveUnsupported` without a request.
 
 The review contract names a repository by https only, so the API must be `https://<host>[:<port>][/<prefix>]/api/v1`
 and the pull request's address must lie on the same host and prefix; anything else is refused before a request,
-and a Forgejo on plain http serves builds but no review. The token needs **read:repository** and **read:user** to
+and a Forgejo on plain http serves builds but no review. An empty API, which the contract reads as the forge's own,
+is the API at the origin of the address the call names: `https://<host>[:<port>]/api/v1` for the pull request's
+address, or the upstream's for the open pull request of a branch. An instance under a path prefix needs its API
+named. The token then goes to that address's host, so Porelo names only addresses on its own forge's host. The token needs **read:repository** and **read:user** to
 read, since the facts name the account the token stands for, and **write:repository** to write; a token missing a
 scope is answered `CredentialRefused`, any other refusal `Failed` with Forgejo's own words.
 

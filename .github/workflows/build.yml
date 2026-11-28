@@ -10,11 +10,12 @@ on:
         tags: ['v*']
         # A change to documents alone is checked locally before the hand-over and by the Shared rules check once a day.
         # Workflows alone build nothing either: an action's move is checked by its pull request, and the next push with
-        # content builds with it.
-        paths-ignore: ['**.md', 'doc/**', 'mkdocs.yml', '.github/**', 'porelo.yml']
+        # content builds with it. porelo.yml builds: its GraalVM moves with porelo-machines' pin, and that move
+        # republishes the packages built by the new GraalVM.
+        paths-ignore: ['**.md', 'doc/**', 'mkdocs.yml', '.github/**']
     pull_request:
-        # The image a Porelo task builds in changes no build here, and a workflow-only change is the Workflow check's.
-        paths-ignore: ['porelo.yml', '.github/**']
+        # A workflow-only change is the Workflow check's.
+        paths-ignore: ['.github/**']
     workflow_dispatch:
 
 permissions:

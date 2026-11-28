@@ -7,6 +7,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.fuin.porelo.build.review.ProfileResult;
+import org.fuin.porelo.build.review.ReviewText;
 import org.fuin.porelo.forge.github.GitHubClient;
 import org.fuin.porelo.forge.github.GitHubGraphQl;
 import org.fuin.porelo.forge.github.model.PullRequest;
@@ -147,7 +149,7 @@ public final class PullRequestFacts {
         } else {
             throw new IllegalStateException("GitHub answered GET /user with no account");
         }
-        if (id == null || id <= 0 || login == null || !Conversation.ProfileText.isName(login)) {
+        if (id == null || id <= 0 || login == null || !ProfileResult.isName(login)) {
             throw new IllegalStateException(
                     "GitHub answered GET /user with no id or login of its form");
         }

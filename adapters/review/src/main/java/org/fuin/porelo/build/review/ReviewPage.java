@@ -1,4 +1,4 @@
-package org.fuin.porelo.build.github.review;
+package org.fuin.porelo.build.review;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

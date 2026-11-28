@@ -15,6 +15,7 @@ import org.fuin.porelo.build.api.ReviewReader;
 import org.fuin.porelo.build.api.review.ProfileCheck;
 import org.fuin.porelo.build.api.review.SarifReading;
 import org.fuin.porelo.build.api.review.SarifRefused;
+import org.fuin.porelo.build.review.ReviewPage;
 import org.fuin.porelo.forge.github.GitHubException;
 import org.fuin.porelo.forge.github.RateLimit;
 import org.jspecify.annotations.Nullable;

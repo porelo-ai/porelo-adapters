@@ -15,6 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.fuin.porelo.build.review.ProfileResult;
+import org.fuin.porelo.build.review.ReviewPage;
 import org.junit.jupiter.api.Test;
 
 class ReviewPageTest {
@@ -188,7 +190,7 @@ class ReviewPageTest {
         final List<ObjectNode> out = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             final ObjectNode copy = one.deepCopy();
-            copy.put("guid", Conversation.guid(ConversationTest.HOST, i + 1));
+            copy.put("guid", ProfileResult.guid(ConversationTest.HOST, i + 1));
             ((ObjectNode) copy.get("message")).put("text", text);
             out.add(copy);
         }

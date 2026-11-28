@@ -1,4 +1,4 @@
-package org.fuin.porelo.build.github.review;
+package org.fuin.porelo.build.review;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -11,6 +11,7 @@ import org.commonmark.ext.footnotes.FootnotesExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.node.Code;
 import org.commonmark.node.Document;
+import org.commonmark.node.Emphasis;
 import org.commonmark.node.FencedCodeBlock;
 import org.commonmark.node.HtmlBlock;
 import org.commonmark.node.HtmlInline;
@@ -20,6 +21,7 @@ import org.commonmark.node.Link;
 import org.commonmark.node.LinkReferenceDefinition;
 import org.commonmark.node.Node;
 import org.commonmark.node.SourceSpan;
+import org.commonmark.node.StrongEmphasis;
 import org.commonmark.node.Text;
 import org.commonmark.parser.IncludeSourceSpans;
 import org.commonmark.parser.Parser;
@@ -38,9 +40,14 @@ public final class ReviewText {
     /** A display name, at most this many Unicode scalar values. */
     public static final int DISPLAY_NAME_LIMIT = 128;
 
+    /**
+     * GitHub's logins and Forgejo's, which may start with an underscore and hold, never end in,
+     * dots.
+     */
     private static final Pattern MENTION =
             Pattern.compile(
-                    "(?<![A-Za-z0-9@])@[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:/[A-Za-z0-9_.-]+)?");
+                    "(?<![A-Za-z0-9@])@[A-Za-z0-9_](?:[A-Za-z0-9_.-]{0,38}[A-Za-z0-9_-])?"
+                            + "(?:/[A-Za-z0-9_](?:[A-Za-z0-9_.-]{0,98}[A-Za-z0-9_-])?)?");
 
     private static final Pattern CHARACTER_REFERENCE =
             Pattern.compile("&(?:#[0-9]{1,7}|#[xX][0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});");
@@ -193,6 +200,11 @@ public final class ReviewText {
                     run.append(plain.getLiteral());
                     continue;
                 }
+                // A forge strips emphasis before it looks for mentions, so its text joins the run.
+                if (child instanceof Emphasis || child instanceof StrongEmphasis) {
+                    emphasized(child, run);
+                    continue;
+                }
                 if (MENTION.matcher(run).find()) {
                     return true;
                 }
@@ -208,6 +220,19 @@ public final class ReviewText {
             }
         }
         return false;
+    }
+
+    /** Appends emphasized text as a forge reads it, a code span as a break no mention spans. */
+    private static void emphasized(Node node, StringBuilder run) {
+        for (Node child = node.getFirstChild(); child != null; child = child.getNext()) {
+            if (child instanceof Text plain) {
+                run.append(plain.getLiteral());
+            } else if (child instanceof Emphasis || child instanceof StrongEmphasis) {
+                emphasized(child, run);
+            } else {
+                run.append(' ');
+            }
+        }
     }
 
     /** Wraps each mention in a range in a code span that touches no backslash or backtick. */

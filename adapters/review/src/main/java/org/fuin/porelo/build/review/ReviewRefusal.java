@@ -1,4 +1,4 @@
-package org.fuin.porelo.build.github.review;
+package org.fuin.porelo.build.review;
 
 /**
  * A document or a write the review profile refuses, and why. The words name the rule and the path,

@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.function.Consumer;
+import org.fuin.porelo.build.review.ProfileResult;
 import org.fuin.porelo.forge.github.GitHubGraphQl;
 import org.fuin.porelo.forge.github.model.PullRequestReviewComment;
 import org.junit.jupiter.api.Test;
@@ -188,7 +189,7 @@ class ConversationTest {
                         answers(
                                 c -> {
                                     if (c.get("id").asLong() == 201) {
-                                        c.put("body", "x".repeat(Conversation.TEXT_LIMIT + 1));
+                                        c.put("body", "x".repeat(ProfileResult.TEXT_LIMIT + 1));
                                     }
                                 },
                                 t -> {}));
@@ -351,14 +352,14 @@ class ConversationTest {
 
     @Test
     void aCommentKeepsOneGuidShapedAsAUuid4() {
-        final String guid = Conversation.guid(HOST, 101);
+        final String guid = ProfileResult.guid(HOST, 101);
 
         assertThat(guid)
                 .as("the profile's UUIDv4 pattern")
                 .matches("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}");
-        assertThat(Conversation.guid(HOST, 101)).as("the same on every read").isEqualTo(guid);
-        assertThat(Conversation.guid(HOST, 102)).isNotEqualTo(guid);
-        assertThat(Conversation.guid("git.example.org", 101))
+        assertThat(ProfileResult.guid(HOST, 101)).as("the same on every read").isEqualTo(guid);
+        assertThat(ProfileResult.guid(HOST, 102)).isNotEqualTo(guid);
+        assertThat(ProfileResult.guid("git.example.org", 101))
                 .as("another forge's comment of the same ID")
                 .isNotEqualTo(guid);
     }

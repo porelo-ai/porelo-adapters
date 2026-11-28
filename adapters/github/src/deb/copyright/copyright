@@ -11,11 +11,11 @@ Copyright: 2026 Michael Schnell <michael@fuin.org>
 License: GPL-3.0-or-later and LGPL-3.0-or-later and Apache-2.0 and BSD-2-Clause and GPL-2.0 with Classpath exception
 Comment:
  This executable is compiled whole from the program; from Porelo's libraries
- porelo-adapter-http and porelo-build-api (GPL-3.0-or-later), porelo-wire
- (Apache-2.0) and porelo-forge-client-github (LGPL-3.0-or-later); from the
- third-party libraries Jackson (Apache-2.0), commonmark (BSD-2-Clause) and
- jspecify (Apache-2.0); and from the GraalVM Java runtime (GPL-2.0 with the
- Classpath exception). The copyright, license and notice texts of the
+ porelo-adapter-http, porelo-adapter-review and porelo-build-api
+ (GPL-3.0-or-later), porelo-wire (Apache-2.0) and porelo-forge-client-github
+ (LGPL-3.0-or-later); from the third-party libraries Jackson (Apache-2.0),
+ commonmark (BSD-2-Clause) and jspecify (Apache-2.0); and from the GraalVM Java
+ runtime (GPL-2.0 with the Classpath exception). The copyright, license and notice texts of the
  third-party code and of the runtime, and of the code they embed, stand in
  full in /usr/share/doc/porelo-adapter-github/THIRD-PARTY-NOTICES.
 

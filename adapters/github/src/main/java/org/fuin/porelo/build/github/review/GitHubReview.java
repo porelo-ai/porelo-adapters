@@ -7,6 +7,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.function.Supplier;
 import org.fuin.porelo.build.http.Http;
+import org.fuin.porelo.build.review.ReviewPage;
+import org.fuin.porelo.build.review.ReviewRefusal;
 import org.fuin.porelo.forge.github.GitHubClient;
 import org.fuin.porelo.forge.github.GitHubException;
 import org.fuin.porelo.forge.github.GitHubGraphQl;

@@ -12,6 +12,7 @@
     <name>Porelo Adapter Parent</name>
     <modules>
         <module>http</module>
+        <module>review</module>
         <module>github</module>
         <module>forgejo</module>
     </modules>

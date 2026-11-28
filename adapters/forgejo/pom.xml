@@ -39,6 +39,23 @@
             <artifactId>jspecify</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-adapter-review</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-forge-client-forgejo</artifactId>
+            <version>${porelo.forge-clients.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
         <!-- test -->
 
         <dependency>
@@ -236,7 +253,7 @@
                             <group>Applications/System</group>
                             <!-- Its own code's and Porelo's libraries', then the third-party code's and the runtime's; what that
                                  code embeds is in THIRD-PARTY-NOTICES. -->
-                            <license>GPL-3.0-or-later AND Apache-2.0 AND GPL-2.0-only WITH Classpath-exception-2.0</license>
+                            <license>GPL-3.0-or-later AND LGPL-3.0-or-later AND Apache-2.0 AND BSD-2-Clause AND GPL-2.0-only WITH Classpath-exception-2.0</license>
                             <packager>Michael Schnell &lt;michael@fuin.org&gt;</packager>
                             <requires>
                                 <require>porelo</require>
@@ -265,6 +282,15 @@
                                     <license>true</license>
                                 </entry>
                                 <!-- The classes of porelo-wire in the executable are under this one. -->
+                                <!-- porelo-forge-client-forgejo's classes in the executable are under this one. -->
+                                <entry>
+                                    <name>/usr/share/licenses/${package.name}/LICENSE.LGPL-3.0</name>
+                                    <file>${maven.multiModuleProjectDirectory}/LICENSE-LGPL-3.0</file>
+                                    <mode>0644</mode>
+                                    <user>root</user>
+                                    <group>root</group>
+                                    <license>true</license>
+                                </entry>
                                 <entry>
                                     <name>/usr/share/licenses/${package.name}/LICENSE.Apache-2.0</name>
                                     <file>${maven.multiModuleProjectDirectory}/LICENSE-Apache-2.0</file>

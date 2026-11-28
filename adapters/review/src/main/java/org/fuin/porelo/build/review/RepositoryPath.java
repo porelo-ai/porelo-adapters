@@ -1,4 +1,4 @@
-package org.fuin.porelo.build.github.review;
+package org.fuin.porelo.build.review;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;

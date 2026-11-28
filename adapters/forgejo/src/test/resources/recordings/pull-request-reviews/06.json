@@ -1,0 +1,12 @@
+{
+  "recorded": true,
+  "source": "Forgejo 17.0.0 in podman, 2026-11-28",
+  "capture": "create-review",
+  "method": "POST",
+  "path": "/repos/core/probe/pulls/1/reviews",
+  "status": 200,
+  "headers": {
+    "content-type": "application/json;charset=utf-8"
+  },
+  "body": "{\"id\":4,\"user\":{\"id\":2,\"login\":\"reviewer\",\"login_name\":\"\",\"source_id\":0,\"full_name\":\"\",\"email\":\"reviewer@example.invalid\",\"avatar_url\":\"http://127.0.0.1:3997/avatars/18d8682970f34ed253a017b29268dc38\",\"html_url\":\"http://127.0.0.1:3997/reviewer\",\"language\":\"\",\"is_admin\":false,\"last_login\":\"1970-01-01T00:00:00Z\",\"created\":\"2026-11-28T05:29:56Z\",\"restricted\":false,\"active\":true,\"prohibit_login\":false,\"location\":\"\",\"pronouns\":\"\",\"website\":\"\",\"description\":\"\",\"visibility\":\"public\",\"followers_count\":0,\"following_count\":0,\"starred_repos_count\":0,\"username\":\"reviewer\"},\"team\":null,\"state\":\"COMMENT\",\"body\":\"\",\"commit_id\":\"9f4b530e5ed93571ea9c468722a4d8189acd5c20\",\"stale\":false,\"official\":false,\"dismissed\":false,\"comments_count\":1,\"submitted_at\":\"2026-11-28T05:30:00Z\",\"updated_at\":\"2026-11-28T05:30:00Z\",\"html_url\":\"http://127.0.0.1:3997/core/probe/pulls/1#issuecomment-10\",\"pull_request_url\":\"http://127.0.0.1:3997/core/probe/pulls/1\"}\n"
+}

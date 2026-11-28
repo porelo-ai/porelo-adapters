@@ -39,7 +39,13 @@
             <artifactId>jspecify</artifactId>
         </dependency>
 
-        <!-- The GitHub calls of reviews and their conversion to Porelo's review profile. -->
+        <!-- The GitHub calls of reviews, and the conversion to Porelo's review profile both adapters share. -->
+
+        <dependency>
+            <groupId>org.fuin.porelo</groupId>
+            <artifactId>porelo-adapter-review</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.fuin.porelo</groupId>
@@ -50,23 +56,6 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.commonmark</groupId>
-            <artifactId>commonmark</artifactId>
-            <version>${commonmark.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.commonmark</groupId>
-            <artifactId>commonmark-ext-gfm-tables</artifactId>
-            <version>${commonmark.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.commonmark</groupId>
-            <artifactId>commonmark-ext-footnotes</artifactId>
-            <version>${commonmark.version}</version>
         </dependency>
 
         <!-- test -->

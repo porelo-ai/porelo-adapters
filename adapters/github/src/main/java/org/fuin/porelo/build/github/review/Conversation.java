@@ -1,14 +1,13 @@
 package org.fuin.porelo.build.github.review;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.fuin.porelo.build.review.ProfileResult;
 import org.fuin.porelo.forge.github.GitHubGraphQl;
 import org.fuin.porelo.forge.github.model.PullRequestReviewComment;
 import org.fuin.porelo.forge.github.model.SimpleUser;
@@ -23,14 +22,6 @@ import org.jspecify.annotations.Nullable;
  * cannot carry is held: counted, left out, and the read is not complete.
  */
 public final class Conversation {
-
-    /** At most this many bytes of UTF-8 in one result's text, as GitHub gave it. */
-    public static final int TEXT_LIMIT = 8192;
-
-    /** A line region spans at most this many lines. */
-    public static final int REGION_LIMIT = 100;
-
-    private static final JsonNodeFactory NODES = JsonNodeFactory.instance;
 
     private Conversation() {}
 
@@ -146,20 +137,19 @@ public final class Conversation {
     private static List<ObjectNode> thread(
             String forgeHost, Thread thread, List<PullRequestReviewComment> comments) {
         final PullRequestReviewComment root = comments.get(0);
-        final Anchor anchor = root.inReplyToId() == null ? Anchor.of(root) : null;
+        final ProfileResult.Anchor anchor = root.inReplyToId() == null ? anchor(root) : null;
         if (anchor == null) {
             return List.of();
         }
         final String threadId = Long.toString(root.id());
-        final String state =
-                Boolean.TRUE.equals(thread.thread().isResolved()) ? "resolved" : "open";
+        final boolean resolved = Boolean.TRUE.equals(thread.thread().isResolved());
         final List<ObjectNode> out = new ArrayList<>();
         for (final PullRequestReviewComment comment : comments) {
             final boolean reply = comment != root;
             if (reply && !Long.valueOf(root.id()).equals(comment.inReplyToId())) {
                 continue;
             }
-            final ObjectNode result = result(forgeHost, comment, anchor, threadId, state, reply);
+            final ObjectNode result = result(forgeHost, comment, anchor, threadId, resolved, reply);
             if (result == null) {
                 if (!reply) {
                     return List.of();
@@ -174,137 +164,46 @@ public final class Conversation {
     private static @Nullable ObjectNode result(
             String forgeHost,
             PullRequestReviewComment comment,
-            Anchor anchor,
+            ProfileResult.Anchor anchor,
             String threadId,
-            String state,
+            boolean resolved,
             boolean reply) {
-        final String text = ProfileText.message(comment.body());
         final SimpleUser user = comment.user();
-        if (text == null || user == null || user.id() < 1 || !ProfileText.isName(user.login())) {
+        if (user == null) {
             return null;
         }
-        final ObjectNode result = NODES.objectNode();
-        result.put("guid", guid(forgeHost, comment.id()));
-        result.put("kind", "review");
-        result.put("level", "none");
-        result.putObject("message").put("text", text);
-        final ObjectNode physical =
-                result.putArray("locations").addObject().putObject("physicalLocation");
-        physical.putObject("artifactLocation").put("uri", anchor.uri());
-        physical.putObject("region").put("startLine", anchor.start()).put("endLine", anchor.end());
-        final ObjectNode properties = result.putObject("properties");
-        properties.put("porelo/anchorKind", "line");
-        properties.put("porelo/diffSide", anchor.side());
-        properties.put("porelo/threadId", threadId);
-        if (reply) {
-            properties.put("porelo/replyTo", threadId);
-        }
-        properties.put("porelo/threadState", state);
-        properties.put("porelo/sourceKind", "forge-account");
-        properties.put("porelo/forgeAccountId", Long.toString(user.id()));
-        properties.put("porelo/forgeAccountName", user.login());
-        // Whole seconds in UTC: when it was written, never when it was last edited.
-        properties.put(
-                "porelo/createdAt",
-                comment.createdAt()
-                        .toInstant()
-                        .truncatedTo(java.time.temporal.ChronoUnit.SECONDS)
-                        .toString());
-        return result;
+        return ProfileResult.of(
+                forgeHost,
+                new ProfileResult.Comment(
+                        comment.id(),
+                        comment.body(),
+                        user.id(),
+                        user.login(),
+                        comment.createdAt().toInstant()),
+                anchor,
+                threadId,
+                resolved,
+                reply);
     }
 
-    /**
-     * The same comment's {@code guid} on every page and call: SHA-256 of the forge's host and the
-     * comment's ID, its bits shaped as a UUIDv4, as the profile's pattern asks.
-     *
-     * @param forgeHost The forge's web host.
-     * @param commentId The comment's REST ID.
-     * @return The guid.
-     */
-    static String guid(String forgeHost, long commentId) {
-        final byte[] hash;
-        try {
-            hash =
-                    java.security.MessageDigest.getInstance("SHA-256")
-                            .digest((forgeHost + ":" + commentId).getBytes(StandardCharsets.UTF_8));
-        } catch (java.security.NoSuchAlgorithmException ex) {
-            throw new IllegalStateException("SHA-256 is missing", ex);
+    /** Where a thread stands, or {@code null} when the profile has no anchor for its lines. */
+    private static ProfileResult.@Nullable Anchor anchor(PullRequestReviewComment root) {
+        final Integer line = root.line();
+        final PullRequestReviewComment.SideEnum side = root.side();
+        if (line == null || side == null) {
+            return null;
         }
-        hash[6] = (byte) ((hash[6] & 0x0f) | 0x40);
-        hash[8] = (byte) ((hash[8] & 0x3f) | 0x80);
-        final java.nio.ByteBuffer bytes = java.nio.ByteBuffer.wrap(hash, 0, 16);
-        return new java.util.UUID(bytes.getLong(), bytes.getLong()).toString();
-    }
-
-    /** Where a thread stands: its file, lines and side, as the profile writes them. */
-    private record Anchor(String uri, int start, int end, String side) {
-
-        static @Nullable Anchor of(PullRequestReviewComment root) {
-            final Integer line = root.line();
-            final PullRequestReviewComment.SideEnum side = root.side();
-            if (line == null || side == null) {
-                return null;
-            }
-            // A span starting on the other side has no one side the profile could name.
-            final PullRequestReviewComment.StartSideEnum startSide = root.startSide();
-            if (root.startLine() != null
-                    && startSide != null
-                    && !startSide.getValue().equals(side.getValue())) {
-                return null;
-            }
-            final int start = root.startLine() == null ? line : root.startLine();
-            if (start < 1 || line < start || line - start + 1 > REGION_LIMIT) {
-                return null;
-            }
-            final String uri;
-            try {
-                uri = RepositoryPath.uri(root.path());
-            } catch (IllegalArgumentException ex) {
-                return null;
-            }
-            return new Anchor(
-                    uri,
-                    start,
-                    line,
-                    side == PullRequestReviewComment.SideEnum.LEFT ? "old" : "new");
+        // A span starting on the other side has no one side the profile could name.
+        final PullRequestReviewComment.StartSideEnum startSide = root.startSide();
+        if (root.startLine() != null
+                && startSide != null
+                && !startSide.getValue().equals(side.getValue())) {
+            return null;
         }
-    }
-
-    /** The text rules of the profile for what a forge wrote. */
-    static final class ProfileText {
-
-        private ProfileText() {}
-
-        /**
-         * A forge's text as the profile's plain message: within its limit, no refused character, a
-         * backslash and square brackets escaped and literal braces doubled.
-         *
-         * @param body What the forge holds.
-         * @return The message, or {@code null} when the profile cannot carry it.
-         */
-        static @Nullable String message(@Nullable String body) {
-            if (body == null) {
-                return null;
-            }
-            final String text = body.replace("\r\n", "\n").replace('\r', '\n');
-            if (text.isBlank()
-                    || text.getBytes(StandardCharsets.UTF_8).length > TEXT_LIMIT
-                    || ReviewText.refusedCharacter(text) != null) {
-                return null;
-            }
-            return text.replace("\\", "\\\\")
-                    .replace("[", "\\[")
-                    .replace("]", "\\]")
-                    .replace("{", "{{")
-                    .replace("}", "}}");
-        }
-
-        /** Whether a login can be shown as an account's name. */
-        static boolean isName(@Nullable String login) {
-            return login != null
-                    && !login.isEmpty()
-                    && ReviewText.refusedCharacter(login) == null
-                    && login.codePointCount(0, login.length()) <= ReviewText.DISPLAY_NAME_LIMIT;
-        }
+        return ProfileResult.Anchor.of(
+                root.path(),
+                root.startLine() == null ? line : root.startLine(),
+                line,
+                side != PullRequestReviewComment.SideEnum.LEFT);
     }
 }

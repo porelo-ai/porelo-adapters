@@ -1,0 +1,2 @@
+title: "The Forgejo adapter converts a pull request's review comments into Porelo's review profile and one released result into a single-line review comment, sharing the conversion with the GitHub adapter."
+type: added

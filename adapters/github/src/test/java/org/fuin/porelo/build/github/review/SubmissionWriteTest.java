@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.fuin.porelo.build.review.ReviewRefusal;
 import org.fuin.porelo.forge.github.model.PullsCreateReviewCommentRequest;
 import org.junit.jupiter.api.Test;
 
